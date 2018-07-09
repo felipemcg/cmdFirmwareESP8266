@@ -132,6 +132,9 @@ char tempChars[numChars];
 WiFiClient client[2];
 WiFiServer server(80);
 
+int socketInUse[MAX_NUM_CLIENTS] = {0,0,0,0};
+
+
 /*-------------------------------------------------------------------*/
 
 void setup() {
@@ -345,12 +348,27 @@ void runInstruction(){
 			break;
 		case 6:
 			/*CCS - Client Connect to Server*/
+			int i;
 			port = atoi(parametros[1]);
-			if(client[0].connect(parametros[0],port)){
-				Serial.println("OK");
-			}else{
-				Serial.println("E");
-			};
+			for (i = 0; i < MAX_NUM_CLIENTS; i++) {
+			//find free/disconnected spot
+			//Si esta vacio y no esta conectado
+			if (!client[i] || !client[i].connected()) {
+				if (client[i]) {
+					client[i].stop();
+				}
+				if(client[0].connect(parametros[0],port)){
+					Serial.println("OK");
+				}else{
+					Serial.println("E");
+				};
+				break;
+				}
+			}
+			//no free/disconnected spot so reject
+			if (i == MAX_NUM_CLIENTS) {
+				Serial.println("NS");
+			}
 			break;
 		case 7:
 
@@ -408,6 +426,8 @@ void runInstruction(){
 			  }*/
 			break;
 		case 11:
+			/*SRC - Server receive from clients*/
+
 			break;
 		case 12:
 			break;
