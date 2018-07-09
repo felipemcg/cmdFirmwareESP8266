@@ -84,6 +84,7 @@ char packet[packetSize];
 char	bufferReceivedFromServer[packetSize];
 uint16_t bytesReceivedFromServer;
 bool	fullBufferRcvd;
+bool	SERVER_ON = false;
 
 /*Matriz que almacena los nombres de todas los comandos validos
  * -WFM: WiFi Mode
@@ -230,6 +231,7 @@ void loop() {
 	yield();
 	/**/
 	receiveFromServer();
+	checkForClients();
 }
 
 /*
@@ -389,6 +391,7 @@ void runInstruction(){
 			break;
 		case 10:
 			/*SCL - Server listens to clients*/
+			SERVER_ON = true;
 			port = atoi(parametros[0]);
 			server.begin(port);
 			// Check if a new client has connected
@@ -517,3 +520,29 @@ void receiveFromServer(){
 	}
 }
 
+void checkForClients(){
+	uint8_t i;
+	if(SERVER_ON == true){
+		  //check if there are any new clients
+		  if (server.hasClient()) {
+			for (i = 0; i < MAX_NUM_CLIENTS; i++) {
+			  //find free/disconnected spot
+				//Si esta vacio y no esta conectado
+			  if (!client[i] || !client[i].connected()) {
+				if (client[i]) {
+				  client[i].stop();
+				}
+				client[i] = server.available();
+				Serial.print("New client: "); Serial.println(i);
+				break;
+			  }
+			}
+			//no free/disconnected spot so reject
+			if (i == MAX_NUM_CLIENTS) {
+			  WiFiClient serverClient = server.available();
+			  serverClient.stop();
+			  Serial1.println("Connection rejected ");
+			}
+		}
+	}
+}
