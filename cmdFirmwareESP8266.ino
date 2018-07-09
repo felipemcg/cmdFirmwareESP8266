@@ -6,20 +6,24 @@
  *
  */
 
-
+#include "Arduino.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
 
 #include <ESP8266WiFi.h>
+/*
 #include <ESP8266WiFiScan.h>
 #include <DNSServer.h>            //Local DNS Server used for redirecting all requests to the configuration portal
-#include <ESP8266WebServer.h>     //Local WebServer used to serve the configuration portal
+    //Local WebServer used to serve the configuration portal
 #include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager WiFi Configuration Magic
+*/
 
 /*-------------------------DEFINE's--------------------------------*/
 //#define sDebug
+
+/*---	Comandos	---*/
 
 /*Cantidad maxima de parametros por comando*/
 #define qParamaters 3
@@ -27,12 +31,13 @@
 /*Cantidad maxima de caracteres que puede contener cada parametro*/
 #define qCharParameters 1024
 
-/*Cantidad maxima de caracteres que puede contener la instruccion*/
+/*Cantidad maxima de caracteres que puede contener el comando*/
 #define qCharInst 3
 
 /*Numero maximo de instrucciones*/
-#define qInstructionSet 10
+#define qInstructionSet 15
 
+/*---------------------*/
 /*El tiempo maxima para esperar una respuesta del servidor, em ms.*/
 #define serverTimeOut 500
 
@@ -42,6 +47,11 @@
 /*Maximum number of Bytes for a packet*/
 #define packetSize 512
 
+/*Numero maximo de clientes que puede manejar el modulo*/
+#define MAX_NUM_CLIENTS 4
+
+/*Puerto por default que el server escuchara*/
+#define DEFAULT_SERVER_PORT
 /*-------------------------------------------------------------------*/
 
 /*Array de parametros e instruccion*/
@@ -94,7 +104,12 @@ static const char instructionSet[qInstructionSet][qCharInst+1] = {"WFC",	//0
 		"CCS",	//6
 		"CWS",	//7
 		"CRS",	//8
-		"CCC"};	//9
+		"CCC",	//9
+		"SLC",	//10
+		"SRC",	//11
+		"SWC",	//12
+		"SCC",	//13
+		""};	//14
 
 char etx = '\x03';
 
@@ -113,8 +128,8 @@ char tempChars[numChars];
 
 
 /*Basicamente provee la misma funcionalidad que el socket*/
-WiFiClient client;
-
+WiFiClient client[2];
+WiFiServer server(80);
 
 /*-------------------------------------------------------------------*/
 
@@ -125,11 +140,10 @@ void setup() {
 
 	bytesReceivedFromServer = 0;
 	fullBufferRcvd = false;
-
-	WiFiManager wifiManager;
+	/*WiFiManager wifiManager;
 	//first parameter is name of access point, second is the password
 	wifiManager.setDebugOutput(false);
-	wifiManager.autoConnect("Nodo_ESP8266");
+	wifiManager.autoConnect("Nodo_ESP8266");*/
 
 #ifdef sDebug
 	Serial.println();
@@ -140,6 +154,7 @@ void setup() {
   	  Serial.println((instructionSet[i]));
     }
 #endif
+
     Serial.println("R");
 
 }
@@ -155,7 +170,8 @@ void loop() {
 	recvWithEndMarker();
 
 	if(newData == true){
-
+		Serial.print("H:");
+		Serial.println(ESP.getFreeHeap());
 	#ifdef sDebug
 		pMillis = millis();
 		/*Echo*/
@@ -328,24 +344,25 @@ void runInstruction(){
 		case 6:
 			/*CCS - Client Connect to Server*/
 			port = atoi(parametros[1]);
-			if(client.connect(parametros[0],port)){
+			if(client[0].connect(parametros[0],port)){
 				Serial.println("OK");
 			}else{
 				Serial.println("E");
 			};
 			break;
 		case 7:
+
 			/*CWS - Client Write to Server*/
 			/*Verificar primero si existe una conexion activa antes de intentar enviar el mensaje*/
-			if(client.connected()){
+			if(client[0].connected()){
 				/*data to print: char, byte, int, long, or string*/
 				/*The max packet size in TCP is 1460 bytes*/
 				bytesToWrite = atoi(parametros[0]);
 				Serial.println(bytesToWrite,DEC);
-				bytesWritten = client.write(parametros[1],bytesToWrite);
+				bytesWritten = client[0].write(parametros[1],bytesToWrite);
 				Serial.println(bytesWritten,DEC);
 				/*Waits for the TX WiFi Buffer be empty.*/
-				client.flush();
+				client[0].flush();
 				Serial.println("OK");
 			}else{
 				Serial.println("NC");
@@ -367,8 +384,31 @@ void runInstruction(){
 			break;
 		case 9:
 			/*CCC - Client Close Connection*/
-			client.stop();
+			client[0].stop();
 			Serial.println("OK");
+			break;
+		case 10:
+			/*SCL - Server listens to clients*/
+			port = atoi(parametros[0]);
+			server.begin(port);
+			// Check if a new client has connected
+			  //WiFiClient newClient = server.available();
+			  /*if (client) {
+				Serial.println("new client");
+				// Find the first unused space
+				for (int i=0 ; i<2 ; ++i) {
+					if (NULL == client[i]) {
+						client[i] = new WiFiClient(newClient);
+						break;
+					}
+				 }
+			  }*/
+			break;
+		case 11:
+			break;
+		case 12:
+			break;
+		case 13:
 			break;
 		default:
 			break;
@@ -461,13 +501,13 @@ void showParsedData() {
 
 /* Descripcion: Recibe un byte del servidor*/
 void receiveFromServer(){
-	if(client.connected()){
+	if(client[0].connected()){
 		/*Retorna la cantidad de bytes disponibles*/
-		int bytesAvailable = client.available();
+		int bytesAvailable = client[0].available();
 		/*Si hay bytes disponibles y el buffer no esta lleno*/
 		if (bytesAvailable && !fullBufferRcvd) {
 			/*Lee el siguiente byte recibido*/
-			bufferReceivedFromServer[bytesReceivedFromServer++] = client.read();
+			bufferReceivedFromServer[bytesReceivedFromServer++] = client[0].read();
 			/*Si la cantidad de bytes leidos por el servidor supero el tamaño
 			 * del buffer, se indica que se lleno el buffer.*/
 			if(bytesReceivedFromServer > packetSize){
