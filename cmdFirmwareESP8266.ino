@@ -233,6 +233,9 @@ void loop() {
 	yield();
 	/**/
 	receiveFromServer();
+
+	yield();
+
 	checkForClients();
 }
 
