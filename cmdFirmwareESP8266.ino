@@ -116,7 +116,7 @@ char etx = '\x03';
 
 /*Matriz que almacena la cantidad de parametros necesarios
  *por cada comando, correspondencia por indice.*/
-int	qParametersInstruction[qInstructionSet] ={2,0,1,0,0,3,2,3,0,0,1,1,2,0};
+int	qParametersInstruction[qInstructionSet] ={2,0,1,0,0,3,2,3,0,1,1,1,2,0};
 
 size_t r;
 
@@ -406,7 +406,8 @@ void runInstruction(){
 			break;
 		case 9:
 			/*CCC - Client Close Connection*/
-			client[0].stop();
+			socket = atoi(parametros[0]);
+			client[socket].stop();
 			Serial.println("OK");
 			break;
 		case 10:
