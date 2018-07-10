@@ -577,3 +577,10 @@ void checkForClients(){
 		}
 	}
 }
+
+bool socketIsInRange(uint8_t socket){
+	if( ( socket>=0 ) && ( socket<=MAX_NUM_CLIENTS ) ){
+		return true;
+	}
+	return false;
+}
