@@ -116,7 +116,7 @@ char etx = '\x03';
 
 /*Matriz que almacena la cantidad de parametros necesarios
  *por cada comando, correspondencia por indice.*/
-int	qParametersInstruction[qInstructionSet] ={2,0,1,0,0,3,2,2,0,0,1,1,2,0};
+int	qParametersInstruction[qInstructionSet] ={2,0,1,0,0,3,2,3,0,0,1,1,2,0};
 
 size_t r;
 
@@ -275,6 +275,7 @@ void runInstruction(){
 	int port;
 	int bytesToWrite, bytesWritten;
 	int numSsid;
+	int socket;
 	bool WFC_STATUS = 1;
 	if(searchInstruction() && validateParameters()){
 		switch(instructionIndex){
@@ -372,18 +373,18 @@ void runInstruction(){
 			}
 			break;
 		case 7:
-
 			/*CWS - Client Write to Server*/
 			/*Verificar primero si existe una conexion activa antes de intentar enviar el mensaje*/
-			if(client[0].connected()){
+			socket = atoi(parametros[0]);
+			if(client[socket].connected()){
 				/*data to print: char, byte, int, long, or string*/
 				/*The max packet size in TCP is 1460 bytes*/
-				bytesToWrite = atoi(parametros[0]);
+				bytesToWrite = atoi(parametros[1]);
 				Serial.println(bytesToWrite,DEC);
-				bytesWritten = client[0].write(parametros[1],bytesToWrite);
+				bytesWritten = client[socket].write(parametros[2],bytesToWrite);
 				Serial.println(bytesWritten,DEC);
 				/*Waits for the TX WiFi Buffer be empty.*/
-				client[0].flush();
+				client[socket].flush();
 				Serial.println("OK");
 			}else{
 				Serial.println("NC");
