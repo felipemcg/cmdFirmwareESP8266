@@ -358,7 +358,8 @@ void runInstruction(){
 						client[i].stop();
 					}
 					if(client[i].connect(parametros[0],port)){
-						Serial.println("OK");
+						Serial.print("OK");
+						Serial.println(i);
 					}else{
 						Serial.println("E");
 					}
