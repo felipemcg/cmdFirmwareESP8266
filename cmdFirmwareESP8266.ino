@@ -81,9 +81,9 @@ int	instructionIndex = 999;
 /*Paquete para enviar a traves de la red*/
 char packet[packetSize];
 
-char	bufferReceivedFromServer[packetSize];
-uint16_t bytesReceivedFromServer;
-bool	fullBufferRcvd;
+char	bufferReceivedFromServer[MAX_NUM_CLIENTS][packetSize];
+uint16_t bytesReceivedFromServer[MAX_NUM_CLIENTS];
+bool	fullBufferRcvd[MAX_NUM_CLIENTS];
 bool	SERVER_ON = false;
 
 /*Matriz que almacena los nombres de todas los comandos validos
@@ -116,7 +116,7 @@ char etx = '\x03';
 
 /*Matriz que almacena la cantidad de parametros necesarios
  *por cada comando, correspondencia por indice.*/
-int	qParametersInstruction[qInstructionSet] ={2,0,1,0,0,3,2,3,0,1,1,1,2,0};
+int	qParametersInstruction[qInstructionSet] ={2,0,1,0,0,3,2,3,1,1,1,1,2,0};
 
 size_t r;
 
@@ -132,7 +132,7 @@ char tempChars[numChars];
 WiFiClient client[MAX_NUM_CLIENTS];
 WiFiServer server(80);
 
-int socketInUse[MAX_NUM_CLIENTS] = {0,0,0,0};
+uint8_t socketInUse[MAX_NUM_CLIENTS] = {0,0,0,0};
 
 
 /*-------------------------------------------------------------------*/
@@ -141,9 +141,10 @@ void setup() {
 	Serial.begin(115200);
 	delay(10);
 	Serial.println();
-
-	bytesReceivedFromServer = 0;
-	fullBufferRcvd = false;
+	for(int i=0; i < MAX_NUM_CLIENTS; i++){
+		bytesReceivedFromServer[i] = 0;
+		fullBufferRcvd[i] = false;
+	}
 	/*WiFiManager wifiManager;
 	//first parameter is name of access point, second is the password
 	wifiManager.setDebugOutput(false);
@@ -392,17 +393,19 @@ void runInstruction(){
 			break;
 		case 8:
 			/*CRS - Client Receive from Server*/
-
+			socket = atoi(parametros[0]);
 			/*print received data from server*/
-			Serial.println(bufferReceivedFromServer);
-			/**/
-			bytesReceivedFromServer = 0;
+			Serial.println(bufferReceivedFromServer[socket]);
 
+			bytesReceivedFromServer[socket] = 0;
 			/*Clear the buffer*/
-			memset(bufferReceivedFromServer,0,sizeof(bufferReceivedFromServer));
+			for (int i=0; i < MAX_NUM_CLIENTS; i++){
+				bufferReceivedFromServer[socket][i] = 0;
+			}
+			//memset(bufferReceivedFromServer,0,sizeof(bufferReceivedFromServer));
 			//bufferReceivedFromServer[0] ='\0';
 			/**/
-			fullBufferRcvd = false;
+			fullBufferRcvd[socket] = false;
 			break;
 		case 9:
 			/*CCC - Client Close Connection*/
@@ -530,20 +533,24 @@ void showParsedData() {
 
 /* Descripcion: Recibe un byte del servidor*/
 void receiveFromServer(){
-	if(client[0].connected()){
-		/*Retorna la cantidad de bytes disponibles*/
-		int bytesAvailable = client[0].available();
-		/*Si hay bytes disponibles y el buffer no esta lleno*/
-		if (bytesAvailable && !fullBufferRcvd) {
-			/*Lee el siguiente byte recibido*/
-			bufferReceivedFromServer[bytesReceivedFromServer++] = client[0].read();
-			/*Si la cantidad de bytes leidos por el servidor supero el tamaño
-			 * del buffer, se indica que se lleno el buffer.*/
-			if(bytesReceivedFromServer > packetSize){
-				fullBufferRcvd = true;
+	int bytesAvailable;
+	for(int i = 0; i < MAX_NUM_CLIENTS; i++){
+		if(client[i].connected()){
+			/*Retorna la cantidad de bytes disponibles*/
+			bytesAvailable = client[i].available();
+			/*Si hay bytes disponibles y el buffer no esta lleno*/
+			if (bytesAvailable && !fullBufferRcvd[i]) {
+				/*Lee el siguiente byte recibido*/
+				bufferReceivedFromServer[i][bytesReceivedFromServer[i]++] = client[i].read();
+				/*Si la cantidad de bytes leidos por el servidor supero el tamaño
+				 * del buffer, se indica que se lleno el buffer.*/
+				if(bytesReceivedFromServer[i] > packetSize){
+					fullBufferRcvd[i] = true;
+				}
 			}
 		}
 	}
+
 }
 
 void checkForClients(){
