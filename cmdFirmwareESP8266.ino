@@ -116,7 +116,7 @@ char etx = '\x03';
 
 /*Matriz que almacena la cantidad de parametros necesarios
  *por cada comando, correspondencia por indice.*/
-int	qParametersInstruction[qInstructionSet] ={2,0,1,0,0,3,2,2,0,0};
+int	qParametersInstruction[qInstructionSet] ={2,0,1,0,0,3,2,2,0,0,1,1,2,0};
 
 size_t r;
 
@@ -351,18 +351,18 @@ void runInstruction(){
 			int i;
 			port = atoi(parametros[1]);
 			for (i = 0; i < MAX_NUM_CLIENTS; i++) {
-			//find free/disconnected spot
-			//Si esta vacio y no esta conectado
-			if (!client[i] || !client[i].connected()) {
-				if (client[i]) {
-					client[i].stop();
-				}
-				if(client[0].connect(parametros[0],port)){
-					Serial.println("OK");
-				}else{
-					Serial.println("E");
-				};
-				break;
+				//find free/disconnected spot
+				//Si esta vacio y no esta conectado
+				if (!client[i] || !client[i].connected()) {
+					if (client[i]) {
+						client[i].stop();
+					}
+					if(client[i].connect(parametros[0],port)){
+						Serial.println("OK");
+					}else{
+						Serial.println("E");
+					}
+					break;
 				}
 			}
 			//no free/disconnected spot so reject
@@ -412,6 +412,7 @@ void runInstruction(){
 			SERVER_ON = true;
 			port = atoi(parametros[0]);
 			server.begin(port);
+			Serial.println("SOK");
 			// Check if a new client has connected
 			  //WiFiClient newClient = server.available();
 			  /*if (client) {
@@ -430,8 +431,10 @@ void runInstruction(){
 
 			break;
 		case 12:
+			/*SRC - Server write to clients*/
 			break;
 		case 13:
+			/*SCC - Server close connection*/
 			break;
 		default:
 			break;
