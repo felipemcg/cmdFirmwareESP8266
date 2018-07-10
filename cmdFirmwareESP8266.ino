@@ -129,7 +129,7 @@ char tempChars[numChars];
 
 
 /*Basicamente provee la misma funcionalidad que el socket*/
-WiFiClient client[2];
+WiFiClient client[MAX_NUM_CLIENTS];
 WiFiServer server(80);
 
 int socketInUse[MAX_NUM_CLIENTS] = {0,0,0,0};
