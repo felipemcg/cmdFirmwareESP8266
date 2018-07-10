@@ -375,60 +375,53 @@ void runInstruction(){
 			/*CWS - Client Write to Server*/
 			/*Verificar primero si existe una conexion activa antes de intentar enviar el mensaje*/
 			socket = atoi(parametros[0]);
-			if(client[socket].connected()){
-				/*data to print: char, byte, int, long, or string*/
-				/*The max packet size in TCP is 1460 bytes*/
-				bytesToWrite = atoi(parametros[1]);
-				Serial.println(bytesToWrite,DEC);
-				bytesWritten = client[socket].write(parametros[2],bytesToWrite);
-				Serial.println(bytesWritten,DEC);
-				/*Waits for the TX WiFi Buffer be empty.*/
-				client[socket].flush();
-				Serial.println("OK");
-			}else{
-				Serial.println("NC");
+			if(socketIsInRange(socket) == true){
+				if(client[socket].connected()){
+					/*data to print: char, byte, int, long, or string*/
+					/*The max packet size in TCP is 1460 bytes*/
+					bytesToWrite = atoi(parametros[1]);
+					Serial.println(bytesToWrite,DEC);
+					bytesWritten = client[socket].write(parametros[2],bytesToWrite);
+					Serial.println(bytesWritten,DEC);
+					/*Waits for the TX WiFi Buffer be empty.*/
+					client[socket].flush();
+					Serial.println("OK");
+				}else{
+					Serial.println("NOCNC");
+				}
 			}
 			break;
 		case 8:
 			/*CRS - Client Receive from Server*/
 			socket = atoi(parametros[0]);
 			/*print received data from server*/
-			Serial.println(bufferReceivedFromServer[socket]);
-
-			bytesReceivedFromServer[socket] = 0;
-			/*Clear the buffer*/
-			for (int i=0; i < MAX_NUM_CLIENTS; i++){
-				bufferReceivedFromServer[socket][i] = 0;
+			if(socketIsInRange(socket) == true){
+				Serial.println(bufferReceivedFromServer[socket]);
+				bytesReceivedFromServer[socket] = 0;
+				/*Clear the buffer*/
+				for (int i=0; i < MAX_NUM_CLIENTS; i++){
+					bufferReceivedFromServer[socket][i] = 0;
+				}
+				//memset(bufferReceivedFromServer,0,sizeof(bufferReceivedFromServer));
+				//bufferReceivedFromServer[0] ='\0';
+				/**/
+				fullBufferRcvd[socket] = false;
 			}
-			//memset(bufferReceivedFromServer,0,sizeof(bufferReceivedFromServer));
-			//bufferReceivedFromServer[0] ='\0';
-			/**/
-			fullBufferRcvd[socket] = false;
 			break;
 		case 9:
 			/*CCC - Client Close Connection*/
 			socket = atoi(parametros[0]);
-			client[socket].stop();
-			Serial.println("OK");
+			if(socketIsInRange(socket) == true){
+				client[socket].stop();
+				Serial.println("OK");
+			}
 			break;
 		case 10:
 			/*SCL - Server listens to clients*/
 			SERVER_ON = true;
 			port = atoi(parametros[0]);
 			server.begin(port);
-			Serial.println("SOK");
-			// Check if a new client has connected
-			  //WiFiClient newClient = server.available();
-			  /*if (client) {
-				Serial.println("new client");
-				// Find the first unused space
-				for (int i=0 ; i<2 ; ++i) {
-					if (NULL == client[i]) {
-						client[i] = new WiFiClient(newClient);
-						break;
-					}
-				 }
-			  }*/
+			Serial.println("OK");
 			break;
 		case 11:
 			/*SRC - Server receive from clients*/
@@ -579,8 +572,9 @@ void checkForClients(){
 }
 
 bool socketIsInRange(uint8_t socket){
-	if( ( socket>=0 ) && ( socket<=MAX_NUM_CLIENTS ) ){
+	if( ( socket>=0 ) && ( socket<MAX_NUM_CLIENTS ) ){
 		return true;
 	}
+	Serial.println("ISO");
 	return false;
 }
