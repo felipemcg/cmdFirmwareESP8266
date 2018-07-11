@@ -427,8 +427,10 @@ void runInstruction(){
 			Serial.println("OK");
 			break;
 		case 11:
-			/*SRC - Server receive from clients*/
-
+			/*SCC*/
+			SERVER_ON = false;
+			server.stop();
+			Serial.println("OK");
 			break;
 		case 12:
 			/*SRC - Server write to clients*/
