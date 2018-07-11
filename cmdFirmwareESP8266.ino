@@ -132,7 +132,7 @@ WiFiServer server(80);
 
 uint8_t socketInUse[MAX_NUM_CLIENTS] = {0,0,0,0};
 
-
+#define sDebug 1
 /*-------------------------------------------------------------------*/
 
 void setup() {
@@ -285,14 +285,14 @@ void runInstruction(){
 			/*WFC - WiFi Connect*/
 			WiFi.mode(WIFI_STA);
 			WiFi.begin(parametros[0],parametros[1]);
-			/*for (int i = 0; i < strlen(parametros[0]); ++i) {
+			for (int i = 0; i < strlen(parametros[0]); ++i) {
 				  Serial.printf("%02x ", parametros[0][i]);
 			  }
 			Serial.println("");
 			for (int i = 0; i < strlen(parametros[1]); ++i) {
 				Serial.printf("%02x ", parametros[1][i]);
 			}
-			Serial.println("");*/
+			Serial.println("");
 			previousMillis = millis();
 			while (WiFi.status() != WL_CONNECTED) {
 				delay(20);
@@ -402,7 +402,7 @@ void runInstruction(){
 				Serial.println(bufferReceivedFromServer[socket]);
 				bytesReceivedFromServer[socket] = 0;
 				/*Clear the buffer*/
-				for (int i=0; i < MAX_NUM_CLIENTS; i++){
+				for (int i=0; i < packetSize; i++){
 					bufferReceivedFromServer[socket][i] = 0;
 				}
 				//memset(bufferReceivedFromServer,0,sizeof(bufferReceivedFromServer));
