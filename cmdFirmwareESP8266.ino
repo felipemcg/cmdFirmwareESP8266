@@ -171,6 +171,9 @@ void loop() {
 
 	/*Recibe los datos por serial, hasta que se encuentra el caracter terminador.*/
 	recvWithEndMarker();
+	for (int i = 0; i < strlen(receivedChars); ++i) {
+		Serial.printf("%02x ", receivedChars[i]);
+	}
 
 	if(newData == true){
 		Serial.print("H:");
@@ -435,9 +438,6 @@ void runInstruction(){
 		case 12:
 			/*SRC - Server write to clients*/
 			break;
-		case 13:
-			/*SCC - Server close connection*/
-			break;
 		default:
 			break;
 		}
@@ -494,18 +494,9 @@ void parseData() {
 	  strcpy(bufferSerial[delimFound],strtokIndx);
 	  strtokIndx = strtok(NULL, delim);
 	  delimFound++;
-	  if(delimFound == qParamaters){
-		  strcpy(delim,"\n");
-	  }
 	}
 	parametersFound = delimFound - 1;
 	strcpy(INST,bufferSerial[0]);
-	/*Para sacar el caracter de LF del ultimo parametro.*/
-	for(i=0; i < strlen(bufferSerial[delimFound]); i++){
-		if(bufferSerial[delimFound][i]== '\n'){
-			bufferSerial[delimFound][i] = '\0';
-		}
-	}
 	for(i=0; i < parametersFound; i++){
 		strcpy(parametros[i],bufferSerial[i+1]);
 	}
