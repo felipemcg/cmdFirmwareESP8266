@@ -388,10 +388,13 @@ void runInstruction(){
 					bytesToWrite = atoi(parametros[1]);
 					Serial.println(bytesToWrite,DEC);
 					bytesWritten = client[socket].write(parametros[2],bytesToWrite);
-					Serial.println(bytesWritten,DEC);
 					/*Waits for the TX WiFi Buffer be empty.*/
 					client[socket].flush();
-					Serial.println("OK");
+					if(bytesToWrite != bytesWritten){
+						Serial.println("E");
+					}else{
+						Serial.println("OK");
+					}
 				}else{
 					Serial.println("NOCNC");
 				}
