@@ -132,7 +132,7 @@ WiFiServer server(80);
 
 uint8_t socketInUse[MAX_NUM_CLIENTS] = {0,0,0,0};
 
-#define sDebug 1
+//#define sDebug 1
 /*-------------------------------------------------------------------*/
 
 void setup() {
@@ -171,9 +171,9 @@ void loop() {
 
 	/*Recibe los datos por serial, hasta que se encuentra el caracter terminador.*/
 	recvWithEndMarker();
-	for (int i = 0; i < strlen(receivedChars); ++i) {
+	/*for (int i = 0; i < strlen(receivedChars); ++i) {
 		Serial.printf("%02x ", receivedChars[i]);
-	}
+	}*/
 
 	if(newData == true){
 		Serial.print("H:");
@@ -288,13 +288,13 @@ void runInstruction(){
 			/*WFC - WiFi Connect*/
 			WiFi.mode(WIFI_STA);
 			WiFi.begin(parametros[0],parametros[1]);
-			for (int i = 0; i < strlen(parametros[0]); ++i) {
+			/*for (int i = 0; i < strlen(parametros[0]); ++i) {
 				  Serial.printf("%02x ", parametros[0][i]);
 			  }
 			Serial.println("");
 			for (int i = 0; i < strlen(parametros[1]); ++i) {
 				Serial.printf("%02x ", parametros[1][i]);
-			}
+			}*/
 			Serial.println("");
 			previousMillis = millis();
 			while (WiFi.status() != WL_CONNECTED) {
@@ -365,6 +365,7 @@ void runInstruction(){
 					}
 					if(client[i].connect(parametros[0],port)){
 						Serial.print("OK");
+						Serial.print(",");
 						Serial.println(i);
 					}else{
 						Serial.println("E");
@@ -386,7 +387,6 @@ void runInstruction(){
 					/*data to print: char, byte, int, long, or string*/
 					/*The max packet size in TCP is 1460 bytes*/
 					bytesToWrite = atoi(parametros[1]);
-					Serial.println(bytesToWrite,DEC);
 					bytesWritten = client[socket].write(parametros[2],bytesToWrite);
 					/*Waits for the TX WiFi Buffer be empty.*/
 					client[socket].flush();
@@ -524,23 +524,31 @@ void showParsedData() {
 /* Descripcion: Recibe un byte del servidor*/
 void receiveFromServer(){
 	int bytesAvailable;
+	char dump;
 	for(int i = 0; i < MAX_NUM_CLIENTS; i++){
 		if(client[i].connected()){
 			/*Retorna la cantidad de bytes disponibles*/
 			bytesAvailable = client[i].available();
 			/*Si hay bytes disponibles y el buffer no esta lleno*/
-			if (bytesAvailable && !fullBufferRcvd[i]) {
-				/*Lee el siguiente byte recibido*/
-				bufferReceivedFromServer[i][bytesReceivedFromServer[i]++] = client[i].read();
-				/*Si la cantidad de bytes leidos por el servidor supero el tamaño
-				 * del buffer, se indica que se lleno el buffer.*/
-				if(bytesReceivedFromServer[i] > packetSize){
-					fullBufferRcvd[i] = true;
+			if (bytesAvailable) {
+				if(!fullBufferRcvd[i]){
+					Serial.println("Leido");
+					/*Lee el siguiente byte recibido*/
+					bufferReceivedFromServer[i][bytesReceivedFromServer[i]++] = client[i].read();
+					/*Si la cantidad de bytes leidos por el servidor supero el tamaño
+					 * del buffer, se indica que se lleno el buffer.*/
+					if(bytesReceivedFromServer[i] > packetSize){
+						Serial.println("Me llene");
+						fullBufferRcvd[i] = true;
+					}
+				}else{
+					Serial.println("Dump");
+					dump = client[i].read();
+
 				}
 			}
 		}
 	}
-
 }
 
 void checkForClients(){
