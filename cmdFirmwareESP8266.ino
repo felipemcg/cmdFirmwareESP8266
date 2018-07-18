@@ -174,8 +174,8 @@ void loop() {
 	}*/
 
 	if(newData == true){
-		Serial.print("H:");
-		Serial.println(ESP.getFreeHeap());
+		//Serial.print("H:");
+		//Serial.println(ESP.getFreeHeap());
 	#ifdef sDebug
 		pMillis = millis();
 		/*Echo*/
@@ -293,7 +293,7 @@ void runInstruction(){
 			for (int i = 0; i < strlen(parametros[1]); ++i) {
 				Serial.printf("%02x ", parametros[1][i]);
 			}*/
-			Serial.println("");
+			//Serial.println("");
 			previousMillis = millis();
 			while (WiFi.status() != WL_CONNECTED) {
 				delay(20);
@@ -537,17 +537,17 @@ void receiveFromServer(){
 			/*Si hay bytes disponibles y el buffer no esta lleno*/
 			if (bytesAvailable) {
 				if(!fullBufferRcvd[i]){
-					Serial.println("Leido");
+					//Serial.println("Leido");
 					/*Lee el siguiente byte recibido*/
 					bufferReceivedFromServer[i][bytesReceivedFromServer[i]++] = client[i].read();
 					/*Si la cantidad de bytes leidos por el servidor supero el tamaño
 					 * del buffer, se indica que se lleno el buffer.*/
 					if(bytesReceivedFromServer[i] > packetSize){
-						Serial.println("Me llene");
+						//Serial.println("Me llene");
 						fullBufferRcvd[i] = true;
 					}
 				}else{
-					Serial.println("Dump");
+					//Serial.println("Dump");
 					dump = client[i].read();
 
 				}
@@ -569,7 +569,7 @@ void checkForClients(){
 				  client[i].stop();
 				}
 				client[i] = server.available();
-				Serial.print("New client: "); Serial.println(i);
+				//Serial.print("New client: "); Serial.println(i);
 				break;
 			  }
 			}
@@ -577,7 +577,7 @@ void checkForClients(){
 			if (i == MAX_NUM_CLIENTS) {
 			  WiFiClient serverClient = server.available();
 			  serverClient.stop();
-			  Serial1.println("Connection rejected ");
+			  //Serial1.println("Connection rejected ");
 			}
 		}
 	}
