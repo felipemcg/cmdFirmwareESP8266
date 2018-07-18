@@ -13,12 +13,10 @@
 #include <stddef.h>
 
 #include <ESP8266WiFi.h>
-/*
 #include <ESP8266WiFiScan.h>
 #include <DNSServer.h>            //Local DNS Server used for redirecting all requests to the configuration portal
     //Local WebServer used to serve the configuration portal
 #include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager WiFi Configuration Magic
-*/
 
 /*-------------------------DEFINE's--------------------------------*/
 //#define sDebug
@@ -145,7 +143,7 @@ void setup() {
 	}
 	/*WiFiManager wifiManager;
 	//first parameter is name of access point, second is the password
-	wifiManager.setDebugOutput(false);
+	wifiManager.setDebugOutput(true);
 	wifiManager.autoConnect("Nodo_ESP8266");*/
 
 #ifdef sDebug
@@ -277,7 +275,7 @@ bool validateParameters(){
 void runInstruction(){
 	unsigned long previousMillis;
 	unsigned long currentMillis;
-	int port;
+	int port,dns;
 	int bytesToWrite, bytesWritten;
 	int numSsid;
 	int socket;
@@ -337,19 +335,26 @@ void runInstruction(){
 			break;
 		case 2:
 			/*WiFi RSSI*/
-
+			Serial.println(WiFi.RSSI());
 			break;
 		case 3:
 			/*WiFi ID*/
-
+			Serial.println(WiFi.SSID());
 			break;
 		case 4:
 			/*WiFi Disconnect*/
-
+			WiFi.disconnect();
+			delay(100);
+			Serial.println("OK");
 			break;
 		case 5:
+			/*IPAddress addr;
+			if (addr.fromString(strIP)) {
+			  // it was a valid address, do something with it
+			}*/
 			/*WiFi Configuration*/
-
+			/*IPAddress local_ip();
+			WiFi.config();*/
 
 			break;
 		case 6:
@@ -396,7 +401,7 @@ void runInstruction(){
 						Serial.println("OK");
 					}
 				}else{
-					Serial.println("NOCNC");
+					Serial.println("NC");
 				}
 			}
 			break;
