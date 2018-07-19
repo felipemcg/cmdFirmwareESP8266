@@ -85,14 +85,6 @@ bool	fullBufferRcvd[MAX_NUM_CLIENTS];
 bool	SERVER_ON = false;
 
 /*Matriz que almacena los nombres de todas los comandos validos
- * -WFM: WiFi Mode
- * -WFC: WiFi Connect
- * -CCS: Client Connect to Server
- * -PTS: Print to server
- * -PTL: Print to server, adding CR/LF.
- * -CCC: Client Close Connection.
- * -WFG: */
-
 /*dejar con static? Podria afectar la velocidad*/
 static const char instructionSet[qInstructionSet][qCharInst+1] = {"WFC",	//0
 		"WFS",	//1
@@ -107,8 +99,6 @@ static const char instructionSet[qInstructionSet][qCharInst+1] = {"WFC",	//0
 		"SLC",	//10
 		"SCC",	//11
 		""};	//12
-
-char etx = '\x03';
 
 /*Matriz que almacena la cantidad de parametros necesarios
  *por cada comando, correspondencia por indice.*/
@@ -246,7 +236,7 @@ void loop() {
  * funcion retorna 1.
  * */
 bool searchInstruction(){
-	int i;
+	uint8_t i;
 	for(i=0; i<qInstructionSet; i++){
 		if(strcmp(INST,instructionSet[i]) == 0){
 			instructionIndex = i;
@@ -278,7 +268,7 @@ void runInstruction(){
 	int port,dns;
 	int bytesToWrite, bytesWritten;
 	int numSsid;
-	int socket;
+	uint8_t socket;
 	bool WFC_STATUS = 1;
 	if(searchInstruction() && validateParameters()){
 		switch(instructionIndex){
@@ -528,7 +518,7 @@ void showParsedData() {
 
 /* Descripcion: Recibe un byte del servidor*/
 void receiveFromServer(){
-	int bytesAvailable;
+	uint16_t bytesAvailable;
 	char dump;
 	for(int i = 0; i < MAX_NUM_CLIENTS; i++){
 		if(client[i].connected()){
