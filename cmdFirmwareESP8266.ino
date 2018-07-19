@@ -374,24 +374,28 @@ void runInstruction(){
 			}
 			break;
 		case 7:
-			/*CWS - Client Write to Server*/
+			/*SOW - Socket Write*/
 			/*Verificar primero si existe una conexion activa antes de intentar enviar el mensaje*/
 			socket = atoi(parametros[0]);
+			bytesToWrite = atoi(parametros[1]);
 			if(socketIsInRange(socket) == true){
-				if(client[socket].connected()){
-					/*data to print: char, byte, int, long, or string*/
-					/*The max packet size in TCP is 1460 bytes*/
-					bytesToWrite = atoi(parametros[1]);
-					bytesWritten = client[socket].write(parametros[2],bytesToWrite);
-					/*Waits for the TX WiFi Buffer be empty.*/
-					client[socket].flush();
-					if(bytesToWrite != bytesWritten){
-						Serial.println("E");
+				if( (bytesToWrite >= 0) && (bytesToWrite <= packetSize) ){
+					if(client[socket].connected()){
+						/*data to print: char, byte, int, long, or string*/
+						/*The max packet size in TCP is 1460 bytes*/
+						bytesWritten = client[socket].write(parametros[2],bytesToWrite);
+						/*Waits for the TX WiFi Buffer be empty.*/
+						client[socket].flush();
+						if(bytesToWrite != bytesWritten){
+							Serial.println("E");
+						}else{
+							Serial.println("OK");
+						}
 					}else{
-						Serial.println("OK");
+						Serial.println("NC");
 					}
 				}else{
-					Serial.println("NC");
+					Serial.println("IB");
 				}
 			}
 			break;
