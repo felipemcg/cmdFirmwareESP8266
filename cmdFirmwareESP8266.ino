@@ -59,10 +59,10 @@ char bufferSerial[qParamaters+1][qCharParameters] = {{'\0'}};
 char delimiter[2] = ",";
 
 /*Cantidad de delimitadores que se encontro*/
-int delimFound = 0;
+uint8_t delimFound = 0;
 
 /*Cantidad de parametros que se encontro*/
-int parametersFound = 0;
+uint8_t parametersFound = 0;
 
 /*Caracter que termina la instruccion*/
 char endMarker = '\n';
@@ -74,7 +74,7 @@ char INST[qCharInst+1] = {'\0'};
 char parametros[qParamaters][qCharParameters] = {{'\0'}};
 
 /*Indice que indica cual funcion se recibio*/
-int	instructionIndex = 999;
+uint8_t	instructionIndex = 255;
 
 /*Paquete para enviar a traves de la red*/
 char packet[packetSize];
@@ -200,13 +200,13 @@ void loop() {
 				if(validateParameters() == true){
 					runInstruction();
 				}else{
-					Serial.println("NOT ENOUGH PARAMETERS.");
+					Serial.println("NEP");
 				}
 			}else{
 				Serial.println("DATA");
 			}
 		}else{
-			Serial.println("NO CMD.");
+			Serial.println("NOCMD");
 		}
 
 		yield();
