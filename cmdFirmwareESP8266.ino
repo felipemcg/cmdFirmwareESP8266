@@ -164,6 +164,7 @@ void loop() {
 	}*/
 
 	if(newData == true){
+		Serial.println(receivedChars);
 		//Serial.print("H:");
 		//Serial.println(ESP.getFreeHeap());
 	#ifdef sDebug
@@ -450,26 +451,90 @@ void runInstruction(){
 
 /* Descripcion: */
 void recvWithEndMarker() {
- static byte ndx = 0;
+	static byte ndx = 0;
+	bool terminatorFound = false;
+	bool dataCmdFound = false;
+	bool execDataCmd = false;
+	bool firstCommaFound = false;
+	bool secondCommaFound = false;
+	uint8_t indexRcv = 0, indxBytes = 0, indxChar = 0, indxData = 0;
+	uint16_t numBytes = 0, numBytesCount = 0;
+	char dataCmd[qCharInst];
+	char dataNumBytes[4];
+	/*Received Byte*/
+	char rc;
 
-/*Received Byte*/
-char rc;
+	/**/
+	while (Serial.available() > 0 && newData == false) {
+		rc = Serial.read();
+		Serial.print(indexRcv,DEC);
+		Serial.print(".");
+		Serial.print(rc);
+		Serial.print(" ");
+		if(indexRcv < qCharInst){
+			dataCmd[indexRcv] = rc;
+		}
+		indexRcv++;
+		if(indexRcv == qCharInst){
+			dataCmd[indexRcv] = '\0';
+			if(!strcmp(dataCmd,"SOW")){
+				dataCmdFound = true;
+			}
+		}
+		if(indexRcv == qCharInst + 3){
+			if(rc == ',') firstCommaFound=true;
+		}
+		if(dataCmdFound && firstCommaFound && (secondCommaFound == false) && (indexRcv > qCharInst+3)){
+			Serial.println("Bitch");
+			if(rc != ','){
+				indxChar++;
+				if(isDigit(rc)){
+					dataNumBytes[indxBytes++] = rc;
+				}
+			}else{
+				secondCommaFound = true;
+				if(indxChar == indxBytes){
+					dataNumBytes[indxBytes] = '\0';
+					execDataCmd = true;
+					indxData = indexRcv;
+					Serial.print("Mbo");
+					Serial.println(indxData,DEC);
+				}else{
+					dataNumBytes[0] = '\0';
+				}
+				numBytes = atoi(dataNumBytes);
+				Serial.print("Numerillo ");
+				Serial.println(numBytes,DEC);
+			}
+		}
 
-/**/
- while (Serial.available() > 0 && newData == false) {
-	 rc = Serial.read();
-	 if (rc != endMarker) {
-		 receivedChars[ndx] = rc;
-		 ndx++;
-	 if (ndx >= numChars) {
-		 ndx = numChars - 1;
-		 }
- 	 }else{
-		 receivedChars[ndx] = '\0'; // terminate the string
-		 ndx = 0;
-		 newData = true;
-	 }
- }
+		if(execDataCmd){
+			if(ndx <= (numBytes + indxData)){
+				Serial.println("mm");
+				receivedChars[ndx++] = rc;
+				if (ndx >= numChars) {
+					ndx = numChars - 1;
+				}
+			}else{
+				receivedChars[ndx] = '\0'; // terminate the string
+				ndx = 0;
+				newData = true;
+			}
+		}else{
+			Serial.println("SERAAA");
+			if (rc != endMarker) {
+				receivedChars[ndx] = rc;
+				ndx++;
+				if (ndx >= numChars) {
+					ndx = numChars - 1;
+				}
+			}else{
+				receivedChars[ndx] = '\0'; // terminate the string
+				ndx = 0;
+				newData = true;
+			}
+		}
+	}
 }
 
 /* Descripcion: Muestra los datos recibidos por serial*/
