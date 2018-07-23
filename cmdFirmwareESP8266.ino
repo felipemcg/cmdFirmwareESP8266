@@ -102,7 +102,7 @@ static const char instructionSet[qInstructionSet][qCharInst+1] = {"WFC",	//0
 
 /*Matriz que almacena la cantidad de parametros necesarios
  *por cada comando, correspondencia por indice.*/
-const uint8_t qParametersInstruction[qInstructionSet] ={2,0,1,0,0,3,2,3,1,1,1,0,0};
+const uint8_t qParametersInstruction[qInstructionSet] ={2,0,0,0,0,3,2,3,1,1,1,0,0};
 
 size_t r;
 
@@ -165,7 +165,7 @@ void loop() {
 
 	if(newData == true){
 		//Serial.println(receivedChars);
-		//Serial.print("H:");
+		Serial.print("H:");
 		Serial.println(ESP.getFreeHeap());
 	#ifdef sDebug
 		pMillis = millis();
@@ -482,7 +482,7 @@ void recvWithEndMarker() {
 		if(indxCharRcv == qCharInst){
 			dataCmd[indxCharRcv] = '\0';
 			if(!strcmp(dataCmd,"SOW")){
-				Serial.println("SOW APARECIO");
+				//Serial.println("SOW APARECIO");
 				dataCmdFound = true;
 			}
 		}
@@ -490,7 +490,7 @@ void recvWithEndMarker() {
 			if(receivedChar == ',') firstCommaFound=true;
 		}
 		if(dataCmdFound && firstCommaFound && (secondCommaFound == false) && (indxCharRcv > qCharInst+2)){
-			Serial.println("Bitch");
+			//Serial.println("Bitch");
 			if(receivedChar != ','){
 				indxChar++;
 				if(isDigit(receivedChar)){
@@ -503,14 +503,14 @@ void recvWithEndMarker() {
 					dataNumBytes[indxBytes] = '\0';
 					execDataCmd = true;
 					indxData = indxCharRcv;
-					Serial.print("Mbo");
-					Serial.println(indxData,DEC);
+					//Serial.print("Mbo");
+					//Serial.println(indxData,DEC);
 				}else{
 					dataNumBytes[0] = '\0';
 				}
 				numBytes = atoi(dataNumBytes);
-				Serial.print("Numerillo ");
-			Serial.println(numBytes,DEC);
+				//Serial.print("Numerillo ");
+			//Serial.println(numBytes,DEC);
 			}
 		}
 		if(execDataCmd){
