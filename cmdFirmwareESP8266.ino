@@ -1,11 +1,3 @@
-/*
- *  This sketch sends data via HTTP GET requests to data.sparkfun.com service.
- *
- *  You need to get streamId and privateKey at data.sparkfun.com and paste them
- *  below. Or just customize this script to talk to other HTTP servers.
- *
- */
-
 #include "Arduino.h"
 #include <string.h>
 #include <stdio.h>
@@ -457,10 +449,10 @@ void recvWithEndMarker() {
 	bool execDataCmd = false;
 	bool firstCommaFound = false;
 	bool secondCommaFound = false;
-	uint8_t indxCharRcv = 0, indxBytes = 0, indxChar = 0, indxData = 0;
+	uint8_t indxCharRcv = 0, indxBytes = 0, indxChar = 0, indxStartData = 0;
 	uint16_t numBytes = 0, numBytesCount = 0;
 	char dataCmd[qCharInst];
-	char dataNumBytes[4];
+	char numBytesString[4];
 	/*Received Byte*/
 	char receivedChar,dump;
 	while (Serial.available() > 0 && newData == false) {
@@ -469,10 +461,10 @@ void recvWithEndMarker() {
 
 		indxCharRcv = ndx;
 
-		/*Serial.print(indxCharRcv,DEC);
-		Serial.print(".");
+		Serial.print(indxCharRcv,DEC);
+		Serial.print("\t");
 		Serial.print(receivedChar);
-		Serial.print(" ");*/
+		Serial.print("\t");
 
 		/*Se guardan los primeros caracteres para preguntar por la funcion*/
 		if(indxCharRcv < qCharInst){
@@ -482,7 +474,7 @@ void recvWithEndMarker() {
 		if(indxCharRcv == qCharInst){
 			dataCmd[indxCharRcv] = '\0';
 			if(!strcmp(dataCmd,"SOW")){
-				//Serial.println("SOW APARECIO");
+				Serial.print("SOW APARECIO\t");
 				dataCmdFound = true;
 			}
 		}
@@ -494,28 +486,30 @@ void recvWithEndMarker() {
 			if(receivedChar != ','){
 				indxChar++;
 				if(isDigit(receivedChar)){
-					dataNumBytes[indxBytes++] = receivedChar;
+					numBytesString[indxBytes++] = receivedChar;
 				}else{
 				}
 			}else{
 				secondCommaFound = true;
 				if(indxChar == indxBytes){
-					dataNumBytes[indxBytes] = '\0';
+					numBytesString[indxBytes] = '\0';
 					execDataCmd = true;
-					indxData = indxCharRcv;
-					//Serial.print("Mbo");
+					indxStartData = indxCharRcv;
+					Serial.print("Cumplio formato de instruccion.\t");
+					//Serial.print("");
 					//Serial.println(indxData,DEC);
 				}else{
-					dataNumBytes[0] = '\0';
+					numBytesString[0] = '\0';
 				}
-				numBytes = atoi(dataNumBytes);
-				//Serial.print("Numerillo ");
-			//Serial.println(numBytes,DEC);
+				numBytes = atoi(numBytesString);
+				Serial.print("Numero de bytes enviar: ");
+				Serial.print(numBytes,DEC);
 			}
 		}
 		if(execDataCmd){
-			if(ndx <= (numBytes + indxData)){
-				//Serial.println("mm");
+			/*Nunca enviar numero de bytes mayor a la cantidad real, hara que el programa se cuelgue*/
+			if(ndx <= (numBytes + indxStartData)){
+				Serial.println("Almaceno contando");
 				receivedChars[ndx++] = receivedChar;
 				if (ndx >= numChars) {
 					ndx = numChars - 1;
@@ -523,14 +517,17 @@ void recvWithEndMarker() {
 			}else{
 				receivedChars[ndx] = '\0'; // terminate the string
 				ndx = 0;
+				Serial.print("Ndx: ");
+				Serial.print(ndx,DEC);
 				/*Se vacia el buffer serial*/
 				while (Serial.available() > 0){
+					Serial.println("Dumped");
 					dump = Serial.read();
 				}
 				newData = true;
 			}
 		}else{
-			//Serial.println("SERAAA");
+			Serial.println("Almaceno Normal");
 			if (receivedChar != endMarker) {
 				receivedChars[ndx] = receivedChar;
 				ndx++;
@@ -544,7 +541,7 @@ void recvWithEndMarker() {
 			}
 		}
 	}
-
+	//Serial.println("Sali del while");
 }
 
 /* Descripcion: Muestra los datos recibidos por serial*/
