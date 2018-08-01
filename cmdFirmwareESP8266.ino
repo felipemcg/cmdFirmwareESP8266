@@ -420,11 +420,10 @@ void runInstruction(){
 			/*SCL - Server listens to clients*/
 			SERVER_ON = true;
 			port = atoi(parametros[0]);
-			Serial.print("Estado");
-			Serial.println(server.status());
-			DEBUGV();
+			/*Serial.print("Estado");
+			Serial.println(server.status());*/
 			server.begin(port);
-			Serial.println(server.status());
+			//Serial.println(server.status());
 			Serial.println("OK");
 			break;
 		case 11:
@@ -445,10 +444,10 @@ void runInstruction(){
 						if (client[i]) {
 						  client[i].stop();
 						}
-						Serial.println(server.status());
-						TCP_DEBUG;
+						//Serial.println(server.status());
+						//TCP_DEBUG;
 						client[i] = server.available();
-						Serial.println(server.status());
+						//Serial.println(server.status());
 						//Serial.print("New client: "); Serial.println(i);
 						Serial.print("OK,");
 						Serial.println(i,DEC);
