@@ -90,7 +90,7 @@ static const char instructionSet[qInstructionSet][qCharInst+1] = {"WFC",	//0
 		"SOC",	//9
 		"SLC",	//10
 		"SCC",	//11
-		""};	//12
+		"SAC"};	//12
 
 /*Matriz que almacena la cantidad de parametros necesarios
  *por cada comando, correspondencia por indice.*/
