@@ -220,7 +220,6 @@ void loop() {
 
 	yield();
 
-	checkForClients();
 }
 
 /*
@@ -657,10 +656,6 @@ void receiveFromServer(){
 			}
 		}
 	}
-}
-
-void checkForClients(){
-
 }
 
 bool socketIsInRange(uint8_t socket){
