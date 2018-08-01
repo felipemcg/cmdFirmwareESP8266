@@ -435,7 +435,35 @@ void runInstruction(){
 			Serial.println("OK");
 			break;
 		case 12:
-			/*SRC - Server write to clients*/
+			/*SAC*/
+			if(SERVER_ON == true){
+				  //check if there are any new clients
+				  if (server.hasClient()) {
+					for (uint8_t i = 0; i < MAX_NUM_CLIENTS; i++) {
+					  //find free/disconnected spot
+						//Si esta vacio y no esta conectado
+					  if (!client[i] || !client[i].connected()) {
+						if (client[i]) {
+						  client[i].stop();
+						}
+						Serial.println(server.status());
+						TCP_DEBUG();
+						client[i] = server.available();
+						Serial.println(server.status());
+						//Serial.print("New client: "); Serial.println(i);
+						Serial.print("OK,");
+						Serial.println(i,DEC);
+						break;
+					  }
+					}
+					//no free/disconnected spot so reject
+					if (i == MAX_NUM_CLIENTS) {
+					  WiFiClient serverClient = server.available();
+					  serverClient.stop();
+					  //Serial1.println("Connection rejected ");
+					}
+				}
+			}
 			break;
 		default:
 			break;
@@ -627,32 +655,7 @@ void receiveFromServer(){
 }
 
 void checkForClients(){
-	uint8_t i;
-	if(SERVER_ON == true){
-		  //check if there are any new clients
-		  if (server.hasClient()) {
-			for (i = 0; i < MAX_NUM_CLIENTS; i++) {
-			  //find free/disconnected spot
-				//Si esta vacio y no esta conectado
-			  if (!client[i] || !client[i].connected()) {
-				if (client[i]) {
-				  client[i].stop();
-				}
-				Serial.println(server.status());
-				client[i] = server.available();
-				Serial.println(server.status());
-				//Serial.print("New client: "); Serial.println(i);
-				break;
-			  }
-			}
-			//no free/disconnected spot so reject
-			if (i == MAX_NUM_CLIENTS) {
-			  WiFiClient serverClient = server.available();
-			  serverClient.stop();
-			  //Serial1.println("Connection rejected ");
-			}
-		}
-	}
+
 }
 
 bool socketIsInRange(uint8_t socket){
