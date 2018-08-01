@@ -32,7 +32,7 @@
 #define serverTimeOut 500
 
 /*Tiempo en mili-segundos para esperar a conectarse*/
-#define WiFiConnectTO 10000
+#define WiFiConnectTO 20000
 
 /*Maximum number of Bytes for a packet*/
 #define packetSize 512
@@ -108,7 +108,7 @@ char tempChars[numChars];
 
 /*Basicamente provee la misma funcionalidad que el socket*/
 WiFiClient client[MAX_NUM_CLIENTS];
-WiFiServer server(80);
+WiFiServer server;
 
 uint8_t socketInUse[MAX_NUM_CLIENTS] = {0,0,0,0};
 
@@ -157,8 +157,8 @@ void loop() {
 
 	if(newData == true){
 		//Serial.println(receivedChars);
-		Serial.print("H:");
-		Serial.println(ESP.getFreeHeap());
+		/*Serial.print("H:");
+		Serial.println(ESP.getFreeHeap());*/
 	#ifdef sDebug
 		pMillis = millis();
 		/*Echo*/
@@ -421,7 +421,11 @@ void runInstruction(){
 			/*SCL - Server listens to clients*/
 			SERVER_ON = true;
 			port = atoi(parametros[0]);
+			Serial.print("Estado");
+			Serial.println(server.status());
+			DEBUGV();
 			server.begin(port);
+			Serial.println(server.status());
 			Serial.println("OK");
 			break;
 		case 11:
@@ -461,11 +465,11 @@ void recvWithEndMarker() {
 
 		indxCharRcv = ndx;
 
-		Serial.print(indxCharRcv,DEC);
+		/*Serial.print(indxCharRcv,DEC);
 		Serial.print("\t");
 		Serial.print(receivedChar);
 		Serial.print("\t");
-
+*/
 		/*Se guardan los primeros caracteres para preguntar por la funcion*/
 		if(indxCharRcv < qCharInst){
 			dataCmd[indxCharRcv] = receivedChar;
@@ -474,7 +478,7 @@ void recvWithEndMarker() {
 		if(indxCharRcv == qCharInst){
 			dataCmd[indxCharRcv] = '\0';
 			if(!strcmp(dataCmd,"SOW")){
-				Serial.print("SOW APARECIO\t");
+				//Serial.print("SOW APARECIO\t");
 				dataCmdFound = true;
 			}
 		}
@@ -495,21 +499,21 @@ void recvWithEndMarker() {
 					numBytesString[indxBytes] = '\0';
 					execDataCmd = true;
 					indxStartData = indxCharRcv;
-					Serial.print("Cumplio formato de instruccion.\t");
+					//Serial.print("Cumplio formato de instruccion.\t");
 					//Serial.print("");
 					//Serial.println(indxData,DEC);
 				}else{
 					numBytesString[0] = '\0';
 				}
 				numBytes = atoi(numBytesString);
-				Serial.print("Numero de bytes enviar: ");
-				Serial.print(numBytes,DEC);
+				/*Serial.print("Numero de bytes enviar: ");
+				Serial.print(numBytes,DEC);*/
 			}
 		}
 		if(execDataCmd){
 			/*Nunca enviar numero de bytes mayor a la cantidad real, hara que el programa se cuelgue*/
 			if(ndx <= (numBytes + indxStartData)){
-				Serial.println("Almaceno contando");
+				//Serial.println("Almaceno contando");
 				receivedChars[ndx++] = receivedChar;
 				if (ndx >= numChars) {
 					ndx = numChars - 1;
@@ -517,17 +521,17 @@ void recvWithEndMarker() {
 			}else{
 				receivedChars[ndx] = '\0'; // terminate the string
 				ndx = 0;
-				Serial.print("Ndx: ");
-				Serial.print(ndx,DEC);
+				/*Serial.print("Ndx: ");
+				Serial.print(ndx,DEC);*/
 				/*Se vacia el buffer serial*/
 				while (Serial.available() > 0){
-					Serial.println("Dumped");
+					//Serial.println("Dumped");
 					dump = Serial.read();
 				}
 				newData = true;
 			}
 		}else{
-			Serial.println("Almaceno Normal");
+			//Serial.println("Almaceno Normal");
 			if (receivedChar != endMarker) {
 				receivedChars[ndx] = receivedChar;
 				ndx++;
@@ -634,7 +638,9 @@ void checkForClients(){
 				if (client[i]) {
 				  client[i].stop();
 				}
+				Serial.println(server.status());
 				client[i] = server.available();
+				Serial.println(server.status());
 				//Serial.print("New client: "); Serial.println(i);
 				break;
 			  }
