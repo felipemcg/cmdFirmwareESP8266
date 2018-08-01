@@ -108,7 +108,7 @@ char tempChars[numChars];
 
 /*Basicamente provee la misma funcionalidad que el socket*/
 WiFiClient client[MAX_NUM_CLIENTS];
-WiFiServer server;
+WiFiServer server(80);
 
 uint8_t socketInUse[MAX_NUM_CLIENTS] = {0,0,0,0};
 
@@ -447,7 +447,7 @@ void runInstruction(){
 						  client[i].stop();
 						}
 						Serial.println(server.status());
-						TCP_DEBUG();
+						TCP_DEBUG;
 						client[i] = server.available();
 						Serial.println(server.status());
 						//Serial.print("New client: "); Serial.println(i);
@@ -460,9 +460,14 @@ void runInstruction(){
 					if (i == MAX_NUM_CLIENTS) {
 					  WiFiClient serverClient = server.available();
 					  serverClient.stop();
+					  Serial.println("NS");
 					  //Serial1.println("Connection rejected ");
 					}
+				}else{
+					Serial.println("NC");
 				}
+			}else{
+				Serial.println("SOFF");
 			}
 			break;
 		default:
