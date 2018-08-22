@@ -9,6 +9,10 @@
 #include <DNSServer.h>            //Local DNS Server used for redirecting all requests to the configuration portal
     //Local WebServer used to serve the configuration portal
 #include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager WiFi Configuration Magic
+/*
+#include "lwip/sockets.h"
+#include "lwip/opt.h"
+*/
 
 /*-------------------------DEFINE's--------------------------------*/
 //#define sDebug
