@@ -25,7 +25,7 @@
 #define qCharInst 3
 
 /*Numero maximo de instrucciones*/
-#define qInstructionSet 13
+#define qInstructionSet 14
 
 /*---------------------*/
 /*El tiempo maxima para esperar una respuesta del servidor, em ms.*/
@@ -94,7 +94,7 @@ static const char instructionSet[qInstructionSet][qCharInst+1] = {"WFC",	//0
 
 /*Matriz que almacena la cantidad de parametros necesarios
  *por cada comando, correspondencia por indice.*/
-const uint8_t qParametersInstruction[qInstructionSet] ={2,0,0,0,0,3,2,3,1,1,1,0,0};
+const uint8_t qParametersInstruction[qInstructionSet] ={2,0,0,0,0,3,2,3,1,1,1,0,0,1};
 
 size_t r;
 
