@@ -43,7 +43,7 @@
 /*-------------------------------------------------------------------*/
 
 /*Array de parametros e instruccion*/
-char bufferSerial[qParamaters+1][qCharParameters] = {{'\0'}};
+char bufferSerial[qParamaters+1][qCharParameters+1] = {{'\0'}};
 
 /*Delimitador de la instruccion*/
 char delimiter[2] = ",";
@@ -61,15 +61,15 @@ char endMarker = '\n';
 char INST[qCharInst+1] = {'\0'};
 
 /*Array donde se almacenan los parametros*/
-char parametros[qParamaters][qCharParameters] = {{'\0'}};
+char parametros[qParamaters][qCharParameters+1] = {{'\0'}};
 
 /*Indice que indica cual funcion se recibio*/
 uint8_t	instructionIndex = 255;
 
 /*Paquete para enviar a traves de la red*/
-char packet[packetSize];
+char packet[packetSize+1];
 
-char	bufferReceivedFromServer[MAX_NUM_CLIENTS][packetSize];
+char	bufferReceivedFromServer[MAX_NUM_CLIENTS][packetSize+1];
 uint16_t bytesReceivedFromServer[MAX_NUM_CLIENTS];
 bool	fullBufferRcvd[MAX_NUM_CLIENTS];
 bool	SERVER_ON = false;
