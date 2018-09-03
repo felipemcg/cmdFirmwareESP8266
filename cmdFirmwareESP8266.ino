@@ -72,16 +72,20 @@ char packet[packetSize+1];
 /*Define el tamaño del buffer serial, +qParameters es para las comas que vienen con el comando.*/
 const uint16_t numChars = qCharInst + qCharParameters + packetSize + qParamaters;
 
+/*Declaracion de los buffers seriales*/
 char tempChars[numChars+1];
 char serialCharsBuffer[numChars+1]; // an array to store the received data
 
+/*Declaracion de los buffers utilizados para recibir datos del servidor*/
 char	bufferReceivedFromServer[MAX_NUM_CLIENTS][packetSize+1];
 uint16_t bytesReceivedFromServer[MAX_NUM_CLIENTS];
 bool	fullBufferRcvd[MAX_NUM_CLIENTS];
+
+/*Bandera para indicar que el servidor esta activo*/
 bool	SERVER_ON = false;
 
 /*Matriz que almacena los nombres de todas los comandos validos
-/*dejar con static? Podria afectar la velocidad*/
+* dejar con static? Podria afectar la velocidad*/
 static const char instructionSet[qInstructionSet][qCharInst+1] = {"WFC",	//0
 		"WFS",	//1
 		"WRI",	//2
@@ -101,25 +105,21 @@ static const char instructionSet[qInstructionSet][qCharInst+1] = {"WFC",	//0
  *por cada comando, correspondencia por indice.*/
 const uint8_t qParametersInstruction[qInstructionSet] ={2,0,0,0,0,3,2,3,1,1,1,0,0,1};
 
-size_t r;
-
-
-
+/*Bandera utilizada para notificar que hay datos seriales nuevos*/
 boolean newData = false;
 
-
-
-
-/*Basicamente provee la misma funcionalidad que el socket*/
+/*Declaracion del objeto que se utilizara para el manejo del cliente, maximo 4
+ * por limitacion del modulo.*/
 WiFiClient client[MAX_NUM_CLIENTS];
-WiFiServer server(DEFAULT_SERVER_PORT);
 
+/*Declaracion del objeto que se utilizara para el manejo del servidor*/
+WiFiServer server(DEFAULT_SERVER_PORT);
 
 uint8_t socketInUse[MAX_NUM_CLIENTS] = {0,0,0,0};
 
 //#define sDebug 1
 /*-------------------------------------------------------------------*/
-String rec;
+
 
 void setup() {
 	Serial.begin(115200);
@@ -260,7 +260,7 @@ bool validateParameters(){
 void runInstruction(){
 	unsigned long previousMillis;
 	unsigned long currentMillis;
-	int port,dns;
+	int port;
 	int bytesToWrite, bytesWritten;
 	int numSsid;
 	uint8_t socket;
@@ -494,12 +494,11 @@ void recvWithEndMarker() {
 	char bufferNumBytes[4] = {'\0'};
 	char tempBuffer[packetSize];
 	static uint16_t indxRecv = 0;
-	uint8_t indxParam;
 	uint16_t indxComa1=0, indxComa2=0, qComa=0, indxData = 0;
 	uint16_t packet = 0;
-	bool dataCmd = false, Coma0 = true, Coma1 = false, Coma2 = false, numBytes = false, runDataCmd = false;
-	unsigned long previousTime;
-	unsigned long currentTime;
+	bool dataCmd = false, Coma0 = true, Coma2 = false, numBytes = false, runDataCmd = false;
+	unsigned long previousTime = 0;
+	unsigned long currentTime = 0;
 
 	/*Mientras haya datos serial disponibles*/
 
