@@ -201,7 +201,6 @@ void loop() {
 		memset(serialCharsBuffer, 0, sizeof(serialCharsBuffer));
 		memset(bufferSerial, 0, sizeof(bufferSerial));
 		memset(INST, 0, sizeof(INST));
-		//memset(serialCharsBuffer, 0, sizeof(serialCharsBuffer));
 		memset(parametros, 0, sizeof(parametros));
 		delimFound = 0;
 		parametersFound = 0;
@@ -373,7 +372,7 @@ void runInstruction(){
 			/*Verificar primero si existe una conexion activa antes de intentar enviar el mensaje*/
 			socket = atoi(parametros[0]);
 			bytesToWrite = atoi(parametros[1]);
-			if(socketIsInRange(socket) == true){
+			if(inRange(socket,0,MAX_NUM_CLIENTS) == true){
 				if( (bytesToWrite >= 0) && (bytesToWrite <= packetSize) ){
 					if(client[socket].connected()){
 						/*data to print: char, byte, int, long, or string*/
@@ -399,7 +398,7 @@ void runInstruction(){
 			/*CRS - Client Receive from Server*/
 			socket = atoi(parametros[0]);
 			/*print received data from server*/
-			if(socketIsInRange(socket) == true){
+			if(inRange(socket,0,MAX_NUM_CLIENTS) == true){
 				Serial.println(bufferReceivedFromServer[socket]);
 				bytesReceivedFromServer[socket] = 0;
 				/*Clear the buffer*/
@@ -415,7 +414,7 @@ void runInstruction(){
 		case 9:
 			/*CCC - Client Close Connection*/
 			socket = atoi(parametros[0]);
-			if(socketIsInRange(socket) == true){
+			if(inRange(socket,0,MAX_NUM_CLIENTS) == true){
 				client[socket].stop();
 				Serial.println("OK");
 			}
@@ -680,8 +679,8 @@ void receiveFromServer(){
 	}
 }
 
-bool inRange(uint16_t val, uint16_t minimum, uint16_t maximum)
+bool inRange(uint16_t val, uint16_t min, uint16_t max)
 {
-  return ((minimum <= val) && (val <= maximum));
+  return ((min <= val) && (val <= max));
 }
 
