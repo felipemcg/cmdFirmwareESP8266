@@ -6,9 +6,7 @@
 
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiScan.h>
-#include <DNSServer.h>            //Local DNS Server used for redirecting all requests to the configuration portal
-    //Local WebServer used to serve the configuration portal
-#include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager WiFi Configuration Magic
+
 
 /*-------------------------DEFINE's--------------------------------*/
 //#define sDebug
@@ -90,7 +88,8 @@ static const char instructionSet[qInstructionSet][qCharInst+1] = {"WFC",	//0
 		"SOC",	//9
 		"SLC",	//10
 		"SCC",	//11
-		"SAC"};	//12
+		"SAC",	//12
+		"SRC"};	//13
 
 /*Matriz que almacena la cantidad de parametros necesarios
  *por cada comando, correspondencia por indice.*/
@@ -99,7 +98,7 @@ const uint8_t qParametersInstruction[qInstructionSet] ={2,0,0,0,0,3,2,3,1,1,1,0,
 size_t r;
 
 const uint8_t numChars = 255;
-char receivedChars[numChars]; // an array to store the received data
+char serialCharsBuffer[numChars]; // an array to store the received data
 
 boolean newData = false;
 
@@ -110,10 +109,12 @@ char tempChars[numChars];
 WiFiClient client[MAX_NUM_CLIENTS];
 WiFiServer server(80);
 
+
 uint8_t socketInUse[MAX_NUM_CLIENTS] = {0,0,0,0};
 
 //#define sDebug 1
 /*-------------------------------------------------------------------*/
+String rec;
 
 void setup() {
 	Serial.begin(115200);
@@ -123,10 +124,6 @@ void setup() {
 		bytesReceivedFromServer[i] = 0;
 		fullBufferRcvd[i] = false;
 	}
-	/*WiFiManager wifiManager;
-	//first parameter is name of access point, second is the password
-	wifiManager.setDebugOutput(true);
-	wifiManager.autoConnect("Nodo_ESP8266");*/
 
 #ifdef sDebug
 	Serial.println();
@@ -156,7 +153,7 @@ void loop() {
 	}*/
 
 	if(newData == true){
-		//Serial.println(receivedChars);
+		Serial.println(serialCharsBuffer);
 		/*Serial.print("H:");
 		Serial.println(ESP.getFreeHeap());*/
 	#ifdef sDebug
@@ -166,7 +163,7 @@ void loop() {
 	#endif
 
 		/*Se copian los datos recibidos en un array temporal para su manipulacion.*/
-		strcpy(tempChars, receivedChars);
+		strcpy(tempChars, serialCharsBuffer);
 
 		/*Separar los datos en los campos correspondientes.*/
 		parseData();
@@ -196,12 +193,13 @@ void loop() {
 
 		/*Se limpian todas las variables para recibir el siguiente comando.*/
 		memset(tempChars, 0, sizeof(tempChars));
-		memset(receivedChars, 0, sizeof(receivedChars));
+		memset(serialCharsBuffer, 0, sizeof(serialCharsBuffer));
 		memset(bufferSerial, 0, sizeof(bufferSerial));
 		memset(INST, 0, sizeof(INST));
-		memset(receivedChars, 0, sizeof(receivedChars));
+		//memset(serialCharsBuffer, 0, sizeof(serialCharsBuffer));
 		memset(parametros, 0, sizeof(parametros));
 		delimFound = 0;
+		parametersFound = 0;
 		newData = false;
 
 
@@ -376,6 +374,7 @@ void runInstruction(){
 						/*data to print: char, byte, int, long, or string*/
 						/*The max packet size in TCP is 1460 bytes*/
 						bytesWritten = client[socket].write(parametros[2],bytesToWrite);
+						//client[socket].println(parametros[2]);
 						/*Waits for the TX WiFi Buffer be empty.*/
 						client[socket].flush();
 						if(bytesToWrite != bytesWritten){
@@ -468,6 +467,13 @@ void runInstruction(){
 				Serial.println("SOFF");
 			}
 			break;
+		case 13:
+			socket = atoi(parametros[0]);
+			if (client[socket]) {
+			  client[socket].stop();
+			}
+			Serial.println("Closed.");
+			break;
 		default:
 			break;
 		}
@@ -478,112 +484,118 @@ void runInstruction(){
 
 /* Descripcion: */
 void recvWithEndMarker() {
-	static byte ndx = 0;
-	bool terminatorFound = false;
-	bool dataCmdFound = false;
-	bool execDataCmd = false;
-	bool firstCommaFound = false;
-	bool secondCommaFound = false;
-	uint8_t indxCharRcv = 0, indxBytes = 0, indxChar = 0, indxStartData = 0;
-	uint16_t numBytes = 0, numBytesCount = 0;
-	char dataCmd[qCharInst];
-	char numBytesString[4];
-	/*Received Byte*/
-	char receivedChar,dump;
+	char recvChar, dump;
+	char bufferCmd[4] = {'\0'};
+	char bufferNumBytes[4] = {'\0'};
+	char tempBuffer[packetSize];
+	static uint16_t indxRecv = 0;
+	uint8_t indxParam;
+	uint16_t indxComa1=0, indxComa2=0, qComa=0, indxData = 0;
+	uint16_t packet = 0;
+	bool dataCmd = false, Coma0 = true, Coma1 = false, Coma2 = false, numBytes = false, runDataCmd = false;
+	unsigned long previousTime;
+	unsigned long currentTime;
+
+	/*Mientras haya datos serial disponibles*/
+
 	while (Serial.available() > 0 && newData == false) {
-		/*Se lee un caracter por serial*/
-		receivedChar = Serial.read();
 
-		indxCharRcv = ndx;
+		/*Recibe caracter por caracter y lo alamcena en un buffer*/
+		recvChar = Serial.read();
+		//Serial.println(indxRecv,DEC);
+		tempBuffer[indxRecv] = recvChar;
 
-		/*Serial.print(indxCharRcv,DEC);
-		Serial.print("\t");
-		Serial.print(receivedChar);
-		Serial.print("\t");
-*/
-		/*Se guardan los primeros caracteres para preguntar por la funcion*/
-		if(indxCharRcv < qCharInst){
-			dataCmd[indxCharRcv] = receivedChar;
-		}
-		/*Se pregunta por el comando SOW*/
-		if(indxCharRcv == qCharInst){
-			dataCmd[indxCharRcv] = '\0';
-			if(!strcmp(dataCmd,"SOW")){
-				//Serial.print("SOW APARECIO\t");
-				dataCmdFound = true;
+		/*Se pregunta si se recibio el comando de datos(SOW)*/
+		if(indxRecv == 2){
+			Serial.println("Indice:2");
+			memcpy(bufferCmd,&tempBuffer,3);
+			bufferCmd[3] = '\0';
+			Serial.println(bufferCmd);
+			if(!strcmp(bufferCmd,"SOW")){
+				Serial.println("SOW APARECIO");
+				dataCmd = true;
+			}else{
+				dataCmd = false;
 			}
 		}
-		if(indxCharRcv == qCharInst + 2){
-			if(receivedChar == ',') firstCommaFound=true;
-		}
-		if(dataCmdFound && firstCommaFound && (secondCommaFound == false) && (indxCharRcv > qCharInst+2)){
-			//Serial.println("Bitch");
-			if(receivedChar != ','){
-				indxChar++;
-				if(isDigit(receivedChar)){
-					numBytesString[indxBytes++] = receivedChar;
-				}else{
-				}
-			}else{
-				secondCommaFound = true;
-				if(indxChar == indxBytes){
-					numBytesString[indxBytes] = '\0';
-					execDataCmd = true;
-					indxStartData = indxCharRcv;
-					//Serial.print("Cumplio formato de instruccion.\t");
-					//Serial.print("");
-					//Serial.println(indxData,DEC);
-				}else{
-					numBytesString[0] = '\0';
-				}
-				numBytes = atoi(numBytesString);
-				/*Serial.print("Numero de bytes enviar: ");
-				Serial.print(numBytes,DEC);*/
+
+		/*Se lleva la cuenta de las comas y se guarda la posicion de la segunda y tercera*/
+		if(recvChar == ','){
+			if(qComa == 1){
+				indxComa1 = indxRecv;
 			}
+			if(qComa == 2){
+				indxComa2 = indxRecv;
+				Coma2 = true;
+			}
+			qComa++;
 		}
-		if(execDataCmd){
-			/*Nunca enviar numero de bytes mayor a la cantidad real, hara que el programa se cuelgue*/
-			if(ndx <= (numBytes + indxStartData)){
-				//Serial.println("Almaceno contando");
-				receivedChars[ndx++] = receivedChar;
-				if (ndx >= numChars) {
-					ndx = numChars - 1;
-				}
+
+		/*Si aparecio el comando SOW y se alcanzo la cantidad de comas, se verifica que la cantidad de bytes
+		 * este presente y sea un numero valido*/
+		if((dataCmd == true && Coma2 == true) && (numBytes == false)){
+			memcpy(bufferNumBytes,&tempBuffer[indxComa1+1],(indxComa2 - indxComa1 - 1));
+			bufferNumBytes[indxComa2 - indxComa1] = '\0';
+			Serial.println("\n");
+			Serial.println(bufferNumBytes);
+			packet = atoi(bufferNumBytes);
+			Serial.print("Packet Size:");
+			Serial.println(packet,DEC);
+			/*Agregar bandera aqui para que haga solo una vez*/
+			//indxData = indxComa2 + 1;
+			numBytes = true;
+			runDataCmd = true;
+		}
+
+		/*Si se valido el comando y la cantidad a transmitir, se espera hasta que lleguen los
+		 * datos y se envia*/
+		if((runDataCmd == true) && (indxRecv > indxComa2)){
+			Serial.print(indxData);
+			Serial.print(":");
+			Serial.print(recvChar);
+			Serial.print(" ");
+			if(indxData < packet){
+				serialCharsBuffer[indxRecv] = recvChar;
+				Serial.println(indxData,DEC);
+				indxRecv++;
+				indxData++;
 			}else{
-				receivedChars[ndx] = '\0'; // terminate the string
-				ndx = 0;
-				/*Serial.print("Ndx: ");
-				Serial.print(ndx,DEC);*/
-				/*Se vacia el buffer serial*/
+				if((recvChar == endMarker)){
+					serialCharsBuffer[indxRecv] = '\0'; // terminate the string
+					indxRecv = 0;
+				}else{
+					/*Si entra aca significa que no se termino el comando con LF(\n)*/
+					serialCharsBuffer[0] = '\0'; // terminate the string
+					indxRecv = 0;
+				}
+				/*Se vacia el buffer serial, necesario para no procesar basura*/
 				while (Serial.available() > 0){
-					//Serial.println("Dumped");
+					Serial.println("Dumped");
 					dump = Serial.read();
 				}
 				newData = true;
 			}
 		}else{
-			//Serial.println("Almaceno Normal");
-			if (receivedChar != endMarker) {
-				receivedChars[ndx] = receivedChar;
-				ndx++;
-				if (ndx >= numChars) {
-					ndx = numChars - 1;
+			if (recvChar != endMarker) {
+				serialCharsBuffer[indxRecv] = recvChar;
+				indxRecv++;
+				if (indxRecv >= numChars) {
+					indxRecv = numChars - 1;
 				}
 			}else{
-				receivedChars[ndx] = '\0'; // terminate the string
-				ndx = 0;
+				serialCharsBuffer[indxRecv] = '\0'; // terminate the string
+				indxRecv = 0;
 				newData = true;
 			}
 		}
 	}
-	//Serial.println("Sali del while");
 }
 
 /* Descripcion: Muestra los datos recibidos por serial*/
 void showNewData() {
  if (newData == true) {
 	 Serial.print("Recibido:");
-	 Serial.println(receivedChars);
+	 Serial.println(serialCharsBuffer);
 	 //newData = false;
  }
 }
@@ -599,16 +611,23 @@ void parseData() {
 	/*Obtiene la primera parte, la instruccion*/
 	strtokIndx = strtok(tempChars,delim);
 	/*Mientras no encuentre el fin de la cadena*/
+	Serial.println("While Parser");
 	while(strtokIndx != NULL){
 	  strcpy(bufferSerial[delimFound],strtokIndx);
 	  strtokIndx = strtok(NULL, delim);
 	  delimFound++;
 	}
-	parametersFound = delimFound - 1;
+	Serial.println("Salida Parser");
+	if(delimFound > 0){
+		parametersFound = delimFound - 1;
+	}
+	Serial.println(parametersFound,DEC);
 	strcpy(INST,bufferSerial[0]);
+	Serial.println("Entra al for");
 	for(i=0; i < parametersFound; i++){
 		strcpy(parametros[i],bufferSerial[i+1]);
 	}
+	Serial.println("Salida funcion");
 }
 
 /* Descripcion: Muestra los datos separados en campos */
