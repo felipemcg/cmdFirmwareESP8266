@@ -488,14 +488,14 @@ void runInstruction(){
 
 /* Descripcion: */
 void recvWithEndMarker() {
-	char recvChar, dump;
+	char recvChar, dump = '\0';
 	char bufferCmd[4] = {'\0'};
 	char bufferNumBytes[4] = {'\0'};
 	char tempBuffer[packetSize];
 	static uint16_t indxRecv = 0;
 	uint16_t indxComa1=0, indxComa2=0, qComa=0, indxData = 0;
-	uint16_t packet = 0;
-	bool dataCmd = false, Coma0 = true, Coma2 = false, numBytes = false, runDataCmd = false;
+	uint16_t cmdPacketSize = 0;
+	bool dataCmd = false, Coma2 = false, numBytes = false, runDataCmd = false;
 	unsigned long previousTime = 0;
 	unsigned long currentTime = 0;
 
@@ -541,13 +541,15 @@ void recvWithEndMarker() {
 			bufferNumBytes[indxComa2 - indxComa1] = '\0';
 			Serial.println("\n");
 			Serial.println(bufferNumBytes);
-			packet = atoi(bufferNumBytes);
+			cmdPacketSize = atoi(bufferNumBytes);
+			if(inRange(cmdPacketSize,0,packetSize)){
+				numBytes = true;
+				runDataCmd = true;
+			}
 			Serial.print("Packet Size:");
 			Serial.println(packet,DEC);
 			/*Agregar bandera aqui para que haga solo una vez*/
 			//indxData = indxComa2 + 1;
-			numBytes = true;
-			runDataCmd = true;
 		}
 
 		/*Si se valido el comando y la cantidad a transmitir, se espera hasta que lleguen los
