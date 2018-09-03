@@ -14,26 +14,26 @@
 /*---	Comandos	---*/
 
 /*Cantidad maxima de parametros por comando*/
-#define qParamaters 3
+#define MAX_PARAMETERS 3
 
 /*Cantidad maxima de caracteres que puede contener cada parametro*/
-#define qCharParameters 1024
+#define MAX_CHARS_PARAMETERS 1024
 
 /*Cantidad maxima de caracteres que puede contener el comando*/
-#define qCharInst 3
+#define MAX_CHAR_INST 3
 
 /*Numero maximo de instrucciones*/
-#define qInstructionSet 14
+#define MAX_INTS_SET 14
 
 /*---------------------*/
 /*El tiempo maxima para esperar una respuesta del servidor, em ms.*/
-#define serverTimeOut 500
+#define MAX_SERVER_TO 500
 
 /*Tiempo en mili-segundos para esperar a conectarse*/
-#define WiFiConnectTO 20000
+#define MAX_WIFICONNECT_TO 20000
 
 /*Maximum number of Bytes for a packet*/
-#define packetSize 512
+#define MAX_PACKET_SIZE 512
 
 /*Numero maximo de clientes que puede manejar el modulo*/
 #define MAX_NUM_CLIENTS 4
@@ -43,7 +43,7 @@
 /*-------------------------------------------------------------------*/
 
 /*Array de parametros e instruccion*/
-char bufferSerial[qParamaters+1][qCharParameters+1] = {{'\0'}};
+char bufferSerial[MAX_PARAMETERS+1][MAX_CHARS_PARAMETERS+1] = {{'\0'}};
 
 /*Delimitador de la instruccion*/
 char delimiter[2] = ",";
@@ -58,26 +58,26 @@ uint8_t parametersFound = 0;
 char endMarker = '\n';
 
 //Campo de instruccion, +1 para el NULL al final
-char INST[qCharInst+1] = {'\0'};
+char INST[MAX_CHAR_INST+1] = {'\0'};
 
 /*Array donde se almacenan los parametros*/
-char parametros[qParamaters][qCharParameters+1] = {{'\0'}};
+char parametros[MAX_PARAMETERS][MAX_CHARS_PARAMETERS+1] = {{'\0'}};
 
 /*Indice que indica cual funcion se recibio*/
 uint8_t	instructionIndex = 255;
 
 /*Paquete para enviar a traves de la red*/
-char packet[packetSize+1];
+char packet[MAX_PACKET_SIZE+1];
 
 /*Define el tamaño del buffer serial, +qParameters es para las comas que vienen con el comando.*/
-const uint16_t numChars = qCharInst + qCharParameters + packetSize + qParamaters;
+const uint16_t numChars = MAX_CHAR_INST + MAX_CHARS_PARAMETERS + MAX_PACKET_SIZE + MAX_PARAMETERS;
 
 /*Declaracion de los buffers seriales*/
 char tempChars[numChars+1];
 char serialCharsBuffer[numChars+1]; // an array to store the received data
 
 /*Declaracion de los buffers utilizados para recibir datos del servidor*/
-char	bufferReceivedFromServer[MAX_NUM_CLIENTS][packetSize+1];
+char	bufferReceivedFromServer[MAX_NUM_CLIENTS][MAX_PACKET_SIZE+1];
 uint16_t bytesReceivedFromServer[MAX_NUM_CLIENTS];
 bool	fullBufferRcvd[MAX_NUM_CLIENTS];
 
@@ -86,7 +86,7 @@ bool	SERVER_ON = false;
 
 /*Matriz que almacena los nombres de todas los comandos validos
 * dejar con static? Podria afectar la velocidad*/
-static const char instructionSet[qInstructionSet][qCharInst+1] = {"WFC",	//0
+static const char instructionSet[MAX_INTS_SET][MAX_CHAR_INST+1] = {"WFC",	//0
 		"WFS",	//1
 		"WRI",	//2
 		"WID",	//3
@@ -103,7 +103,7 @@ static const char instructionSet[qInstructionSet][qCharInst+1] = {"WFC",	//0
 
 /*Matriz que almacena la cantidad de parametros necesarios
  *por cada comando, correspondencia por indice.*/
-const uint8_t qParametersInstruction[qInstructionSet] ={2,0,0,0,0,3,2,3,1,1,1,0,0,1};
+const uint8_t qParametersInstruction[MAX_INTS_SET] ={2,0,0,0,0,3,2,3,1,1,1,0,0,1};
 
 /*Bandera utilizada para notificar que hay datos seriales nuevos*/
 boolean newData = false;
@@ -135,7 +135,7 @@ void setup() {
     Serial.println();
     Serial.println("Listo.");
     Serial.println("Las instrucciones que tengo son: ");
-    for(int i=0; i < qInstructionSet; i++){
+    for(int i=0; i < MAX_INTS_SET; i++){
   	  Serial.println((instructionSet[i]));
     }
 #endif
@@ -231,7 +231,7 @@ void loop() {
  * */
 bool searchInstruction(){
 	uint8_t i;
-	for(i=0; i<qInstructionSet; i++){
+	for(i=0; i<MAX_INTS_SET; i++){
 		if(strcmp(INST,instructionSet[i]) == 0){
 			instructionIndex = i;
 			return 1;
@@ -282,7 +282,7 @@ void runInstruction(){
 			while (WiFi.status() != WL_CONNECTED) {
 				delay(20);
 				currentMillis = millis();
-				if((currentMillis - previousMillis) > WiFiConnectTO) {
+				if((currentMillis - previousMillis) > MAX_WIFICONNECT_TO) {
 					WFC_STATUS = 0;
 					break;
 				}
@@ -373,7 +373,7 @@ void runInstruction(){
 			socket = atoi(parametros[0]);
 			bytesToWrite = atoi(parametros[1]);
 			if(inRange(socket,0,MAX_NUM_CLIENTS) == true){
-				if( (bytesToWrite >= 0) && (bytesToWrite <= packetSize) ){
+				if( (bytesToWrite >= 0) && (bytesToWrite <= MAX_PACKET_SIZE) ){
 					if(client[socket].connected()){
 						/*data to print: char, byte, int, long, or string*/
 						/*The max packet size in TCP is 1460 bytes*/
@@ -402,7 +402,7 @@ void runInstruction(){
 				Serial.println(bufferReceivedFromServer[socket]);
 				bytesReceivedFromServer[socket] = 0;
 				/*Clear the buffer*/
-				for (int i=0; i < packetSize; i++){
+				for (int i=0; i < MAX_PACKET_SIZE; i++){
 					bufferReceivedFromServer[socket][i] = 0;
 				}
 				//memset(bufferReceivedFromServer,0,sizeof(bufferReceivedFromServer));
@@ -491,7 +491,7 @@ void recvWithEndMarker() {
 	char recvChar, dump = '\0';
 	char bufferCmd[4] = {'\0'};
 	char bufferNumBytes[4] = {'\0'};
-	char tempBuffer[packetSize];
+	char tempBuffer[MAX_PACKET_SIZE];
 	static uint16_t indxRecv = 0;
 	uint16_t indxComa1=0, indxComa2=0, qComa=0, indxData = 0;
 	uint16_t cmdPacketSize = 0;
@@ -542,12 +542,12 @@ void recvWithEndMarker() {
 			Serial.println("\n");
 			Serial.println(bufferNumBytes);
 			cmdPacketSize = atoi(bufferNumBytes);
-			if(inRange(cmdPacketSize,0,packetSize)){
+			if(inRange(cmdPacketSize,0,MAX_PACKET_SIZE)){
 				numBytes = true;
 				runDataCmd = true;
 			}
 			Serial.print("Packet Size:");
-			Serial.println(packet,DEC);
+			Serial.println(cmdPacketSize,DEC);
 			/*Agregar bandera aqui para que haga solo una vez*/
 			//indxData = indxComa2 + 1;
 		}
@@ -667,7 +667,7 @@ void receiveFromServer(){
 					bufferReceivedFromServer[i][bytesReceivedFromServer[i]++] = client[i].read();
 					/*Si la cantidad de bytes leidos por el servidor supero el tamaño
 					 * del buffer, se indica que se lleno el buffer.*/
-					if(bytesReceivedFromServer[i] > packetSize){
+					if(bytesReceivedFromServer[i] > MAX_PACKET_SIZE){
 						//Serial.println("Me llene");
 						fullBufferRcvd[i] = true;
 					}
