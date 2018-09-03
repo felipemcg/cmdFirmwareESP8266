@@ -39,7 +39,7 @@
 #define MAX_NUM_CLIENTS 4
 
 /*Puerto por default que el server escuchara*/
-#define DEFAULT_SERVER_PORT
+#define DEFAULT_SERVER_PORT 80
 /*-------------------------------------------------------------------*/
 
 /*Array de parametros e instruccion*/
@@ -112,7 +112,7 @@ boolean newData = false;
 
 /*Basicamente provee la misma funcionalidad que el socket*/
 WiFiClient client[MAX_NUM_CLIENTS];
-WiFiServer server(80);
+WiFiServer server(DEFAULT_SERVER_PORT);
 
 
 uint8_t socketInUse[MAX_NUM_CLIENTS] = {0,0,0,0};
