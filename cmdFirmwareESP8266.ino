@@ -69,6 +69,12 @@ uint8_t	instructionIndex = 255;
 /*Paquete para enviar a traves de la red*/
 char packet[packetSize+1];
 
+/*Define el tamaño del buffer serial, +qParameters es para las comas que vienen con el comando.*/
+const uint16_t numChars = qCharInst + qCharParameters + packetSize + qParamaters;
+
+char tempChars[numChars+1];
+char serialCharsBuffer[numChars+1]; // an array to store the received data
+
 char	bufferReceivedFromServer[MAX_NUM_CLIENTS][packetSize+1];
 uint16_t bytesReceivedFromServer[MAX_NUM_CLIENTS];
 bool	fullBufferRcvd[MAX_NUM_CLIENTS];
@@ -97,12 +103,11 @@ const uint8_t qParametersInstruction[qInstructionSet] ={2,0,0,0,0,3,2,3,1,1,1,0,
 
 size_t r;
 
-const uint8_t numChars = 255;
-char serialCharsBuffer[numChars]; // an array to store the received data
+
 
 boolean newData = false;
 
-char tempChars[numChars];
+
 
 
 /*Basicamente provee la misma funcionalidad que el socket*/
