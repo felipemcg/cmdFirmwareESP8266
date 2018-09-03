@@ -680,10 +680,8 @@ void receiveFromServer(){
 	}
 }
 
-bool socketIsInRange(uint8_t socket){
-	if( ( socket>=0 ) && ( socket<MAX_NUM_CLIENTS ) ){
-		return true;
-	}
-	Serial.println("ISO");
-	return false;
+bool inRange(uint16_t val, uint16_t minimum, uint16_t maximum)
+{
+  return ((minimum <= val) && (val <= maximum));
 }
+
