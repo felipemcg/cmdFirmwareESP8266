@@ -8,6 +8,8 @@
 #include <ESP8266WiFiScan.h>
 
 
+/*Considerar usar client.setNoDelay para desactivar el algoritmo de naggle*/
+
 /*-------------------------DEFINE's--------------------------------*/
 //#define sDebug
 
@@ -37,6 +39,11 @@
 
 /*Numero maximo de clientes que puede manejar el modulo*/
 #define MAX_NUM_CLIENTS 4
+
+#define MAX_NUM_SERVERS 4
+
+/**/
+#define MAX_PORT_NUMBER  65535
 
 /*Puerto por default que el server escuchara*/
 #define DEFAULT_SERVER_PORT 80
@@ -84,6 +91,9 @@ bool	fullBufferRcvd[MAX_NUM_CLIENTS];
 /*Bandera para indicar que el servidor esta activo*/
 bool	SERVER_ON = false;
 
+/*Bandera utilizada para notificar que hay datos seriales nuevos*/
+boolean newData = false;
+
 /*Matriz que almacena los nombres de todas los comandos validos
 * dejar con static? Podria afectar la velocidad*/
 static const char instructionSet[MAX_INTS_SET][MAX_CHAR_INST+1] = {"WFC",	//0
@@ -105,17 +115,18 @@ static const char instructionSet[MAX_INTS_SET][MAX_CHAR_INST+1] = {"WFC",	//0
  *por cada comando, correspondencia por indice.*/
 const uint8_t qParametersInstruction[MAX_INTS_SET] ={2,0,0,0,0,3,2,3,1,1,1,0,0,1};
 
-/*Bandera utilizada para notificar que hay datos seriales nuevos*/
-boolean newData = false;
-
 /*Declaracion del objeto que se utilizara para el manejo del cliente, maximo 4
  * por limitacion del modulo.*/
 WiFiClient client[MAX_NUM_CLIENTS];
 
-/*Declaracion del objeto que se utilizara para el manejo del servidor*/
-WiFiServer server(DEFAULT_SERVER_PORT);
+/*Declaracion de los objetos que se utilizaran para el manejo del servidor*/
+WiFiServer server1(DEFAULT_SERVER_PORT);
+WiFiServer server2(DEFAULT_SERVER_PORT);
+WiFiServer server3(DEFAULT_SERVER_PORT);
+WiFiServer server4(DEFAULT_SERVER_PORT);
 
 uint8_t socketInUse[MAX_NUM_CLIENTS] = {0,0,0,0};
+uint16_t serverPortsInUse[MAX_NUM_SERVERS];
 
 //#define sDebug 1
 /*-------------------------------------------------------------------*/
@@ -153,9 +164,9 @@ void loop() {
 
 	/*Recibe los datos por serial, hasta que se encuentra el caracter terminador.*/
 	recvWithEndMarker();
-	/*for (int i = 0; i < strlen(receivedChars); ++i) {
-		Serial.printf("%02x ", receivedChars[i]);
-	}*/
+	for (int i = 0; i < strlen(serialCharsBuffer); ++i) {
+		Serial.printf("%02x ", serialCharsBuffer[i]);
+	}
 
 	if(newData == true){
 		Serial.println(serialCharsBuffer);
@@ -175,8 +186,9 @@ void loop() {
 
 	#ifdef sDebug
 		/*Se muestran los datos separados en campos.*/
-		showParsedData();
+
 	#endif
+		showParsedData();
 
 		yield();
 
@@ -230,13 +242,18 @@ void loop() {
  * funcion retorna 1.
  * */
 bool searchInstruction(){
-	uint8_t i;
-	for(i=0; i<MAX_INTS_SET; i++){
-		if(strcmp(INST,instructionSet[i]) == 0){
-			instructionIndex = i;
+	uint8_t j;
+	Serial.println("Entro search");
+	for(j=0; j<MAX_INTS_SET; j++){
+		Serial.print(j,DEC);
+		if(strcmp(INST,instructionSet[j]) == 0){
+			instructionIndex = j;
+			Serial.println("retorno ok");
 			return 1;
+
 		}
 	}
+	Serial.println("retorno o");
 	return 0;
 }
 
@@ -263,12 +280,14 @@ void runInstruction(){
 	int bytesToWrite, bytesWritten;
 	int numSsid;
 	uint8_t socket;
-	bool WFC_STATUS = 1;
+	uint8_t i;
+	bool WFC_STATUS = 1, portInUse = false;
 	if(searchInstruction() && validateParameters()){
 		switch(instructionIndex){
 		case 0:
 			/*WFC - WiFi Connect*/
 			WiFi.mode(WIFI_STA);
+			Serial.println("A");
 			WiFi.begin(parametros[0],parametros[1]);
 			/*for (int i = 0; i < strlen(parametros[0]); ++i) {
 				  Serial.printf("%02x ", parametros[0][i]);
@@ -278,7 +297,9 @@ void runInstruction(){
 				Serial.printf("%02x ", parametros[1][i]);
 			}*/
 			//Serial.println("");
+			Serial.println("B");
 			previousMillis = millis();
+			Serial.println("Mbo");
 			while (WiFi.status() != WL_CONNECTED) {
 				delay(20);
 				currentMillis = millis();
@@ -343,7 +364,6 @@ void runInstruction(){
 			break;
 		case 6:
 			/*CCS - Client Connect to Server*/
-			int i;
 			port = atoi(parametros[1]);
 			for (i = 0; i < MAX_NUM_CLIENTS; i++) {
 				//find free/disconnected spot
@@ -421,25 +441,62 @@ void runInstruction(){
 			break;
 		case 10:
 			/*SCL - Server listens to clients*/
-			SERVER_ON = true;
 			port = atoi(parametros[0]);
-			/*Serial.print("Estado");
-			Serial.println(server.status());*/
-			server.begin(port);
-			//Serial.println(server.status());
-			Serial.println("OK");
+			/*Determinar primero si el puerto es valido*/
+			if(inRange(port,0,MAX_PORT_NUMBER)){
+				SERVER_ON = true;
+			}else{
+				Serial.println("IP");
+				break;
+			}
+			/*Determinar si ya existe un servidor funcionando con ese puerto*/
+			for (i = 0; i < MAX_NUM_SERVERS; i++) {
+				if(port != serverPortsInUse[i]){
+					portInUse = false;
+					break;
+				}else{
+					portInUse = true;
+					break;
+				}
+			}
+			/*Si no existe un servidor con ese puerto, determinar que servidor esta libre y crear el servidor*/
+			if(!portInUse){
+				serverPortsInUse[i] = port;
+				if(server1.status() == CLOSED){
+					server1.begin(port);
+					Serial.println("OK,0");
+					break;
+				}
+				if(server2.status() == CLOSED){
+					server2.begin(port);
+					Serial.println("OK,1");
+					break;
+				}
+				if(server3.status() == CLOSED){
+					server3.begin(port);
+					Serial.println("OK,2");
+					break;
+				}
+				if(server4.status() == CLOSED){
+					server4.begin(port);
+					Serial.println("OK,3");
+					break;
+				}
+			}else{
+				Serial.println("UP");
+			}
 			break;
 		case 11:
 			/*SCC*/
 			SERVER_ON = false;
-			server.stop();
+			server1.stop();
 			Serial.println("OK");
 			break;
 		case 12:
 			/*SAC*/
 			if(SERVER_ON == true){
 				  //check if there are any new clients
-				  if (server.hasClient()) {
+				  if (server1.hasClient()) {
 					for (uint8_t i = 0; i < MAX_NUM_CLIENTS; i++) {
 					  //find free/disconnected spot
 						//Si esta vacio y no esta conectado
@@ -449,7 +506,7 @@ void runInstruction(){
 						}
 						//Serial.println(server.status());
 						//TCP_DEBUG;
-						client[i] = server.available();
+						client[i] = server1.available();
 						//Serial.println(server.status());
 						//Serial.print("New client: "); Serial.println(i);
 						Serial.print("OK,");
@@ -459,7 +516,7 @@ void runInstruction(){
 					}
 					//no free/disconnected spot so reject
 					if (i == MAX_NUM_CLIENTS) {
-					  WiFiClient serverClient = server.available();
+					  WiFiClient serverClient = server1.available();
 					  serverClient.stop();
 					  Serial.println("NS");
 					  //Serial1.println("Connection rejected ");
@@ -559,7 +616,7 @@ void recvWithEndMarker() {
 			Serial.print(":");
 			Serial.print(recvChar);
 			Serial.print(" ");
-			if(indxData < packet){
+			if(indxData < cmdPacketSize){
 				serialCharsBuffer[indxRecv] = recvChar;
 				Serial.println(indxData,DEC);
 				indxRecv++;
