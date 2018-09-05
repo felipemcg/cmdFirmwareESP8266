@@ -121,6 +121,7 @@ const uint8_t qParametersInstruction[MAX_INTS_SET] ={2,0,0,0,0,3,2,3,1,1,1,0,0,1
 WiFiClient client[MAX_NUM_CLIENTS];
 
 /*Declaracion de los objetos que se utilizaran para el manejo del servidor*/
+
 WiFiServer server1(DEFAULT_SERVER_PORT);
 WiFiServer server2(DEFAULT_SERVER_PORT);
 WiFiServer server3(DEFAULT_SERVER_PORT);
@@ -498,22 +499,33 @@ void runInstruction(){
 			if(SERVER_ON == true){
 				/*Verifica si el servidor tiene clientes esperando*/
 			  if (server1.hasClient()) {
-				  socket = getFreeSocket();
-				  if(socket!=255){
-					  /*Se encontro socket libre*/
-					  client[socket] = server1.available();
-					  Serial.print("OK,");
-					  Serial.println(socket,DEC);
-				  }else{
-					  /*No hay socket disponible*/
-					  WiFiClient serverClient = server1.available();
-					  serverClient.stop();
-					  Serial.println("NS");
-				  }
+				  acceptClients(server1);
 			  }else{
 				  /*El servidor no tiene clientes esperando*/
 					Serial.println("NC");
 			  }
+
+			  if (server2.hasClient()) {
+				  acceptClients(server2);
+			  }else{
+				  /*El servidor no tiene clientes esperando*/
+					Serial.println("NC");
+			  }
+
+			  if (server3.hasClient()) {
+				  acceptClients(server3);
+			  }else{
+				  /*El servidor no tiene clientes esperando*/
+					Serial.println("NC");
+			  }
+
+			  if (server4.hasClient()) {
+				  acceptClients(server4);
+			  }else{
+				  /*El servidor no tiene clientes esperando*/
+					Serial.println("NC");
+			  }
+
 			}else{
 				/*El servidor esta descativado*/
 				Serial.println("SOFF");
@@ -754,5 +766,22 @@ uint8_t	getFreeSocket(){
 		return 255;
 	}
 }
+
+void acceptClients(WiFiServer& server){
+	uint8_t socket;
+	socket = getFreeSocket();
+	if(socket!=255){
+		/*Se encontro socket libre*/
+		client[socket] = server.available();
+		Serial.print("OK,");
+		Serial.println(socket,DEC);
+	}else{
+		/*No hay socket disponible*/
+		WiFiClient serverClient = server.available();
+		serverClient.stop();
+		Serial.println("NS");
+	}
+}
+
 
 
