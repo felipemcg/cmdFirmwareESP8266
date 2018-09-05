@@ -496,36 +496,26 @@ void runInstruction(){
 		case 12:
 			/*SAC*/
 			if(SERVER_ON == true){
-				  //check if there are any new clients
-				  if (server1.hasClient()) {
-					for (uint8_t i = 0; i < MAX_NUM_CLIENTS; i++) {
-					  //find free/disconnected spot
-						//Si esta vacio y no esta conectado
-					  if (!client[i] || !client[i].connected()) {
-						if (client[i]) {
-						  client[i].stop();
-						}
-						//Serial.println(server.status());
-						//TCP_DEBUG;
-						client[i] = server1.available();
-						//Serial.println(server.status());
-						//Serial.print("New client: "); Serial.println(i);
-						Serial.print("OK,");
-						Serial.println(i,DEC);
-						break;
-					  }
-					}
-					//no free/disconnected spot so reject
-					if (i == MAX_NUM_CLIENTS) {
+				/*Verifica si el servidor tiene clientes esperando*/
+			  if (server1.hasClient()) {
+				  socket = getFreeSocket();
+				  if(socket!=255){
+					  /*Se encontro socket libre*/
+					  client[socket] = server1.available();
+					  Serial.print("OK,");
+					  Serial.println(socket,DEC);
+				  }else{
+					  /*No hay socket disponible*/
 					  WiFiClient serverClient = server1.available();
 					  serverClient.stop();
 					  Serial.println("NS");
-					  //Serial1.println("Connection rejected ");
-					}
-				}else{
+				  }
+			  }else{
+				  /*El servidor no tiene clientes esperando*/
 					Serial.println("NC");
-				}
+			  }
 			}else{
+				/*El servidor esta descativado*/
 				Serial.println("SOFF");
 			}
 			break;
@@ -747,4 +737,22 @@ bool inRange(uint16_t val, uint16_t min, uint16_t max)
 {
   return ((min <= val) && (val <= max));
 }
+
+uint8_t	getFreeSocket(){
+	uint8_t i=0;
+	for (i = 0; i < MAX_NUM_CLIENTS; i++) {
+		//Si esta vacio y no esta conectado
+	  if (!client[i] || !client[i].connected()) {
+		if (client[i]) {
+		  client[i].stop();
+		}
+		return i;
+	  }
+	}
+	//no free/disconnected spot so reject
+	if (i == MAX_NUM_CLIENTS) {
+		return 255;
+	}
+}
+
 
