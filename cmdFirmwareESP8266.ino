@@ -89,7 +89,7 @@ uint16_t bytesReceivedFromServer[MAX_NUM_CLIENTS];
 bool	fullBufferRcvd[MAX_NUM_CLIENTS];
 
 /*Bandera para indicar que el servidor esta activo*/
-bool	SERVER_ON[MAX_NUM_SERVERS] = {false,false,false,false};
+bool	serverOn[MAX_NUM_SERVERS] = {false,false,false,false};
 
 /*Bandera utilizada para notificar que hay datos seriales nuevos*/
 boolean newData = false;
@@ -114,18 +114,14 @@ static const char instructionSet[MAX_INTS_SET][MAX_CHAR_INST+1] = {"WFC",	//0
 
 /*Matriz que almacena la cantidad de parametros necesarios
  *por cada comando, correspondencia por indice.*/
-const uint8_t qParametersInstruction[MAX_INTS_SET] ={2,0,0,0,0,3,2,3,1,1,1,0,0,1,0};
+const uint8_t qParametersInstruction[MAX_INTS_SET] ={2,0,0,0,0,3,2,3,1,1,1,1,1,1,0};
 
 /*Declaracion del objeto que se utilizara para el manejo del cliente, maximo 4
  * por limitacion del modulo.*/
 WiFiClient client[MAX_NUM_CLIENTS];
 
 /*Declaracion de los objetos que se utilizaran para el manejo del servidor*/
-
-WiFiServer server1(DEFAULT_SERVER_PORT);
-WiFiServer server2(DEFAULT_SERVER_PORT);
-WiFiServer server3(DEFAULT_SERVER_PORT);
-WiFiServer server4(DEFAULT_SERVER_PORT);
+std::vector<WiFiServer> server(MAX_NUM_SERVERS, WiFiServer(DEFAULT_SERVER_PORT));
 
 uint8_t socketInUse[MAX_NUM_CLIENTS] = {0,0,0,0};
 uint16_t serverPortsInUse[MAX_NUM_SERVERS];
@@ -446,7 +442,7 @@ void runInstruction(){
 			port = atoi(parametros[0]);
 			/*Determinar primero si el puerto es valido*/
 			if(inRange(port,0,MAX_PORT_NUMBER)){
-				SERVER_ON = true;
+
 			}else{
 				Serial.println("IP");
 				break;
@@ -464,29 +460,14 @@ void runInstruction(){
 			/*Si no existe un servidor con ese puerto, determinar que servidor esta libre y crear el servidor*/
 			if(!portInUse){
 				serverPortsInUse[i] = port;
-				if(server1.status() == CLOSED){
-					server1.begin(port);
-					Serial.println("OK,0");
-					SERVER_ON[0] = true;
-					break;
-				}
-				if(server2.status() == CLOSED){
-					server2.begin(port);
-					Serial.println("OK,1");
-					SERVER_ON[1] = true;
-					break;
-				}
-				if(server3.status() == CLOSED){
-					server3.begin(port);
-					Serial.println("OK,2");
-					SERVER_ON[2] = true;
-					break;
-				}
-				if(server4.status() == CLOSED){
-					server4.begin(port);
-					Serial.println("OK,3");
-					SERVER_ON[3] = true;
-					break;
+				for (i = 0; i < MAX_NUM_SERVERS; i++) {
+					if(server[i].status() == CLOSED){
+						server[i].begin(port);
+						Serial.print("OK,");
+						Serial.println(i,DEC);
+						serverOn[i] = true;
+						break;
+					}
 				}
 			}else{
 				Serial.println("UP");
@@ -494,44 +475,29 @@ void runInstruction(){
 			break;
 		case 11:
 			/*SCC*/
-			SERVER_ON = false;
-			server1.stop();
+			//SERVER_ON = false;
+			socket = atoi(parametros[0]);
+			if(!inRange(socket,0,MAX_NUM_SERVERS)){
+				Serial.println("IS");
+				break;
+			}
+			server[socket].stop();
 			Serial.println("OK");
 			break;
 		case 12:
 			/*SAC*/
-			if(SERVER_ON == true){
-				/*Verifica si el servidor tiene clientes esperando*/
-			  if (server1.hasClient()) {
-				  acceptClients(server1);
-			  }else{
-				  /*El servidor no tiene clientes esperando*/
+			socket = atoi(parametros[0]);
+			if(!inRange(socket,0,MAX_NUM_SERVERS)){
+				Serial.println("IS");
+				break;
+			}
+			if(serverOn[socket]){
+				if(server[socket].hasClient()){
+					acceptClients(server[socket]);
+				}else{
 					Serial.println("NC");
-			  }
-
-			  if (server2.hasClient()) {
-				  acceptClients(server2);
-			  }else{
-				  /*El servidor no tiene clientes esperando*/
-					Serial.println("NC");
-			  }
-
-			  if (server3.hasClient()) {
-				  acceptClients(server3);
-			  }else{
-				  /*El servidor no tiene clientes esperando*/
-					Serial.println("NC");
-			  }
-
-			  if (server4.hasClient()) {
-				  acceptClients(server4);
-			  }else{
-				  /*El servidor no tiene clientes esperando*/
-					Serial.println("NC");
-			  }
-
+				}
 			}else{
-				/*El servidor esta descativado*/
 				Serial.println("SOFF");
 			}
 			break;
