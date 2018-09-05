@@ -89,7 +89,7 @@ uint16_t bytesReceivedFromServer[MAX_NUM_CLIENTS];
 bool	fullBufferRcvd[MAX_NUM_CLIENTS];
 
 /*Bandera para indicar que el servidor esta activo*/
-bool	SERVER_ON = false;
+bool	SERVER_ON[MAX_NUM_SERVERS] = {false,false,false,false};
 
 /*Bandera utilizada para notificar que hay datos seriales nuevos*/
 boolean newData = false;
@@ -467,21 +467,25 @@ void runInstruction(){
 				if(server1.status() == CLOSED){
 					server1.begin(port);
 					Serial.println("OK,0");
+					SERVER_ON[0] = true;
 					break;
 				}
 				if(server2.status() == CLOSED){
 					server2.begin(port);
 					Serial.println("OK,1");
+					SERVER_ON[1] = true;
 					break;
 				}
 				if(server3.status() == CLOSED){
 					server3.begin(port);
 					Serial.println("OK,2");
+					SERVER_ON[2] = true;
 					break;
 				}
 				if(server4.status() == CLOSED){
 					server4.begin(port);
 					Serial.println("OK,3");
+					SERVER_ON[3] = true;
 					break;
 				}
 			}else{
