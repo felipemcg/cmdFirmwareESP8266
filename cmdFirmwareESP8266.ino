@@ -430,12 +430,14 @@ void runInstruction(){
 			}
 			break;
 		case 9:
-			/*CCC - Client Close Connection*/
+			/*SOC- Socket Close*/
 			socket = atoi(parametros[0]);
-			if(inRange(socket,0,MAX_NUM_CLIENTS) == true){
-				client[socket].stop();
-				Serial.println("OK");
+			if(!inRange(socket,0,MAX_NUM_CLIENTS) == true){
+				Serial.println("IS");
+				break;
 			}
+			client[socket].stop();
+			Serial.println("OK");
 			break;
 		case 10:
 			/*SCL - Server listens to clients*/
