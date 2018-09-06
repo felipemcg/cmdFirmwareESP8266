@@ -191,14 +191,10 @@ void loop() {
 		yield();
 
 		if(searchInstruction() == true){
-			if(isCommand() == true){
-				if(validateParameters() == true){
-					runInstruction();
-				}else{
-					Serial.println("NEP");
-				}
+			if(validateParameters() == true){
+				runInstruction();
 			}else{
-				Serial.println("DATA");
+				Serial.println("NEP");
 			}
 		}else{
 			Serial.println("NOCMD");
@@ -253,13 +249,6 @@ bool searchInstruction(){
 	}
 	Serial.println("retorno o");
 	return 0;
-}
-
-/* Descripcion: Comprueba si el comando recibido es un comando o dato.*/
-bool isCommand(){
-
-
-	return 1;
 }
 
 /* Descripcion: Comprueba que se hayan recibido la cantidad necesaria de parametros ejecutar el comando.*/
