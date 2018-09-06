@@ -1,12 +1,4 @@
-/*
- *  This sketch sends data via HTTP GET requests to data.sparkfun.com service.
- *
- *  You need to get streamId and privateKey at data.sparkfun.com and paste them
- *  below. Or just customize this script to talk to other HTTP servers.
- *
- */
-
-
+#include "Arduino.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,132 +6,150 @@
 
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiScan.h>
-#include <DNSServer.h>            //Local DNS Server used for redirecting all requests to the configuration portal
-#include <ESP8266WebServer.h>     //Local WebServer used to serve the configuration portal
-#include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager WiFi Configuration Magic
+
+
+/*Considerar usar client.setNoDelay para desactivar el algoritmo de naggle*/
 
 /*-------------------------DEFINE's--------------------------------*/
 //#define sDebug
 
+/*---	Comandos	---*/
+
 /*Cantidad maxima de parametros por comando*/
-#define qParamaters 3
+#define MAX_PARAMETERS 3
 
 /*Cantidad maxima de caracteres que puede contener cada parametro*/
-#define qCharParameters 1024
+#define MAX_CHARS_PARAMETERS 1024
 
-/*Cantidad maxima de caracteres que puede contener la instruccion*/
-#define qCharInst 3
+/*Cantidad maxima de caracteres que puede contener el comando*/
+#define MAX_CHAR_INST 3
 
 /*Numero maximo de instrucciones*/
-#define qInstructionSet 10
+#define MAX_INTS_SET 15
 
+/*---------------------*/
 /*El tiempo maxima para esperar una respuesta del servidor, em ms.*/
-#define serverTimeOut 500
+#define MAX_SERVER_TO 500
 
 /*Tiempo en mili-segundos para esperar a conectarse*/
-#define WiFiConnectTO 10000
+#define MAX_WIFICONNECT_TO 20000
 
 /*Maximum number of Bytes for a packet*/
-#define packetSize 512
+#define MAX_PACKET_SIZE 512
 
+/*Numero maximo de clientes que puede manejar el modulo*/
+#define MAX_NUM_CLIENTS 4
+
+/*Numero maximo de servidores que puede manejar el modulo*/
+#define MAX_NUM_SERVERS 4
+
+/*Numero maximo de puerto*/
+#define MAX_PORT_NUMBER  65535
+
+/*Puerto por default que el server escuchara*/
+#define DEFAULT_SERVER_PORT 80
 /*-------------------------------------------------------------------*/
 
 /*Array de parametros e instruccion*/
-char bufferSerial[qParamaters+1][qCharParameters] = {{'\0'}};
+char bufferSerial[MAX_PARAMETERS+1][MAX_CHARS_PARAMETERS+1] = {{'\0'}};
 
 /*Delimitador de la instruccion*/
 char delimiter[2] = ",";
 
 /*Cantidad de delimitadores que se encontro*/
-int delimFound = 0;
+uint8_t delimFound = 0;
 
 /*Cantidad de parametros que se encontro*/
-int parametersFound = 0;
+uint8_t parametersFound = 0;
 
 /*Caracter que termina la instruccion*/
 char endMarker = '\n';
 
 //Campo de instruccion, +1 para el NULL al final
-char INST[qCharInst+1] = {'\0'};
+char INST[MAX_CHAR_INST+1] = {'\0'};
 
 /*Array donde se almacenan los parametros*/
-char parametros[qParamaters][qCharParameters] = {{'\0'}};
+char parametros[MAX_PARAMETERS][MAX_CHARS_PARAMETERS+1] = {{'\0'}};
 
 /*Indice que indica cual funcion se recibio*/
-int	instructionIndex = 999;
+uint8_t	instructionIndex = 255;
 
 /*Paquete para enviar a traves de la red*/
-char packet[packetSize];
+char packet[MAX_PACKET_SIZE+1];
 
-char	bufferReceivedFromServer[packetSize];
-uint16_t bytesReceivedFromServer;
-bool	fullBufferRcvd;
+/*Define el tamaño del buffer serial, +qParameters es para las comas que vienen con el comando.*/
+const uint16_t numChars = MAX_CHAR_INST + MAX_CHARS_PARAMETERS + MAX_PACKET_SIZE + MAX_PARAMETERS;
+
+/*Declaracion de los buffers seriales*/
+char tempChars[numChars+1];
+char serialCharsBuffer[numChars+1]; // an array to store the received data
+
+/*Declaracion de los buffers utilizados para recibir datos del servidor*/
+char	bufferReceivedFromServer[MAX_NUM_CLIENTS][MAX_PACKET_SIZE+1];
+uint16_t bytesReceivedFromServer[MAX_NUM_CLIENTS];
+bool	fullBufferRcvd[MAX_NUM_CLIENTS];
+
+/*Bandera para indicar que el servidor esta activo*/
+bool	serverOn[MAX_NUM_SERVERS] = {false,false,false,false};
+
+/*Bandera utilizada para notificar que hay datos seriales nuevos*/
+boolean newData = false;
 
 /*Matriz que almacena los nombres de todas los comandos validos
- * -WFM: WiFi Mode
- * -WFC: WiFi Connect
- * -CCS: Client Connect to Server
- * -PTS: Print to server
- * -PTL: Print to server, adding CR/LF.
- * -CCC: Client Close Connection.
- * -WFG: */
-
-/*dejar con static? Podria afectar la velocidad*/
-static const char instructionSet[qInstructionSet][qCharInst+1] = {"WFC",	//0
+* dejar con static? Podria afectar la velocidad*/
+static const char instructionSet[MAX_INTS_SET][MAX_CHAR_INST+1] = {"WFC",	//0
 		"WFS",	//1
 		"WRI",	//2
 		"WID",	//3
 		"WFD",	//4
 		"WCF",	//5
 		"CCS",	//6
-		"CWS",	//7
-		"CRS",	//8
-		"CCC"};	//9
-
-char etx = '\x03';
+		"SOW",	//7
+		"SOR",	//8
+		"SOC",	//9
+		"SLC",	//10
+		"SCC",	//11
+		"SAC",	//12
+		"SRC",	//13
+		"GFH"};	//14
 
 /*Matriz que almacena la cantidad de parametros necesarios
  *por cada comando, correspondencia por indice.*/
-int	qParametersInstruction[qInstructionSet] ={2,0,1,0,0,3,2,2,0,0};
+const uint8_t qParametersInstruction[MAX_INTS_SET] ={2,0,0,0,0,3,2,3,1,1,1,1,1,1,0};
 
-size_t r;
+/*Declaracion del objeto que se utilizara para el manejo del cliente, maximo 4
+ * por limitacion del modulo.*/
+WiFiClient client[MAX_NUM_CLIENTS];
 
-const uint8_t numChars = 255;
-char receivedChars[numChars]; // an array to store the received data
+/*Declaracion de los objetos que se utilizaran para el manejo del servidor*/
+std::vector<WiFiServer> server(MAX_NUM_SERVERS, WiFiServer(DEFAULT_SERVER_PORT));
 
-boolean newData = false;
+uint8_t socketInUse[MAX_NUM_CLIENTS] = {0,0,0,0};
+uint16_t serverPortsInUse[MAX_NUM_SERVERS];
 
-char tempChars[numChars];
-
-
-/*Basicamente provee la misma funcionalidad que el socket*/
-WiFiClient client;
-
-
+//#define sDebug 1
 /*-------------------------------------------------------------------*/
+
 
 void setup() {
 	Serial.begin(115200);
 	delay(10);
 	Serial.println();
-
-	bytesReceivedFromServer = 0;
-	fullBufferRcvd = false;
-
-	WiFiManager wifiManager;
-	//first parameter is name of access point, second is the password
-	wifiManager.setDebugOutput(false);
-	wifiManager.autoConnect("Nodo_ESP8266");
+	for(int i=0; i < MAX_NUM_CLIENTS; i++){
+		bytesReceivedFromServer[i] = 0;
+		fullBufferRcvd[i] = false;
+	}
 
 #ifdef sDebug
 	Serial.println();
     Serial.println();
     Serial.println("Listo.");
     Serial.println("Las instrucciones que tengo son: ");
-    for(int i=0; i < qInstructionSet; i++){
+    for(int i=0; i < MAX_INTS_SET; i++){
   	  Serial.println((instructionSet[i]));
     }
 #endif
+
     Serial.println("R");
 
 }
@@ -154,6 +164,7 @@ void loop() {
 	/*Recibe los datos por serial, hasta que se encuentra el caracter terminador.*/
 	recvWithEndMarker();
 
+	/*Una vez que se reciben todos los datos por serial, se conienza a procesar*/
 	if(newData == true){
 
 	#ifdef sDebug
@@ -163,42 +174,39 @@ void loop() {
 	#endif
 
 		/*Se copian los datos recibidos en un array temporal para su manipulacion.*/
-		strcpy(tempChars, receivedChars);
+		strcpy(tempChars, serialCharsBuffer);
 
 		/*Separar los datos en los campos correspondientes.*/
 		parseData();
 
 	#ifdef sDebug
 		/*Se muestran los datos separados en campos.*/
-		showParsedData();
+
 	#endif
+		//showParsedData();
 
 		yield();
 
 		if(searchInstruction() == true){
-			if(isCommand() == true){
-				if(validateParameters() == true){
-					runInstruction();
-				}else{
-					Serial.println("NOT ENOUGH PARAMETERS.");
-				}
+			if(validateParameters() == true){
+				runInstruction();
 			}else{
-				Serial.println("DATA");
+				Serial.println("NEP");
 			}
 		}else{
-			Serial.println("NO CMD.");
+			Serial.println("NOCMD");
 		}
 
 		yield();
 
 		/*Se limpian todas las variables para recibir el siguiente comando.*/
 		memset(tempChars, 0, sizeof(tempChars));
-		memset(receivedChars, 0, sizeof(receivedChars));
+		memset(serialCharsBuffer, 0, sizeof(serialCharsBuffer));
 		memset(bufferSerial, 0, sizeof(bufferSerial));
 		memset(INST, 0, sizeof(INST));
-		memset(receivedChars, 0, sizeof(receivedChars));
 		memset(parametros, 0, sizeof(parametros));
 		delimFound = 0;
+		parametersFound = 0;
 		newData = false;
 
 
@@ -212,8 +220,12 @@ void loop() {
 	#endif
 	}
 	yield();
-	/**/
+
+	/*Se almacenan los datos recibidos en los sockets en sus respectivos buffer's*/
 	receiveFromServer();
+
+	yield();
+
 }
 
 /*
@@ -222,21 +234,15 @@ void loop() {
  * funcion retorna 1.
  * */
 bool searchInstruction(){
-	int i;
-	for(i=0; i<qInstructionSet; i++){
-		if(strcmp(INST,instructionSet[i]) == 0){
-			instructionIndex = i;
+	uint8_t j;
+	for(j=0; j<MAX_INTS_SET; j++){
+		if(strcmp(INST,instructionSet[j]) == 0){
+			instructionIndex = j;
 			return 1;
+
 		}
 	}
 	return 0;
-}
-
-/* Descripcion: Comprueba si el comando recibido es un comando o dato.*/
-bool isCommand(){
-
-
-	return 1;
 }
 
 /* Descripcion: Comprueba que se hayan recibido la cantidad necesaria de parametros ejecutar el comando.*/
@@ -254,161 +260,325 @@ void runInstruction(){
 	int port;
 	int bytesToWrite, bytesWritten;
 	int numSsid;
-	bool WFC_STATUS = 1;
-	if(searchInstruction() && validateParameters()){
-		switch(instructionIndex){
-		case 0:
-			/*WFC - WiFi Connect*/
-			WiFi.mode(WIFI_STA);
-			WiFi.begin(parametros[0],parametros[1]);
-			/*for (int i = 0; i < strlen(parametros[0]); ++i) {
-				  Serial.printf("%02x ", parametros[0][i]);
-			  }
-			Serial.println("");
-			for (int i = 0; i < strlen(parametros[1]); ++i) {
-				Serial.printf("%02x ", parametros[1][i]);
+	uint8_t socket;
+	uint8_t i;
+	bool WFC_STATUS = 1, portInUse = false;
+	switch(instructionIndex){
+	case 0:
+		/*WFC - WiFi Connect*/
+		WiFi.mode(WIFI_STA);
+		WiFi.begin(parametros[0],parametros[1]);
+		previousMillis = millis();
+		while (WiFi.status() != WL_CONNECTED) {
+			delay(20);
+			currentMillis = millis();
+			if((currentMillis - previousMillis) > MAX_WIFICONNECT_TO) {
+				WFC_STATUS = 0;
+				break;
 			}
-			Serial.println("");*/
-			previousMillis = millis();
-			while (WiFi.status() != WL_CONNECTED) {
-				delay(20);
-				currentMillis = millis();
-				if((currentMillis - previousMillis) > WiFiConnectTO) {
-					WFC_STATUS = 0;
+		}
+		if(WFC_STATUS==1){
+			Serial.println("OK");
+		}else{
+			Serial.println("TO");
+		}
+		break;
+	case 1:
+		/*WFS - WiFi Scan*/
+		WiFi.mode(WIFI_STA);
+		WiFi.disconnect();
+		delay(100);
+		numSsid = WiFi.scanNetworks();
+		if (numSsid == -1) {
+		Serial.println("NC");
+		}else{
+			// print the list of networks seen:
+			Serial.println(numSsid);
+
+			// print the network number and name for each network found:
+			for (int thisNet = 0; thisNet < numSsid; thisNet++) {
+			Serial.print(thisNet);
+			Serial.print(") ");
+			Serial.print(WiFi.SSID(thisNet));
+			//Serial.printf("SSID: %s", WiFi.SSID().c_str());
+			Serial.print("\tSignal: ");
+			Serial.print(WiFi.RSSI(thisNet));
+			Serial.println(" dBm");
+			}
+		}
+		break;
+	case 2:
+		/*WRI - WiFi RSSI*/
+		Serial.println(WiFi.RSSI());
+		break;
+	case 3:
+		/*WID - WiFi ID*/
+		Serial.println(WiFi.SSID());
+		break;
+	case 4:
+		/*WFD - WiFi Disconnect*/
+		WiFi.disconnect();
+		delay(100);
+		Serial.println("OK");
+		break;
+	case 5:
+		/*IPAddress addr;
+		if (addr.fromString(strIP)) {
+		  // it was a valid address, do something with it
+		}*/
+		/*WiFi Configuration*/
+		/*IPAddress local_ip();
+		WiFi.config();*/
+
+		break;
+	case 6:
+		/*CCS - Client Connect to Server*/
+		port = atoi(parametros[1]);
+		if(!inRange(port,0,MAX_PORT_NUMBER)){
+			Serial.println("IP");
+			break;
+		}
+		socket = getFreeSocket();
+		if(client[socket].connect(parametros[0],port)){
+			Serial.print("OK");
+			Serial.print(",");
+			Serial.println(socket);
+		}else{
+			Serial.println("E");
+		}
+		break;
+	case 7:
+		/*SOW - Socket Write*/
+		/*Verificar primero si existe una conexion activa antes de intentar enviar el mensaje*/
+		socket = atoi(parametros[0]);
+		bytesToWrite = atoi(parametros[1]);
+		if(inRange(socket,0,MAX_NUM_CLIENTS) == true){
+			if( (bytesToWrite >= 0) && (bytesToWrite <= MAX_PACKET_SIZE) ){
+				if(client[socket].connected()){
+					/*data to print: char, byte, int, long, or string*/
+					/*The max packet size in TCP is 1460 bytes*/
+					bytesWritten = client[socket].write(parametros[2],bytesToWrite);
+					/*Waits for the TX WiFi Buffer be empty.*/
+					client[socket].flush();
+					if(bytesToWrite != bytesWritten){
+						Serial.println("E");
+					}else{
+						Serial.println("OK");
+					}
+				}else{
+					Serial.println("NC");
+				}
+			}else{
+				Serial.println("IB");
+			}
+		}else{
+			Serial.println("IS");
+		}
+		break;
+	case 8:
+		/*SOR - Socket Read*/
+		socket = atoi(parametros[0]);
+		/*print received data from server*/
+		if(!inRange(socket,0,MAX_NUM_CLIENTS)){
+			Serial.println("IS");
+			break;
+		}
+		Serial.write(bufferReceivedFromServer[socket]);
+		bytesReceivedFromServer[socket] = 0;
+		/*Clear the buffer*/
+		for (int i=0; i < MAX_PACKET_SIZE; i++){
+			bufferReceivedFromServer[socket][i] = 0;
+		}
+		fullBufferRcvd[socket] = false;
+		break;
+	case 9:
+		/*SOC- Socket Close*/
+		socket = atoi(parametros[0]);
+		if(!inRange(socket,0,MAX_NUM_CLIENTS) == true){
+			Serial.println("IS");
+			break;
+		}
+		client[socket].stop();
+		Serial.println("OK");
+		break;
+	case 10:
+		/*SLC - Server Listen to Clients*/
+		port = atoi(parametros[0]);
+		/*Determinar primero si el puerto es valido*/
+		if(!inRange(port,0,MAX_PORT_NUMBER)){
+			Serial.println("IP");
+			break;
+		}
+		/*Determinar si ya existe un servidor funcionando con ese puerto*/
+		for (i = 0; i < MAX_NUM_SERVERS; i++) {
+			if(port != serverPortsInUse[i]){
+				portInUse = false;
+				break;
+			}else{
+				portInUse = true;
+				break;
+			}
+		}
+		/*Si no existe un servidor con ese puerto, determinar que servidor esta libre y crear el servidor*/
+		if(!portInUse){
+			serverPortsInUse[i] = port;
+			for (i = 0; i < MAX_NUM_SERVERS; i++) {
+				if(server[i].status() == CLOSED){
+					server[i].begin(port);
+					Serial.print("OK,");
+					Serial.println(i,DEC);
+					serverOn[i] = true;
 					break;
 				}
 			}
-			if(WFC_STATUS==1){
-				Serial.println("OK");
-			}else{
-				Serial.println("TO");
-			}
+		}else{
+			Serial.println("UP");
+		}
+		break;
+	case 11:
+		/*SCC - Server Close Connection*/
+		socket = atoi(parametros[0]);
+		if(!inRange(socket,0,MAX_NUM_SERVERS)){
+			Serial.println("IS");
 			break;
-		case 1:
-			/*WiFi Scan*/
-			WiFi.mode(WIFI_STA);
-			WiFi.disconnect();
-			delay(100);
-			numSsid = WiFi.scanNetworks();
-			if (numSsid == -1) {
-			Serial.println("NC");
-			}else{
-				// print the list of networks seen:
-				Serial.println(numSsid);
-
-				// print the network number and name for each network found:
-				for (int thisNet = 0; thisNet < numSsid; thisNet++) {
-				Serial.print(thisNet);
-				Serial.print(") ");
-				Serial.print(WiFi.SSID(thisNet));
-				//Serial.printf("SSID: %s", WiFi.SSID().c_str());
-				Serial.print("\tSignal: ");
-				Serial.print(WiFi.RSSI(thisNet));
-				Serial.println(" dBm");
-				}
-			}
+		}
+		server[socket].stop();
+		serverOn[socket] = false;
+		Serial.println("OK");
+		break;
+	case 12:
+		/*SAC - Server Accept Clients*/
+		socket = atoi(parametros[0]);
+		if(!inRange(socket,0,MAX_NUM_SERVERS)){
+			Serial.println("IS");
 			break;
-		case 2:
-			/*WiFi RSSI*/
-
-			break;
-		case 3:
-			/*WiFi ID*/
-
-			break;
-		case 4:
-			/*WiFi Disconnect*/
-
-			break;
-		case 5:
-			/*WiFi Configuration*/
-
-
-			break;
-		case 6:
-			/*CCS - Client Connect to Server*/
-			port = atoi(parametros[1]);
-			if(client.connect(parametros[0],port)){
-				Serial.println("OK");
-			}else{
-				Serial.println("E");
-			};
-			break;
-		case 7:
-			/*CWS - Client Write to Server*/
-			/*Verificar primero si existe una conexion activa antes de intentar enviar el mensaje*/
-			if(client.connected()){
-				/*data to print: char, byte, int, long, or string*/
-				/*The max packet size in TCP is 1460 bytes*/
-				bytesToWrite = atoi(parametros[0]);
-				Serial.println(bytesToWrite,DEC);
-				bytesWritten = client.write(parametros[1],bytesToWrite);
-				Serial.println(bytesWritten,DEC);
-				/*Waits for the TX WiFi Buffer be empty.*/
-				client.flush();
-				Serial.println("OK");
+		}
+		if(serverOn[socket]){
+			if(server[socket].hasClient()){
+				acceptClients(server[socket]);
 			}else{
 				Serial.println("NC");
 			}
-			break;
-		case 8:
-			/*CRS - Client Receive from Server*/
-
-			/*print received data from server*/
-			Serial.println(bufferReceivedFromServer);
-			/**/
-			bytesReceivedFromServer = 0;
-
-			/*Clear the buffer*/
-			memset(bufferReceivedFromServer,0,sizeof(bufferReceivedFromServer));
-			//bufferReceivedFromServer[0] ='\0';
-			/**/
-			fullBufferRcvd = false;
-			break;
-		case 9:
-			/*CCC - Client Close Connection*/
-			client.stop();
-			Serial.println("OK");
-			break;
-		default:
-			break;
+		}else{
+			Serial.println("SOFF");
 		}
-
+		break;
+	case 13:
+		socket = atoi(parametros[0]);
+		if (client[socket]) {
+		  client[socket].stop();
+		}
+		Serial.println("Closed.");
+		break;
+	case 14:
+		/*GFH - Get Free Heap*/
+		Serial.println(ESP.getFreeHeap(),DEC);
+		break;
+	default:
+		break;
 	}
-
 }
 
-/* Descripcion: */
+/* Descripcion: Recibe los datos seriales, byte por byte*/
 void recvWithEndMarker() {
- static byte ndx = 0;
+	char recvChar, dump = '\0';
+	char bufferCmd[4] = {'\0'};
+	char bufferNumBytes[4] = {'\0'};
+	char tempBuffer[MAX_PACKET_SIZE];
+	static uint16_t indxRecv = 0;
+	uint16_t indxComa1=0, indxComa2=0, qComa=0, indxData = 0;
+	uint16_t cmdPacketSize = 0;
+	bool dataCmd = false, Coma2 = false, numBytes = false, runDataCmd = false;
+	unsigned long previousTime = 0;
+	unsigned long currentTime = 0;
 
-/*Received Byte*/
-char rc;
+	/*Mientras haya datos serial disponibles*/
 
-/**/
- while (Serial.available() > 0 && newData == false) {
-	 rc = Serial.read();
-	 if (rc != endMarker) {
-		 receivedChars[ndx] = rc;
-		 ndx++;
-	 if (ndx >= numChars) {
-		 ndx = numChars - 1;
-		 }
- 	 }else{
-		 receivedChars[ndx] = '\0'; // terminate the string
-		 ndx = 0;
-		 newData = true;
-	 }
- }
+	while (Serial.available() > 0 && newData == false) {
+
+		/*Recibe caracter por caracter y lo alamcena en un buffer*/
+		recvChar = Serial.read();
+		tempBuffer[indxRecv] = recvChar;
+
+		/*Se pregunta si se recibio el comando de datos(SOW)*/
+		if(indxRecv == 2){
+			memcpy(bufferCmd,&tempBuffer,3);
+			bufferCmd[3] = '\0';
+			if(!strcmp(bufferCmd,"SOW")){
+				dataCmd = true;
+			}else{
+				dataCmd = false;
+			}
+		}
+
+		/*Se lleva la cuenta de las comas y se guarda la posicion de la segunda y tercera*/
+		if(recvChar == ','){
+			if(qComa == 1){
+				indxComa1 = indxRecv;
+			}
+			if(qComa == 2){
+				indxComa2 = indxRecv;
+				Coma2 = true;
+			}
+			qComa++;
+		}
+
+		/*Si aparecio el comando SOW y se alcanzo la cantidad de comas, se verifica que la cantidad de bytes
+		 * este presente y sea un numero valido*/
+		if((dataCmd == true && Coma2 == true) && (numBytes == false)){
+			memcpy(bufferNumBytes,&tempBuffer[indxComa1+1],(indxComa2 - indxComa1 - 1));
+			bufferNumBytes[indxComa2 - indxComa1] = '\0';
+			cmdPacketSize = atoi(bufferNumBytes);
+			if(inRange(cmdPacketSize,0,MAX_PACKET_SIZE)){
+				numBytes = true;
+				runDataCmd = true;
+			}
+		}
+
+		/*Si se valido el comando y la cantidad a transmitir, se espera hasta que lleguen los
+		 * datos y se envia*/
+		if((runDataCmd == true) && (indxRecv > indxComa2)){
+			if(indxData < cmdPacketSize){
+				serialCharsBuffer[indxRecv] = recvChar;
+				indxRecv++;
+				indxData++;
+			}else{
+				if((recvChar == endMarker)){
+					serialCharsBuffer[indxRecv] = '\0'; // terminate the string
+					indxRecv = 0;
+				}else{
+					/*Si entra aca significa que no se termino el comando con LF(\n)*/
+					serialCharsBuffer[0] = '\0'; // terminate the string
+					indxRecv = 0;
+				}
+				/*Se vacia el buffer serial, necesario para no procesar basura*/
+				while (Serial.available() > 0){
+					dump = Serial.read();
+				}
+				newData = true;
+			}
+		}else{
+			if (recvChar != endMarker) {
+				serialCharsBuffer[indxRecv] = recvChar;
+				indxRecv++;
+				if (indxRecv >= numChars) {
+					indxRecv = numChars - 1;
+				}
+			}else{
+				serialCharsBuffer[indxRecv] = '\0'; // terminate the string
+				indxRecv = 0;
+				newData = true;
+			}
+		}
+	}
 }
 
 /* Descripcion: Muestra los datos recibidos por serial*/
 void showNewData() {
- if (newData == true) {
-	 Serial.print("Recibido:");
-	 Serial.println(receivedChars);
-	 //newData = false;
- }
+	if (newData == true) {
+		Serial.print("Recibido:");
+		Serial.println(serialCharsBuffer);
+	}
 }
 
 /* Descripcion: Separa los datos recibidos en campos*/
@@ -426,18 +596,11 @@ void parseData() {
 	  strcpy(bufferSerial[delimFound],strtokIndx);
 	  strtokIndx = strtok(NULL, delim);
 	  delimFound++;
-	  if(delimFound == qParamaters){
-		  strcpy(delim,"\n");
-	  }
 	}
-	parametersFound = delimFound - 1;
+	if(delimFound > 0){
+		parametersFound = delimFound - 1;
+	}
 	strcpy(INST,bufferSerial[0]);
-	/*Para sacar el caracter de LF del ultimo parametro.*/
-	for(i=0; i < strlen(bufferSerial[delimFound]); i++){
-		if(bufferSerial[delimFound][i]== '\n'){
-			bufferSerial[delimFound][i] = '\0';
-		}
-	}
 	for(i=0; i < parametersFound; i++){
 		strcpy(parametros[i],bufferSerial[i+1]);
 	}
@@ -461,19 +624,75 @@ void showParsedData() {
 
 /* Descripcion: Recibe un byte del servidor*/
 void receiveFromServer(){
-	if(client.connected()){
-		/*Retorna la cantidad de bytes disponibles*/
-		int bytesAvailable = client.available();
-		/*Si hay bytes disponibles y el buffer no esta lleno*/
-		if (bytesAvailable && !fullBufferRcvd) {
-			/*Lee el siguiente byte recibido*/
-			bufferReceivedFromServer[bytesReceivedFromServer++] = client.read();
-			/*Si la cantidad de bytes leidos por el servidor supero el tamaño
-			 * del buffer, se indica que se lleno el buffer.*/
-			if(bytesReceivedFromServer > packetSize){
-				fullBufferRcvd = true;
+	uint16_t bytesAvailable;
+	char dump;
+	for(int i = 0; i < MAX_NUM_CLIENTS; i++){
+		if(client[i].connected()){
+			/*Retorna la cantidad de bytes disponibles*/
+			bytesAvailable = client[i].available();
+			/*Si hay bytes disponibles y el buffer no esta lleno*/
+			if (bytesAvailable) {
+				if(!fullBufferRcvd[i]){
+					//Serial.println("Leido");
+					/*Lee el siguiente byte recibido*/
+					bufferReceivedFromServer[i][bytesReceivedFromServer[i]++] = client[i].read();
+					/*Si la cantidad de bytes leidos por el servidor supero el tamaño
+					 * del buffer, se indica que se lleno el buffer.*/
+					if(bytesReceivedFromServer[i] > MAX_PACKET_SIZE){
+						//Serial.println("Me llene");
+						fullBufferRcvd[i] = true;
+					}
+				}else{
+					//Serial.println("Dump");
+					dump = client[i].read();
+
+				}
 			}
 		}
 	}
 }
+
+/* Descripcion: Verifica el numero val este dentro del rango limitado por min y max*/
+bool inRange(uint16_t val, uint16_t min, uint16_t max)
+{
+  return ((min <= val) && (val <= max));
+}
+
+/* Descripcion: Devuelve el primer indice del socket dispoinible*/
+uint8_t	getFreeSocket(){
+	uint8_t i=0;
+	for (i = 0; i < MAX_NUM_CLIENTS; i++) {
+		/*Si esta vacio y no esta conectado*/
+		if (!client[i] || !client[i].connected()) {
+			if (client[i]) {
+			  client[i].stop();
+			}
+			return i;
+		}
+	}
+	/*Si no hay ningun lugar disponible*/
+	if (i == MAX_NUM_CLIENTS) {
+		return 255;
+	}
+	return 255;
+}
+
+/* Descripcion: Se encarga de aceptar a clientes que se quieren conectar al servidor*/
+void acceptClients(WiFiServer& server){
+	uint8_t socket;
+	socket = getFreeSocket();
+	if(socket!=255){
+		/*Se encontro socket libre*/
+		client[socket] = server.available();
+		Serial.print("OK,");
+		Serial.println(socket,DEC);
+	}else{
+		/*No hay socket disponible*/
+		WiFiClient serverClient = server.available();
+		serverClient.stop();
+		Serial.println("NS");
+	}
+}
+
+
 
