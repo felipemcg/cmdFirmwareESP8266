@@ -269,236 +269,232 @@ void runInstruction(){
 	uint8_t socket;
 	uint8_t i;
 	bool WFC_STATUS = 1, portInUse = false;
-	if(searchInstruction() && validateParameters()){
-		switch(instructionIndex){
-		case 0:
-			/*WFC - WiFi Connect*/
-			WiFi.mode(WIFI_STA);
-			Serial.println("A");
-			WiFi.begin(parametros[0],parametros[1]);
-			/*for (int i = 0; i < strlen(parametros[0]); ++i) {
-				  Serial.printf("%02x ", parametros[0][i]);
-			  }
-			Serial.println("");
-			for (int i = 0; i < strlen(parametros[1]); ++i) {
-				Serial.printf("%02x ", parametros[1][i]);
-			}*/
-			//Serial.println("");
-			Serial.println("B");
-			previousMillis = millis();
-			Serial.println("Mbo");
-			while (WiFi.status() != WL_CONNECTED) {
-				delay(20);
-				currentMillis = millis();
-				if((currentMillis - previousMillis) > MAX_WIFICONNECT_TO) {
-					WFC_STATUS = 0;
-					break;
-				}
-			}
-			if(WFC_STATUS==1){
-				Serial.println("OK");
-			}else{
-				Serial.println("TO");
-			}
-			break;
-		case 1:
-			/*WiFi Scan*/
-			WiFi.mode(WIFI_STA);
-			WiFi.disconnect();
-			delay(100);
-			numSsid = WiFi.scanNetworks();
-			if (numSsid == -1) {
-			Serial.println("NC");
-			}else{
-				// print the list of networks seen:
-				Serial.println(numSsid);
-
-				// print the network number and name for each network found:
-				for (int thisNet = 0; thisNet < numSsid; thisNet++) {
-				Serial.print(thisNet);
-				Serial.print(") ");
-				Serial.print(WiFi.SSID(thisNet));
-				//Serial.printf("SSID: %s", WiFi.SSID().c_str());
-				Serial.print("\tSignal: ");
-				Serial.print(WiFi.RSSI(thisNet));
-				Serial.println(" dBm");
-				}
-			}
-			break;
-		case 2:
-			/*WiFi RSSI*/
-			Serial.println(WiFi.RSSI());
-			break;
-		case 3:
-			/*WiFi ID*/
-			Serial.println(WiFi.SSID());
-			break;
-		case 4:
-			/*WiFi Disconnect*/
-			WiFi.disconnect();
-			delay(100);
-			Serial.println("OK");
-			break;
-		case 5:
-			/*IPAddress addr;
-			if (addr.fromString(strIP)) {
-			  // it was a valid address, do something with it
-			}*/
-			/*WiFi Configuration*/
-			/*IPAddress local_ip();
-			WiFi.config();*/
-
-			break;
-		case 6:
-			/*CCS - Client Connect to Server*/
-			port = atoi(parametros[1]);
-			if(!inRange(port,0,MAX_PORT_NUMBER)){
-				Serial.println("IP");
+	switch(instructionIndex){
+	case 0:
+		/*WFC - WiFi Connect*/
+		WiFi.mode(WIFI_STA);
+		Serial.println("A");
+		WiFi.begin(parametros[0],parametros[1]);
+		/*for (int i = 0; i < strlen(parametros[0]); ++i) {
+			  Serial.printf("%02x ", parametros[0][i]);
+		  }
+		Serial.println("");
+		for (int i = 0; i < strlen(parametros[1]); ++i) {
+			Serial.printf("%02x ", parametros[1][i]);
+		}*/
+		//Serial.println("");
+		Serial.println("B");
+		previousMillis = millis();
+		Serial.println("Mbo");
+		while (WiFi.status() != WL_CONNECTED) {
+			delay(20);
+			currentMillis = millis();
+			if((currentMillis - previousMillis) > MAX_WIFICONNECT_TO) {
+				WFC_STATUS = 0;
 				break;
 			}
-			socket = getFreeSocket();
-			if(client[socket].connect(parametros[0],port)){
-				Serial.print("OK");
-				Serial.print(",");
-				Serial.println(socket);
-			}else{
-				Serial.println("E");
+		}
+		if(WFC_STATUS==1){
+			Serial.println("OK");
+		}else{
+			Serial.println("TO");
+		}
+		break;
+	case 1:
+		/*WiFi Scan*/
+		WiFi.mode(WIFI_STA);
+		WiFi.disconnect();
+		delay(100);
+		numSsid = WiFi.scanNetworks();
+		if (numSsid == -1) {
+		Serial.println("NC");
+		}else{
+			// print the list of networks seen:
+			Serial.println(numSsid);
+
+			// print the network number and name for each network found:
+			for (int thisNet = 0; thisNet < numSsid; thisNet++) {
+			Serial.print(thisNet);
+			Serial.print(") ");
+			Serial.print(WiFi.SSID(thisNet));
+			//Serial.printf("SSID: %s", WiFi.SSID().c_str());
+			Serial.print("\tSignal: ");
+			Serial.print(WiFi.RSSI(thisNet));
+			Serial.println(" dBm");
 			}
+		}
+		break;
+	case 2:
+		/*WiFi RSSI*/
+		Serial.println(WiFi.RSSI());
+		break;
+	case 3:
+		/*WiFi ID*/
+		Serial.println(WiFi.SSID());
+		break;
+	case 4:
+		/*WiFi Disconnect*/
+		WiFi.disconnect();
+		delay(100);
+		Serial.println("OK");
+		break;
+	case 5:
+		/*IPAddress addr;
+		if (addr.fromString(strIP)) {
+		  // it was a valid address, do something with it
+		}*/
+		/*WiFi Configuration*/
+		/*IPAddress local_ip();
+		WiFi.config();*/
+
+		break;
+	case 6:
+		/*CCS - Client Connect to Server*/
+		port = atoi(parametros[1]);
+		if(!inRange(port,0,MAX_PORT_NUMBER)){
+			Serial.println("IP");
 			break;
-		case 7:
-			/*SOW - Socket Write*/
-			/*Verificar primero si existe una conexion activa antes de intentar enviar el mensaje*/
-			socket = atoi(parametros[0]);
-			bytesToWrite = atoi(parametros[1]);
-			if(inRange(socket,0,MAX_NUM_CLIENTS) == true){
-				if( (bytesToWrite >= 0) && (bytesToWrite <= MAX_PACKET_SIZE) ){
-					if(client[socket].connected()){
-						/*data to print: char, byte, int, long, or string*/
-						/*The max packet size in TCP is 1460 bytes*/
-						bytesWritten = client[socket].write(parametros[2],bytesToWrite);
-						//client[socket].println(parametros[2]);
-						/*Waits for the TX WiFi Buffer be empty.*/
-						client[socket].flush();
-						if(bytesToWrite != bytesWritten){
-							Serial.println("E");
-						}else{
-							Serial.println("OK");
-						}
+		}
+		socket = getFreeSocket();
+		if(client[socket].connect(parametros[0],port)){
+			Serial.print("OK");
+			Serial.print(",");
+			Serial.println(socket);
+		}else{
+			Serial.println("E");
+		}
+		break;
+	case 7:
+		/*SOW - Socket Write*/
+		/*Verificar primero si existe una conexion activa antes de intentar enviar el mensaje*/
+		socket = atoi(parametros[0]);
+		bytesToWrite = atoi(parametros[1]);
+		if(inRange(socket,0,MAX_NUM_CLIENTS) == true){
+			if( (bytesToWrite >= 0) && (bytesToWrite <= MAX_PACKET_SIZE) ){
+				if(client[socket].connected()){
+					/*data to print: char, byte, int, long, or string*/
+					/*The max packet size in TCP is 1460 bytes*/
+					bytesWritten = client[socket].write(parametros[2],bytesToWrite);
+					//client[socket].println(parametros[2]);
+					/*Waits for the TX WiFi Buffer be empty.*/
+					client[socket].flush();
+					if(bytesToWrite != bytesWritten){
+						Serial.println("E");
 					}else{
-						Serial.println("NC");
+						Serial.println("OK");
 					}
-				}else{
-					Serial.println("IB");
-				}
-			}else{
-				Serial.println("IS");
-			}
-			break;
-		case 8:
-			/*SOR - Socket Read*/
-			socket = atoi(parametros[0]);
-			/*print received data from server*/
-			if(!inRange(socket,0,MAX_NUM_CLIENTS)){
-				Serial.println("IS");
-				break;
-			}
-			Serial.write(bufferReceivedFromServer[socket]);
-			bytesReceivedFromServer[socket] = 0;
-			/*Clear the buffer*/
-			for (int i=0; i < MAX_PACKET_SIZE; i++){
-				bufferReceivedFromServer[socket][i] = 0;
-			}
-			fullBufferRcvd[socket] = false;
-			break;
-		case 9:
-			/*SOC- Socket Close*/
-			socket = atoi(parametros[0]);
-			if(!inRange(socket,0,MAX_NUM_CLIENTS) == true){
-				Serial.println("IS");
-				break;
-			}
-			client[socket].stop();
-			Serial.println("OK");
-			break;
-		case 10:
-			/*SCL - Server listens to clients*/
-			port = atoi(parametros[0]);
-			/*Determinar primero si el puerto es valido*/
-			if(!inRange(port,0,MAX_PORT_NUMBER)){
-				Serial.println("IP");
-				break;
-			}
-			/*Determinar si ya existe un servidor funcionando con ese puerto*/
-			for (i = 0; i < MAX_NUM_SERVERS; i++) {
-				if(port != serverPortsInUse[i]){
-					portInUse = false;
-					break;
-				}else{
-					portInUse = true;
-					break;
-				}
-			}
-			/*Si no existe un servidor con ese puerto, determinar que servidor esta libre y crear el servidor*/
-			if(!portInUse){
-				serverPortsInUse[i] = port;
-				for (i = 0; i < MAX_NUM_SERVERS; i++) {
-					if(server[i].status() == CLOSED){
-						server[i].begin(port);
-						Serial.print("OK,");
-						Serial.println(i,DEC);
-						serverOn[i] = true;
-						break;
-					}
-				}
-			}else{
-				Serial.println("UP");
-			}
-			break;
-		case 11:
-			/*SCC*/
-			//SERVER_ON = false;
-			socket = atoi(parametros[0]);
-			if(!inRange(socket,0,MAX_NUM_SERVERS)){
-				Serial.println("IS");
-				break;
-			}
-			server[socket].stop();
-			Serial.println("OK");
-			break;
-		case 12:
-			/*SAC*/
-			socket = atoi(parametros[0]);
-			if(!inRange(socket,0,MAX_NUM_SERVERS)){
-				Serial.println("IS");
-				break;
-			}
-			if(serverOn[socket]){
-				if(server[socket].hasClient()){
-					acceptClients(server[socket]);
 				}else{
 					Serial.println("NC");
 				}
 			}else{
-				Serial.println("SOFF");
+				Serial.println("IB");
 			}
-			break;
-		case 13:
-			socket = atoi(parametros[0]);
-			if (client[socket]) {
-			  client[socket].stop();
-			}
-			Serial.println("Closed.");
-			break;
-		case 14:
-			/*GFH - Get Free Heap*/
-			Serial.println(ESP.getFreeHeap(),DEC);
-			break;
-		default:
+		}else{
+			Serial.println("IS");
+		}
+		break;
+	case 8:
+		/*SOR - Socket Read*/
+		socket = atoi(parametros[0]);
+		/*print received data from server*/
+		if(!inRange(socket,0,MAX_NUM_CLIENTS)){
+			Serial.println("IS");
 			break;
 		}
-
+		Serial.write(bufferReceivedFromServer[socket]);
+		bytesReceivedFromServer[socket] = 0;
+		/*Clear the buffer*/
+		for (int i=0; i < MAX_PACKET_SIZE; i++){
+			bufferReceivedFromServer[socket][i] = 0;
+		}
+		fullBufferRcvd[socket] = false;
+		break;
+	case 9:
+		/*SOC- Socket Close*/
+		socket = atoi(parametros[0]);
+		if(!inRange(socket,0,MAX_NUM_CLIENTS) == true){
+			Serial.println("IS");
+			break;
+		}
+		client[socket].stop();
+		Serial.println("OK");
+		break;
+	case 10:
+		/*SCL - Server listens to clients*/
+		port = atoi(parametros[0]);
+		/*Determinar primero si el puerto es valido*/
+		if(!inRange(port,0,MAX_PORT_NUMBER)){
+			Serial.println("IP");
+			break;
+		}
+		/*Determinar si ya existe un servidor funcionando con ese puerto*/
+		for (i = 0; i < MAX_NUM_SERVERS; i++) {
+			if(port != serverPortsInUse[i]){
+				portInUse = false;
+				break;
+			}else{
+				portInUse = true;
+				break;
+			}
+		}
+		/*Si no existe un servidor con ese puerto, determinar que servidor esta libre y crear el servidor*/
+		if(!portInUse){
+			serverPortsInUse[i] = port;
+			for (i = 0; i < MAX_NUM_SERVERS; i++) {
+				if(server[i].status() == CLOSED){
+					server[i].begin(port);
+					Serial.print("OK,");
+					Serial.println(i,DEC);
+					serverOn[i] = true;
+					break;
+				}
+			}
+		}else{
+			Serial.println("UP");
+		}
+		break;
+	case 11:
+		/*SCC*/
+		//SERVER_ON = false;
+		socket = atoi(parametros[0]);
+		if(!inRange(socket,0,MAX_NUM_SERVERS)){
+			Serial.println("IS");
+			break;
+		}
+		server[socket].stop();
+		Serial.println("OK");
+		break;
+	case 12:
+		/*SAC*/
+		socket = atoi(parametros[0]);
+		if(!inRange(socket,0,MAX_NUM_SERVERS)){
+			Serial.println("IS");
+			break;
+		}
+		if(serverOn[socket]){
+			if(server[socket].hasClient()){
+				acceptClients(server[socket]);
+			}else{
+				Serial.println("NC");
+			}
+		}else{
+			Serial.println("SOFF");
+		}
+		break;
+	case 13:
+		socket = atoi(parametros[0]);
+		if (client[socket]) {
+		  client[socket].stop();
+		}
+		Serial.println("Closed.");
+		break;
+	case 14:
+		/*GFH - Get Free Heap*/
+		Serial.println(ESP.getFreeHeap(),DEC);
+		break;
+	default:
+		break;
 	}
-
 }
 
 /* Descripcion: */
