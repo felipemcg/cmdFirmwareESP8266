@@ -363,26 +363,17 @@ void runInstruction(){
 		case 6:
 			/*CCS - Client Connect to Server*/
 			port = atoi(parametros[1]);
-			for (i = 0; i < MAX_NUM_CLIENTS; i++) {
-				//find free/disconnected spot
-				//Si esta vacio y no esta conectado
-				if (!client[i] || !client[i].connected()) {
-					if (client[i]) {
-						client[i].stop();
-					}
-					if(client[i].connect(parametros[0],port)){
-						Serial.print("OK");
-						Serial.print(",");
-						Serial.println(i);
-					}else{
-						Serial.println("E");
-					}
-					break;
-				}
+			if(!inRange(port,0,MAX_PORT_NUMBER)){
+				Serial.println("IP");
+				break;
 			}
-			//no free/disconnected spot so reject
-			if (i == MAX_NUM_CLIENTS) {
-				Serial.println("NS");
+			socket = getFreeSocket();
+			if(client[socket].connect(parametros[0],port)){
+				Serial.print("OK");
+				Serial.print(",");
+				Serial.println(socket);
+			}else{
+				Serial.println("E");
 			}
 			break;
 		case 7:
@@ -737,6 +728,7 @@ uint8_t	getFreeSocket(){
 	if (i == MAX_NUM_CLIENTS) {
 		return 255;
 	}
+	return 255;
 }
 
 void acceptClients(WiFiServer& server){
