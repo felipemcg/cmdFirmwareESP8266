@@ -166,7 +166,6 @@ void loop() {
 
 	/*Una vez que se reciben todos los datos por serial, se conienza a procesar*/
 	if(newData == true){
-		Serial.println(serialCharsBuffer);
 
 	#ifdef sDebug
 		pMillis = millis();
@@ -237,7 +236,6 @@ void loop() {
 bool searchInstruction(){
 	uint8_t j;
 	for(j=0; j<MAX_INTS_SET; j++){
-		Serial.print(j,DEC);
 		if(strcmp(INST,instructionSet[j]) == 0){
 			instructionIndex = j;
 			return 1;
@@ -602,7 +600,6 @@ void parseData() {
 	if(delimFound > 0){
 		parametersFound = delimFound - 1;
 	}
-	Serial.println(parametersFound,DEC);
 	strcpy(INST,bufferSerial[0]);
 	for(i=0; i < parametersFound; i++){
 		strcpy(parametros[i],bufferSerial[i+1]);
