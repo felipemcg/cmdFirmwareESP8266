@@ -40,9 +40,10 @@
 /*Numero maximo de clientes que puede manejar el modulo*/
 #define MAX_NUM_CLIENTS 4
 
+/*Numero maximo de servidores que puede manejar el modulo*/
 #define MAX_NUM_SERVERS 4
 
-/**/
+/*Numero maximo de puerto*/
 #define MAX_PORT_NUMBER  65535
 
 /*Puerto por default que el server escuchara*/
@@ -235,17 +236,14 @@ void loop() {
  * */
 bool searchInstruction(){
 	uint8_t j;
-	Serial.println("Entro search");
 	for(j=0; j<MAX_INTS_SET; j++){
 		Serial.print(j,DEC);
 		if(strcmp(INST,instructionSet[j]) == 0){
 			instructionIndex = j;
-			Serial.println("retorno ok");
 			return 1;
 
 		}
 	}
-	Serial.println("retorno o");
 	return 0;
 }
 
@@ -271,19 +269,8 @@ void runInstruction(){
 	case 0:
 		/*WFC - WiFi Connect*/
 		WiFi.mode(WIFI_STA);
-		Serial.println("A");
 		WiFi.begin(parametros[0],parametros[1]);
-		/*for (int i = 0; i < strlen(parametros[0]); ++i) {
-			  Serial.printf("%02x ", parametros[0][i]);
-		  }
-		Serial.println("");
-		for (int i = 0; i < strlen(parametros[1]); ++i) {
-			Serial.printf("%02x ", parametros[1][i]);
-		}*/
-		//Serial.println("");
-		Serial.println("B");
 		previousMillis = millis();
-		Serial.println("Mbo");
 		while (WiFi.status() != WL_CONNECTED) {
 			delay(20);
 			currentMillis = millis();
@@ -299,7 +286,7 @@ void runInstruction(){
 		}
 		break;
 	case 1:
-		/*WiFi Scan*/
+		/*WFS - WiFi Scan*/
 		WiFi.mode(WIFI_STA);
 		WiFi.disconnect();
 		delay(100);
@@ -323,15 +310,15 @@ void runInstruction(){
 		}
 		break;
 	case 2:
-		/*WiFi RSSI*/
+		/*WRI - WiFi RSSI*/
 		Serial.println(WiFi.RSSI());
 		break;
 	case 3:
-		/*WiFi ID*/
+		/*WID - WiFi ID*/
 		Serial.println(WiFi.SSID());
 		break;
 	case 4:
-		/*WiFi Disconnect*/
+		/*WFD - WiFi Disconnect*/
 		WiFi.disconnect();
 		delay(100);
 		Serial.println("OK");
@@ -373,7 +360,6 @@ void runInstruction(){
 					/*data to print: char, byte, int, long, or string*/
 					/*The max packet size in TCP is 1460 bytes*/
 					bytesWritten = client[socket].write(parametros[2],bytesToWrite);
-					//client[socket].println(parametros[2]);
 					/*Waits for the TX WiFi Buffer be empty.*/
 					client[socket].flush();
 					if(bytesToWrite != bytesWritten){
@@ -418,7 +404,7 @@ void runInstruction(){
 		Serial.println("OK");
 		break;
 	case 10:
-		/*SCL - Server listens to clients*/
+		/*SLC - Server Listen to Clients*/
 		port = atoi(parametros[0]);
 		/*Determinar primero si el puerto es valido*/
 		if(!inRange(port,0,MAX_PORT_NUMBER)){
@@ -452,7 +438,7 @@ void runInstruction(){
 		}
 		break;
 	case 11:
-		/*SCC*/
+		/*SCC - Server Close Connection*/
 		socket = atoi(parametros[0]);
 		if(!inRange(socket,0,MAX_NUM_SERVERS)){
 			Serial.println("IS");
@@ -463,7 +449,7 @@ void runInstruction(){
 		Serial.println("OK");
 		break;
 	case 12:
-		/*SAC*/
+		/*SAC - Server Accept Clients*/
 		socket = atoi(parametros[0]);
 		if(!inRange(socket,0,MAX_NUM_SERVERS)){
 			Serial.println("IS");
@@ -495,7 +481,7 @@ void runInstruction(){
 	}
 }
 
-/* Descripcion: */
+/* Descripcion: Recibe los datos seriales, byte por byte*/
 void recvWithEndMarker() {
 	char recvChar, dump = '\0';
 	char bufferCmd[4] = {'\0'};
@@ -514,17 +500,13 @@ void recvWithEndMarker() {
 
 		/*Recibe caracter por caracter y lo alamcena en un buffer*/
 		recvChar = Serial.read();
-		//Serial.println(indxRecv,DEC);
 		tempBuffer[indxRecv] = recvChar;
 
 		/*Se pregunta si se recibio el comando de datos(SOW)*/
 		if(indxRecv == 2){
-			Serial.println("Indice:2");
 			memcpy(bufferCmd,&tempBuffer,3);
 			bufferCmd[3] = '\0';
-			Serial.println(bufferCmd);
 			if(!strcmp(bufferCmd,"SOW")){
-				Serial.println("SOW APARECIO");
 				dataCmd = true;
 			}else{
 				dataCmd = false;
@@ -548,29 +530,18 @@ void recvWithEndMarker() {
 		if((dataCmd == true && Coma2 == true) && (numBytes == false)){
 			memcpy(bufferNumBytes,&tempBuffer[indxComa1+1],(indxComa2 - indxComa1 - 1));
 			bufferNumBytes[indxComa2 - indxComa1] = '\0';
-			Serial.println("\n");
-			Serial.println(bufferNumBytes);
 			cmdPacketSize = atoi(bufferNumBytes);
 			if(inRange(cmdPacketSize,0,MAX_PACKET_SIZE)){
 				numBytes = true;
 				runDataCmd = true;
 			}
-			Serial.print("Packet Size:");
-			Serial.println(cmdPacketSize,DEC);
-			/*Agregar bandera aqui para que haga solo una vez*/
-			//indxData = indxComa2 + 1;
 		}
 
 		/*Si se valido el comando y la cantidad a transmitir, se espera hasta que lleguen los
 		 * datos y se envia*/
 		if((runDataCmd == true) && (indxRecv > indxComa2)){
-			Serial.print(indxData);
-			Serial.print(":");
-			Serial.print(recvChar);
-			Serial.print(" ");
 			if(indxData < cmdPacketSize){
 				serialCharsBuffer[indxRecv] = recvChar;
-				Serial.println(indxData,DEC);
 				indxRecv++;
 				indxData++;
 			}else{
@@ -584,7 +555,6 @@ void recvWithEndMarker() {
 				}
 				/*Se vacia el buffer serial, necesario para no procesar basura*/
 				while (Serial.available() > 0){
-					Serial.println("Dumped");
 					dump = Serial.read();
 				}
 				newData = true;
@@ -607,11 +577,10 @@ void recvWithEndMarker() {
 
 /* Descripcion: Muestra los datos recibidos por serial*/
 void showNewData() {
- if (newData == true) {
-	 Serial.print("Recibido:");
-	 Serial.println(serialCharsBuffer);
-	 //newData = false;
- }
+	if (newData == true) {
+		Serial.print("Recibido:");
+		Serial.println(serialCharsBuffer);
+	}
 }
 
 /* Descripcion: Separa los datos recibidos en campos*/
@@ -625,23 +594,19 @@ void parseData() {
 	/*Obtiene la primera parte, la instruccion*/
 	strtokIndx = strtok(tempChars,delim);
 	/*Mientras no encuentre el fin de la cadena*/
-	Serial.println("While Parser");
 	while(strtokIndx != NULL){
 	  strcpy(bufferSerial[delimFound],strtokIndx);
 	  strtokIndx = strtok(NULL, delim);
 	  delimFound++;
 	}
-	Serial.println("Salida Parser");
 	if(delimFound > 0){
 		parametersFound = delimFound - 1;
 	}
 	Serial.println(parametersFound,DEC);
 	strcpy(INST,bufferSerial[0]);
-	Serial.println("Entra al for");
 	for(i=0; i < parametersFound; i++){
 		strcpy(parametros[i],bufferSerial[i+1]);
 	}
-	Serial.println("Salida funcion");
 }
 
 /* Descripcion: Muestra los datos separados en campos */
