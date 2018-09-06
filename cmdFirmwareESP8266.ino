@@ -455,13 +455,13 @@ void runInstruction(){
 		break;
 	case 11:
 		/*SCC*/
-		//SERVER_ON = false;
 		socket = atoi(parametros[0]);
 		if(!inRange(socket,0,MAX_NUM_SERVERS)){
 			Serial.println("IS");
 			break;
 		}
 		server[socket].stop();
+		serverOn[socket] = false;
 		Serial.println("OK");
 		break;
 	case 12:
