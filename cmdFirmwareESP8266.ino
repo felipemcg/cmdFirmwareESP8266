@@ -410,6 +410,8 @@ void runInstruction(){
 				}else{
 					Serial.println("IB");
 				}
+			}else{
+				Serial.println("IS");
 			}
 			break;
 		case 8:
