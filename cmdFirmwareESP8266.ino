@@ -406,21 +406,20 @@ void runInstruction(){
 			}
 			break;
 		case 8:
-			/*CRS - Client Receive from Server*/
+			/*SOR - Socket Read*/
 			socket = atoi(parametros[0]);
 			/*print received data from server*/
-			if(inRange(socket,0,MAX_NUM_CLIENTS) == true){
-				Serial.println(bufferReceivedFromServer[socket]);
-				bytesReceivedFromServer[socket] = 0;
-				/*Clear the buffer*/
-				for (int i=0; i < MAX_PACKET_SIZE; i++){
-					bufferReceivedFromServer[socket][i] = 0;
-				}
-				//memset(bufferReceivedFromServer,0,sizeof(bufferReceivedFromServer));
-				//bufferReceivedFromServer[0] ='\0';
-				/**/
-				fullBufferRcvd[socket] = false;
+			if(!inRange(socket,0,MAX_NUM_CLIENTS)){
+				Serial.println("IS");
+				break;
 			}
+			Serial.write(bufferReceivedFromServer[socket]);
+			bytesReceivedFromServer[socket] = 0;
+			/*Clear the buffer*/
+			for (int i=0; i < MAX_PACKET_SIZE; i++){
+				bufferReceivedFromServer[socket][i] = 0;
+			}
+			fullBufferRcvd[socket] = false;
 			break;
 		case 9:
 			/*SOC- Socket Close*/
