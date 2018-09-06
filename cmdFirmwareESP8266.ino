@@ -162,14 +162,11 @@ void loop() {
 
 	/*Recibe los datos por serial, hasta que se encuentra el caracter terminador.*/
 	recvWithEndMarker();
-	for (int i = 0; i < strlen(serialCharsBuffer); ++i) {
-		Serial.printf("%02x ", serialCharsBuffer[i]);
-	}
 
+	/*Una vez que se reciben todos los datos por serial, se conienza a procesar*/
 	if(newData == true){
 		Serial.println(serialCharsBuffer);
-		/*Serial.print("H:");
-		Serial.println(ESP.getFreeHeap());*/
+
 	#ifdef sDebug
 		pMillis = millis();
 		/*Echo*/
@@ -186,7 +183,7 @@ void loop() {
 		/*Se muestran los datos separados en campos.*/
 
 	#endif
-		showParsedData();
+		//showParsedData();
 
 		yield();
 
@@ -223,7 +220,8 @@ void loop() {
 	#endif
 	}
 	yield();
-	/**/
+
+	/*Se almacenan los datos recibidos en los sockets en sus respectivos buffer's*/
 	receiveFromServer();
 
 	yield();
@@ -692,29 +690,32 @@ void receiveFromServer(){
 	}
 }
 
+/* Descripcion: Verifica el numero val este dentro del rango limitado por min y max*/
 bool inRange(uint16_t val, uint16_t min, uint16_t max)
 {
   return ((min <= val) && (val <= max));
 }
 
+/* Descripcion: Devuelve el primer indice del socket dispoinible*/
 uint8_t	getFreeSocket(){
 	uint8_t i=0;
 	for (i = 0; i < MAX_NUM_CLIENTS; i++) {
-		//Si esta vacio y no esta conectado
-	  if (!client[i] || !client[i].connected()) {
-		if (client[i]) {
-		  client[i].stop();
+		/*Si esta vacio y no esta conectado*/
+		if (!client[i] || !client[i].connected()) {
+			if (client[i]) {
+			  client[i].stop();
+			}
+			return i;
 		}
-		return i;
-	  }
 	}
-	//no free/disconnected spot so reject
+	/*Si no hay ningun lugar disponible*/
 	if (i == MAX_NUM_CLIENTS) {
 		return 255;
 	}
 	return 255;
 }
 
+/* Descripcion: Se encarga de aceptar a clientes que se quieren conectar al servidor*/
 void acceptClients(WiFiServer& server){
 	uint8_t socket;
 	socket = getFreeSocket();
