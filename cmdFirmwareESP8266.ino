@@ -441,9 +441,7 @@ void runInstruction(){
 			/*SCL - Server listens to clients*/
 			port = atoi(parametros[0]);
 			/*Determinar primero si el puerto es valido*/
-			if(inRange(port,0,MAX_PORT_NUMBER)){
-
-			}else{
+			if(!inRange(port,0,MAX_PORT_NUMBER)){
 				Serial.println("IP");
 				break;
 			}
