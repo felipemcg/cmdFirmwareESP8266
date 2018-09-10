@@ -16,7 +16,7 @@
 /*---	Comandos	---*/
 
 /*Cantidad maxima de parametros por comando*/
-#define MAX_PARAMETERS 3
+#define MAX_PARAMETERS 4
 
 /*Cantidad maxima de caracteres que puede contener cada parametro*/
 #define MAX_CHARS_PARAMETERS 1024
@@ -115,7 +115,7 @@ static const char instructionSet[MAX_INTS_SET][MAX_CHAR_INST+1] = {"WFC",	//0
 
 /*Matriz que almacena la cantidad de parametros necesarios
  *por cada comando, correspondencia por indice.*/
-const uint8_t qParametersInstruction[MAX_INTS_SET] ={2,0,0,0,0,3,2,3,1,1,1,1,1,1,0};
+const uint8_t qParametersInstruction[MAX_INTS_SET] ={2,0,0,0,0,4,2,3,1,1,1,1,1,1,0};
 
 /*Declaracion del objeto que se utilizara para el manejo del cliente, maximo 4
  * por limitacion del modulo.*/
@@ -263,6 +263,8 @@ void runInstruction(){
 	uint8_t socket;
 	uint8_t i;
 	bool WFC_STATUS = 1, portInUse = false;
+	IPAddress ip,dns,gateway,subnet;
+
 	switch(instructionIndex){
 	case 0:
 		/*WFC - WiFi Connect*/
@@ -322,13 +324,32 @@ void runInstruction(){
 		Serial.println("OK");
 		break;
 	case 5:
-		/*IPAddress addr;
-		if (addr.fromString(strIP)) {
-		  // it was a valid address, do something with it
-		}*/
-		/*WiFi Configuration*/
-		/*IPAddress local_ip();
-		WiFi.config();*/
+		/*WCF - WiFi Configuration*/
+		if(!ip.fromString(parametros[0])){
+			/*IP Invalida*/
+			Serial.println("E1");
+			break;
+		}
+		if(!dns.fromString(parametros[1])){
+			/*DNS Invalido*/
+			Serial.println("E2");
+			break;
+		}
+		if(!gateway.fromString(parametros[2])){
+			/*Gateway Invalido*/
+			Serial.println("E3");
+			break;
+		}
+		if(!subnet.fromString(parametros[3])){
+			/*Subnet Invalido*/
+			Serial.println("E4");
+			break;
+		}
+		if(WiFi.config(ip,gateway,subnet,dns)){
+			Serial.println("OK");
+		}else{
+			Serial.println("E");
+		}
 
 		break;
 	case 6:
@@ -481,7 +502,7 @@ void runInstruction(){
 
 /* Descripcion: Recibe los datos seriales, byte por byte*/
 void recvWithEndMarker() {
-	char recvChar, dump = '\0';
+	char recvChar, dump;
 	char bufferCmd[4] = {'\0'};
 	char bufferNumBytes[4] = {'\0'};
 	char tempBuffer[MAX_PACKET_SIZE];
@@ -489,8 +510,6 @@ void recvWithEndMarker() {
 	uint16_t indxComa1=0, indxComa2=0, qComa=0, indxData = 0;
 	uint16_t cmdPacketSize = 0;
 	bool dataCmd = false, Coma2 = false, numBytes = false, runDataCmd = false;
-	unsigned long previousTime = 0;
-	unsigned long currentTime = 0;
 
 	/*Mientras haya datos serial disponibles*/
 
