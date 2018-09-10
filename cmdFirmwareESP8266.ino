@@ -25,7 +25,7 @@
 #define MAX_CHAR_INST 3
 
 /*Numero maximo de instrucciones*/
-#define MAX_INTS_SET 15
+#define MAX_INTS_SET 16
 
 /*---------------------*/
 /*El tiempo maxima para esperar una respuesta del servidor, em ms.*/
@@ -111,11 +111,12 @@ static const char instructionSet[MAX_INTS_SET][MAX_CHAR_INST+1] = {"WFC",	//0
 		"SCC",	//11
 		"SAC",	//12
 		"SRC",	//13
-		"GFH"};	//14
+		"GFH",	//14
+		"MIS"};	//15
 
 /*Matriz que almacena la cantidad de parametros necesarios
  *por cada comando, correspondencia por indice.*/
-const uint8_t qParametersInstruction[MAX_INTS_SET] ={2,0,0,0,0,4,2,3,1,1,1,1,1,1,0};
+const uint8_t qParametersInstruction[MAX_INTS_SET] ={2,0,0,0,0,4,2,3,1,1,1,1,1,1,0,0};
 
 /*Declaracion del objeto que se utilizara para el manejo del cliente, maximo 4
  * por limitacion del modulo.*/
@@ -494,6 +495,10 @@ void runInstruction(){
 	case 14:
 		/*GFH - Get Free Heap*/
 		Serial.println(ESP.getFreeHeap(),DEC);
+		break;
+	case 15:
+		/*MIS - Module Is Alive*/
+		Serial.println("OK");
 		break;
 	default:
 		break;
