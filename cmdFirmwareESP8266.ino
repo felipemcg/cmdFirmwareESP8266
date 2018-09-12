@@ -471,7 +471,8 @@ void runInstruction(){
 		port = atoi(parametros[0]);
 		/*Determinar primero si el puerto es valido*/
 		if(!inRange(port,0,MAX_PORT_NUMBER)){
-			Serial.println("IP");
+			/*El numero de puerto esta fuera de rango*/
+			Serial.println("E1");
 			break;
 		}
 		/*Determinar si ya existe un servidor funcionando con ese puerto*/
@@ -497,14 +498,16 @@ void runInstruction(){
 				}
 			}
 		}else{
-			Serial.println("UP");
+			/*Indica que ya existe un servidor escuchando en ese puerto*/
+			Serial.println("E2");
 		}
 		break;
 	case 11:
 		/*SCC - Server Close Connection*/
 		socket = atoi(parametros[0]);
 		if(!inRange(socket,0,MAX_NUM_SERVERS)){
-			Serial.println("IS");
+			/*El numero de socket esta fuera de rango*/
+			Serial.println("E1");
 			break;
 		}
 		server[socket].stop();
@@ -515,17 +518,20 @@ void runInstruction(){
 		/*SAC - Server Accept Clients*/
 		socket = atoi(parametros[0]);
 		if(!inRange(socket,0,MAX_NUM_SERVERS)){
-			Serial.println("IS");
+			/*El numero de socket esta fuera de rango*/
+			Serial.println("E1");
 			break;
 		}
 		if(serverOn[socket]){
 			if(server[socket].hasClient()){
 				acceptClients(server[socket]);
 			}else{
-				Serial.println("NC");
+				/*El servidor no tiene clientes*/
+				Serial.println("E2");
 			}
 		}else{
-			Serial.println("SOFF");
+			/*El servidor se encuentra desactivado*/
+			Serial.println("E3");
 		}
 		break;
 	case 13:
