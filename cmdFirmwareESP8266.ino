@@ -445,7 +445,7 @@ void runInstruction(){
 		socket = atoi(parametros[0]);
 		/*print received data from server*/
 		if(!inRange(socket,0,MAX_NUM_CLIENTS)){
-			Serial.println("IS");
+			Serial.println("E1");
 			break;
 		}
 		Serial.write(bufferReceivedFromServer[socket]);
