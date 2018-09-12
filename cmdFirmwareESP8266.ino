@@ -4,9 +4,9 @@
 #include <stdlib.h>
 #include <stddef.h>
 
+
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiScan.h>
-
 
 /*Considerar usar client.setNoDelay para desactivar el algoritmo de naggle*/
 
@@ -258,12 +258,14 @@ bool validateParameters(){
 void runInstruction(){
 	unsigned long previousMillis;
 	unsigned long currentMillis;
-	int port;
+	uint16_t port;
 	int bytesToWrite, bytesWritten;
 	int numSsid;
 	uint8_t socket;
 	uint8_t i;
 	bool WFC_STATUS = 1, portInUse = false;
+	wl_status_t WF_STATUS;
+	int C_STATUS = 0;
 	IPAddress ip,dns,gateway,subnet;
 
 	switch(instructionIndex){
@@ -272,18 +274,47 @@ void runInstruction(){
 		WiFi.mode(WIFI_STA);
 		WiFi.begin(parametros[0],parametros[1]);
 		previousMillis = millis();
-		while (WiFi.status() != WL_CONNECTED) {
-			delay(20);
+		WF_STATUS = WiFi.status();
+		while (WF_STATUS != WL_CONNECTED) {
 			currentMillis = millis();
 			if((currentMillis - previousMillis) > MAX_WIFICONNECT_TO) {
 				WFC_STATUS = 0;
 				break;
 			}
+			WF_STATUS = WiFi.status();
+			delay(20);
 		}
-		if(WFC_STATUS==1){
+/*		if(WFC_STATUS==1){
 			Serial.println("OK");
+			break;
 		}else{
-			Serial.println("TO");
+			Serial.println("E2");
+			break;
+		}*/
+		switch(WF_STATUS){
+		case WL_IDLE_STATUS:
+			Serial.println("E7");
+			break;
+		case WL_NO_SSID_AVAIL:
+			Serial.println("E4");
+			break;
+		case WL_SCAN_COMPLETED:
+			Serial.println("E5");
+			break;
+		case WL_CONNECT_FAILED:
+			Serial.println("E3");
+			break;
+		case WL_CONNECTION_LOST:
+			Serial.println("E6");
+			break;
+		case WL_DISCONNECTED:
+			Serial.println("E1");
+			break;
+		case WL_CONNECTED:
+			Serial.println("OK");
+			break;
+		default:
+			break;
 		}
 		break;
 	case 1:
@@ -356,17 +387,23 @@ void runInstruction(){
 	case 6:
 		/*CCS - Client Connect to Server*/
 		port = atoi(parametros[1]);
+		Serial.println(port);
 		if(!inRange(port,0,MAX_PORT_NUMBER)){
-			Serial.println("IP");
+			Serial.println("E1");
+			break;
+		}
+		WF_STATUS = WiFi.status();
+		if( (WF_STATUS == WL_DISCONNECTED) || (WF_STATUS == WL_CONNECTION_LOST) ){
+			Serial.println("E2");
 			break;
 		}
 		socket = getFreeSocket();
-		if(client[socket].connect(parametros[0],port)){
+		C_STATUS = client[socket].connect(parametros[0],port);
+		if(C_STATUS){
 			Serial.print("OK");
 			Serial.print(",");
 			Serial.println(socket);
 		}else{
-			Serial.println("E");
 		}
 		break;
 	case 7:
