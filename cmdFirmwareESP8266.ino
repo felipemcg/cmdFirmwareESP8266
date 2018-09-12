@@ -460,7 +460,7 @@ void runInstruction(){
 		/*SOC- Socket Close*/
 		socket = atoi(parametros[0]);
 		if(!inRange(socket,0,MAX_NUM_CLIENTS) == true){
-			Serial.println("IS");
+			Serial.println("E1");
 			break;
 		}
 		client[socket].stop();
