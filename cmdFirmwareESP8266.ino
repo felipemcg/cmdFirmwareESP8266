@@ -412,26 +412,32 @@ void runInstruction(){
 		socket = atoi(parametros[0]);
 		bytesToWrite = atoi(parametros[1]);
 		if(inRange(socket,0,MAX_NUM_CLIENTS) == true){
-			if( (bytesToWrite >= 0) && (bytesToWrite <= MAX_PACKET_SIZE) ){
+			if(inRange(bytesToWrite,0,MAX_PACKET_SIZE) == true){
 				if(client[socket].connected()){
 					/*data to print: char, byte, int, long, or string*/
 					/*The max packet size in TCP is 1460 bytes*/
+					/*parametros[2] solo puede ser uint8_t ??*/
 					bytesWritten = client[socket].write(parametros[2],bytesToWrite);
 					/*Waits for the TX WiFi Buffer be empty.*/
 					client[socket].flush();
 					if(bytesToWrite != bytesWritten){
-						Serial.println("E");
+						/*No se pudo escribir los datos al socket*/
+						Serial.println("E1");
 					}else{
+						/*Los datos se enviaron correctamente*/
 						Serial.println("OK");
 					}
 				}else{
-					Serial.println("NC");
+					/*El socket no esta conectado*/
+					Serial.println("E2");
 				}
 			}else{
-				Serial.println("IB");
+				/*Numero de bytes para escribir fuera de rango*/
+				Serial.println("E3");
 			}
 		}else{
-			Serial.println("IS");
+			/*Numero de socket fuera de rango*/
+			Serial.println("E4");
 		}
 		break;
 	case 8:
