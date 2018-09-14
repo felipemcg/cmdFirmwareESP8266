@@ -386,7 +386,7 @@ void runInstruction(){
 		if(WiFi.config(ip,gateway,subnet,dns)){
 			Serial.println("OK");
 		}else{
-			Serial.println("E");
+			Serial.println("E5");
 		}
 
 		break;
