@@ -422,8 +422,12 @@ void runInstruction(){
 				if(client[socket].connected()){
 					/*data to print: char, byte, int, long, or string*/
 					/*The max packet size in TCP is 1460 bytes*/
-					/*parametros[2] solo puede ser uint8_t ??*/
+
+
+					 /* ======>  parametros[2] solo puede ser uint8_t ??*/
 					bytesWritten = client[socket].write(parametros[2],bytesToWrite);
+
+
 					/*Waits for the TX WiFi Buffer be empty.*/
 					client[socket].flush();
 					if(bytesToWrite != bytesWritten){
@@ -515,7 +519,7 @@ void runInstruction(){
 			}
 		}else{
 			/*Indica que ya existe un servidor escuchando en ese puerto*/
-			Serial.println("E2");
+			Serial.println("E3");
 		}
 		break;
 	case 11:
