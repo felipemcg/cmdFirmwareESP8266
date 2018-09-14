@@ -574,6 +574,7 @@ void runInstruction(){
 		break;
 	case 14:
 		/*GFH - Get Free Heap*/
+		Serial.print("OK,");
 		Serial.println(ESP.getFreeHeap(),DEC);
 		break;
 	case 15:
