@@ -290,13 +290,13 @@ void runInstruction(){
 			WF_STATUS = WiFi.status();
 			delay(20);
 		}
-/*		if(WFC_STATUS==1){
+		if(WFC_STATUS==1){
 			Serial.println("OK");
 			break;
 		}else{
 			Serial.println("E2");
 			break;
-		}*/
+		}
 		switch(WF_STATUS){
 		case WL_IDLE_STATUS:
 			Serial.println("E7");
@@ -330,7 +330,7 @@ void runInstruction(){
 		delay(100);
 		numSsid = WiFi.scanNetworks();
 		if (numSsid == -1) {
-		Serial.println("NC");
+		Serial.println("E1");
 		}else{
 			// print the list of networks seen:
 			Serial.println(numSsid);
