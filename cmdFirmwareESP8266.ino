@@ -116,7 +116,7 @@ static const char instructionSet[MAX_INTS_SET][MAX_CHAR_INST+1] = {"WFC",	//0
 
 /*Matriz que almacena la cantidad de parametros necesarios
  *por cada comando, correspondencia por indice.*/
-const uint8_t qParametersInstruction[MAX_INTS_SET] ={2,0,0,0,0,4,2,3,1,1,1,1,1,1,0,0};
+const uint8_t qParametersInstruction[MAX_INTS_SET] ={2,0,0,0,0,4,2,3,1,1,2,1,1,1,0,0};
 
 /*Declaracion del objeto que se utilizara para el manejo del cliente, maximo 4
  * por limitacion del modulo.*/
@@ -127,6 +127,8 @@ std::vector<WiFiServer> server(MAX_NUM_SERVERS, WiFiServer(DEFAULT_SERVER_PORT))
 
 uint8_t socketInUse[MAX_NUM_CLIENTS] = {0,0,0,0};
 uint16_t serverPortsInUse[MAX_NUM_SERVERS];
+uint8_t serverBacklog[MAX_NUM_SERVERS];
+uint8_t serverClients[MAX_NUM_SERVERS];
 
 //#define sDebug 1
 /*-------------------------------------------------------------------*/
@@ -227,6 +229,8 @@ void loop() {
 
 	yield();
 
+	refreshServerClients();
+
 }
 
 /*
@@ -259,6 +263,8 @@ void runInstruction(){
 	unsigned long previousMillis;
 	unsigned long currentMillis;
 	uint16_t port;
+	uint8_t backlog;
+	uint8_t serverAcceptStatus;
 	int bytesToWrite, bytesWritten;
 	int numSsid;
 	uint8_t socket;
@@ -467,13 +473,22 @@ void runInstruction(){
 		Serial.println("OK");
 		break;
 	case 10:
+		/*Agregar el parametro de cuantos clientes puede aceptar*/
 		/*SLC - Server Listen to Clients*/
 		port = atoi(parametros[0]);
+		backlog = atoi(parametros[1]);
 		/*Determinar primero si el puerto es valido*/
 		if(!inRange(port,0,MAX_PORT_NUMBER)){
 			/*El numero de puerto esta fuera de rango*/
 			Serial.println("E1");
 			break;
+		}
+		if(!inRange(backlog,0,MAX_NUM_CLIENTS)){
+			/*El numero de clientes esta fuera de rango*/
+			Serial.println("E2");
+			break;
+		}else{
+			/*Verificar que se tienen los recursos disponibles para escuchar la cantidad de clientes*/
 		}
 		/*Determinar si ya existe un servidor funcionando con ese puerto*/
 		for (i = 0; i < MAX_NUM_SERVERS; i++) {
@@ -487,9 +502,10 @@ void runInstruction(){
 		}
 		/*Si no existe un servidor con ese puerto, determinar que servidor esta libre y crear el servidor*/
 		if(!portInUse){
-			serverPortsInUse[i] = port;
 			for (i = 0; i < MAX_NUM_SERVERS; i++) {
 				if(server[i].status() == CLOSED){
+					serverPortsInUse[i] = port;
+					serverBacklog[i] = backlog;
 					server[i].begin(port);
 					Serial.print("OK,");
 					Serial.println(i,DEC);
@@ -524,14 +540,25 @@ void runInstruction(){
 		}
 		if(serverOn[socket]){
 			if(server[socket].hasClient()){
-				acceptClients(server[socket]);
+				serverAcceptStatus = acceptClients(server[socket],socket);
+				if(serverAcceptStatus == 1){
+					/*Hay socket disponible*/
+				}
+				if(serverAcceptStatus == 2){
+					/*No hay socket disponible*/
+					Serial.println("E2");
+				}
+				if(serverAcceptStatus == 3){
+					/*No se aceptan mas clientes en este servidor*/
+					Serial.println("E3");
+				}
 			}else{
 				/*El servidor no tiene clientes*/
-				Serial.println("E2");
+				Serial.println("E4");
 			}
 		}else{
 			/*El servidor se encuentra desactivado*/
-			Serial.println("E3");
+			Serial.println("E5");
 		}
 		break;
 	case 13:
@@ -751,19 +778,42 @@ uint8_t	getFreeSocket(){
 }
 
 /* Descripcion: Se encarga de aceptar a clientes que se quieren conectar al servidor*/
-void acceptClients(WiFiServer& server){
+uint8_t acceptClients(WiFiServer& server, uint8_t serverId){
 	uint8_t socket;
-	socket = getFreeSocket();
-	if(socket!=255){
-		/*Se encontro socket libre*/
-		client[socket] = server.available();
-		Serial.print("OK,");
-		Serial.println(socket,DEC);
+	/*Verificar que todavia no se conectaron el numero maximo de clientes*/
+	if(serverClients[serverId] < serverBacklog[serverId]){
+		socket = getFreeSocket();
+		if(socket!=255){
+			/*Se encontro socket libre*/
+			/*Se acepta al cliente*/
+			client[socket] = server.available();
+			serverClients[serverId]++;
+			Serial.print("OK,");
+			Serial.println(socket);
+			return 1;
+		}else{
+			/*No hay socket disponible*/
+			WiFiClient serverClient = server.available();
+			serverClient.stop();
+			return 2;
+		}
 	}else{
-		/*No hay socket disponible*/
+		/*No se admiten mas clientes para este servidor*/
 		WiFiClient serverClient = server.available();
 		serverClient.stop();
-		Serial.println("NS");
+		return 3;
+	}
+	return 255;
+}
+
+void refreshServerClients(){
+	/*Aca se tiene que verificar si los servidores tienen clientes en cola, para rechazarlos si es necesario por el backlog*/
+	uint8_t i;
+	for (i = 0; i < MAX_NUM_SERVERS; i++){
+		if(server[i].hasClient() && (serverClients[i] == serverBacklog[i]) ){
+			WiFiClient serverClient = server[i].available();
+			serverClient.stop();
+		}
 	}
 }
 
