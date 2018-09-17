@@ -197,7 +197,7 @@ void loop() {
 				Serial.println("NEP");
 			}
 		}else{
-			Serial.println("NOCMD");
+			Serial.println("NOC");
 		}
 
 		yield();
