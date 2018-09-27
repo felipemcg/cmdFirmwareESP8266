@@ -393,7 +393,6 @@ void runInstruction(){
 	case 6:
 		/*CCS - Client Connect to Server*/
 		port = atoi(parametros[1]);
-		Serial.println(port);
 		if(!inRange(port,0,MAX_PORT_NUMBER)){
 			Serial.println("E1");
 			break;
@@ -822,5 +821,8 @@ void refreshServerClients(){
 	}
 }
 
-
+void sendUART(char string[MAX_CHARS_PARAMETERS]){
+	Serial.print(string);
+	Serial.print('\n');
+}
 
