@@ -600,6 +600,12 @@ void runInstruction(){
 			Serial.print(CMD_TERMINATOR);
 			break;
 		}
+		if( (WF_STATUS == WL_DISCONNECTED) || (WF_STATUS == WL_CONNECTION_LOST) ){
+			/*WiFi desconectado*/
+			Serial.print('6');
+			Serial.print(CMD_TERMINATOR);
+			break;
+		}
 		if(serverOn[socket]){
 			if(server[socket].hasClient()){
 				serverAcceptStatus = acceptClients(server[socket],socket);
