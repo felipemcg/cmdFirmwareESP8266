@@ -540,6 +540,12 @@ void runInstruction(){
 		}else{
 			/*Verificar que se tienen los recursos disponibles para escuchar la cantidad de clientes*/
 		}
+		if( (WF_STATUS == WL_DISCONNECTED) || (WF_STATUS == WL_CONNECTION_LOST) ){
+			/*WiFi desconectado*/
+			Serial.print('4');
+			Serial.print(CMD_TERMINATOR);
+			break;
+		}
 		/*Determinar si ya existe un servidor funcionando con ese puerto*/
 		for (i = 0; i < MAX_NUM_SERVERS; i++) {
 			if(port != serverPortsInUse[i]){
