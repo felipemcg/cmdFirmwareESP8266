@@ -453,6 +453,12 @@ void runInstruction(){
 		/*Verificar primero si existe una conexion activa antes de intentar enviar el mensaje*/
 		socket = atoi(parametros[0]);
 		bytesToWrite = atoi(parametros[1]);
+		if( (WF_STATUS == WL_DISCONNECTED) || (WF_STATUS == WL_CONNECTION_LOST) ){
+			/*WiFi desconectado*/
+			Serial.print('5');
+			Serial.print(CMD_TERMINATOR);
+			break;
+		}
 		if(inRange(socket,0,MAX_NUM_CLIENTS) == true){
 			if(inRange(bytesToWrite,0,MAX_PACKET_SIZE) == true){
 				if(client[socket].connected()){
