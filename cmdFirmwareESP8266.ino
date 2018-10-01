@@ -506,6 +506,12 @@ void runInstruction(){
 			Serial.print(CMD_TERMINATOR);
 			break;
 		}
+		if( (WF_STATUS == WL_DISCONNECTED) || (WF_STATUS == WL_CONNECTION_LOST) ){
+			/*WiFi desconectado*/
+			Serial.print('2');
+			Serial.print(CMD_TERMINATOR);
+			break;
+		}
 		Serial.write(bufferReceivedFromServer[socket]);
 		bytesReceivedFromServer[socket] = 0;
 		/*Clear the buffer*/
