@@ -453,6 +453,7 @@ void runInstruction(){
 		/*Verificar primero si existe una conexion activa antes de intentar enviar el mensaje*/
 		socket = atoi(parametros[0]);
 		bytesToWrite = atoi(parametros[1]);
+		WF_STATUS = WiFi.status();
 		if( (WF_STATUS == WL_DISCONNECTED) || (WF_STATUS == WL_CONNECTION_LOST) ){
 			/*WiFi desconectado*/
 			Serial.print('5');
@@ -506,6 +507,7 @@ void runInstruction(){
 			Serial.print(CMD_TERMINATOR);
 			break;
 		}
+		WF_STATUS = WiFi.status();
 		if( (WF_STATUS == WL_DISCONNECTED) || (WF_STATUS == WL_CONNECTION_LOST) ){
 			/*WiFi desconectado*/
 			Serial.print('2');
@@ -525,6 +527,13 @@ void runInstruction(){
 		socket = atoi(parametros[0]);
 		if(!inRange(socket,0,MAX_NUM_CLIENTS) == true){
 			Serial.print("1");
+			Serial.print(CMD_TERMINATOR);
+			break;
+		}
+		WF_STATUS = WiFi.status();
+		if( (WF_STATUS == WL_DISCONNECTED) || (WF_STATUS == WL_CONNECTION_LOST) ){
+			/*WiFi desconectado*/
+			Serial.print('2');
 			Serial.print(CMD_TERMINATOR);
 			break;
 		}
@@ -552,6 +561,7 @@ void runInstruction(){
 		}else{
 			/*Verificar que se tienen los recursos disponibles para escuchar la cantidad de clientes*/
 		}
+		WF_STATUS = WiFi.status();
 		if( (WF_STATUS == WL_DISCONNECTED) || (WF_STATUS == WL_CONNECTION_LOST) ){
 			/*WiFi desconectado*/
 			Serial.print('4');
@@ -598,6 +608,7 @@ void runInstruction(){
 			Serial.print(CMD_TERMINATOR);
 			break;
 		}
+		WF_STATUS = WiFi.status();
 		if( (WF_STATUS == WL_DISCONNECTED) || (WF_STATUS == WL_CONNECTION_LOST) ){
 			/*WiFi desconectado*/
 			Serial.print('2');
@@ -618,6 +629,7 @@ void runInstruction(){
 			Serial.print(CMD_TERMINATOR);
 			break;
 		}
+		WF_STATUS = WiFi.status();
 		if( (WF_STATUS == WL_DISCONNECTED) || (WF_STATUS == WL_CONNECTION_LOST) ){
 			/*WiFi desconectado*/
 			Serial.print('6');
