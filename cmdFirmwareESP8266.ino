@@ -321,6 +321,7 @@ void runInstruction(){
 			Serial.print("5");
 			break;
 		case WL_CONNECT_FAILED:
+			/*Significa que la contraseña es incorrecta*/
 			Serial.print("3");
 			break;
 		case WL_CONNECTION_LOST:
@@ -416,17 +417,25 @@ void runInstruction(){
 		/*CCS - Client Connect to Server*/
 		port = atoi(parametros[1]);
 		if(!inRange(port,0,MAX_PORT_NUMBER)){
+			/*Puerto fuera de rango*/
 			Serial.print("1");
 			Serial.print(CMD_TERMINATOR);
 			break;
 		}
 		WF_STATUS = WiFi.status();
 		if( (WF_STATUS == WL_DISCONNECTED) || (WF_STATUS == WL_CONNECTION_LOST) ){
+			/*WiFi desconectado*/
 			Serial.print("2");
 			Serial.print(CMD_TERMINATOR);
 			break;
 		}
 		socket = getFreeSocket();
+		if(socket == 255){
+			/*No hay socket disponible*/
+			Serial.print('3');
+			Serial.print(CMD_TERMINATOR);
+			break;
+		}
 		C_STATUS = client[socket].connect(parametros[0],port);
 		if(C_STATUS){
 			Serial.print(CMD_RESP_OK);
@@ -434,6 +443,9 @@ void runInstruction(){
 			Serial.print(socket);
 			Serial.print(CMD_TERMINATOR);
 		}else{
+			/*No se pudo conectar*/
+			Serial.print('4');
+			Serial.print(CMD_TERMINATOR);
 		}
 		break;
 	case 7:
