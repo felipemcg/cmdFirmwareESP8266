@@ -514,7 +514,12 @@ void runInstruction(){
 			Serial.print(CMD_TERMINATOR);
 			break;
 		}
+		Serial.print(CMD_RESP_OK);
+		Serial.print(CMD_DELIMITER);
+		Serial.print(bytesReceivedFromServer[socket],DEC);
+		Serial.print(CMD_DELIMITER);
 		Serial.write(bufferReceivedFromServer[socket]);
+		Serial.print(CMD_TERMINATOR);
 		bytesReceivedFromServer[socket] = 0;
 		/*Clear the buffer*/
 		for (int i=0; i < MAX_PACKET_SIZE; i++){
