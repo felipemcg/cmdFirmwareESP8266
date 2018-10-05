@@ -468,11 +468,10 @@ void runInstruction(){
 
 
 					 /* ======>  parametros[2] solo puede ser uint8_t ??*/
+					/*client.write() blocks until either data is sent and ACKed, or timeout occurs (currently hard-coded to 5 seconds)
+					 * @ https://github.com/esp8266/Arduino/issues/917#issuecomment-150304010*/
 					bytesWritten = client[socket].write(parametros[2],bytesToWrite);
 
-
-					/*Waits for the TX WiFi Buffer be empty.*/
-					client[socket].flush();
 					if(bytesToWrite != bytesWritten){
 						/*No se pudo escribir los datos al socket*/
 						Serial.print("1");
