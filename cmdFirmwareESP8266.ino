@@ -161,7 +161,10 @@ void setup() {
 
     Serial.print("R");
     Serial.print(CMD_TERMINATOR);
-
+    client[0].setNoDelay(1);
+    client[1].setNoDelay(1);
+    client[2].setNoDelay(1);
+    client[3].setNoDelay(1);
 }
 
 void loop() {
@@ -438,6 +441,7 @@ void runInstruction(){
 		}
 		C_STATUS = client[socket].connect(parametros[0],port);
 		if(C_STATUS){
+			client[socket].setNoDelay(1);
 			Serial.print(CMD_RESP_OK);
 			Serial.print(CMD_DELIMITER);
 			Serial.print(socket);
