@@ -4,9 +4,9 @@
 #include <stdlib.h>
 #include <stddef.h>
 
+
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiScan.h>
-
 
 /*Considerar usar client.setNoDelay para desactivar el algoritmo de naggle*/
 
@@ -14,9 +14,15 @@
 //#define sDebug
 
 /*---	Comandos	---*/
+#define CMD_TERMINATOR '\n'
+#define CMD_DELIMITER ','
+#define CMD_RESP_OK '0'
+#define CMD_NOT_FOUND ''
+#define CMD_NO_PARAM ''
+
 
 /*Cantidad maxima de parametros por comando*/
-#define MAX_PARAMETERS 3
+#define MAX_PARAMETERS 4
 
 /*Cantidad maxima de caracteres que puede contener cada parametro*/
 #define MAX_CHARS_PARAMETERS 1024
@@ -25,7 +31,7 @@
 #define MAX_CHAR_INST 3
 
 /*Numero maximo de instrucciones*/
-#define MAX_INTS_SET 15
+#define MAX_INTS_SET 16
 
 /*---------------------*/
 /*El tiempo maxima para esperar una respuesta del servidor, em ms.*/
@@ -111,11 +117,12 @@ static const char instructionSet[MAX_INTS_SET][MAX_CHAR_INST+1] = {"WFC",	//0
 		"SCC",	//11
 		"SAC",	//12
 		"SRC",	//13
-		"GFH"};	//14
+		"GFH",	//14
+		"MIS"};	//15
 
 /*Matriz que almacena la cantidad de parametros necesarios
  *por cada comando, correspondencia por indice.*/
-const uint8_t qParametersInstruction[MAX_INTS_SET] ={2,0,0,0,0,3,2,3,1,1,1,1,1,1,0};
+const uint8_t qParametersInstruction[MAX_INTS_SET] ={2,0,0,0,0,4,2,3,1,1,2,1,1,1,0,0};
 
 /*Declaracion del objeto que se utilizara para el manejo del cliente, maximo 4
  * por limitacion del modulo.*/
@@ -126,6 +133,8 @@ std::vector<WiFiServer> server(MAX_NUM_SERVERS, WiFiServer(DEFAULT_SERVER_PORT))
 
 uint8_t socketInUse[MAX_NUM_CLIENTS] = {0,0,0,0};
 uint16_t serverPortsInUse[MAX_NUM_SERVERS];
+uint8_t serverBacklog[MAX_NUM_SERVERS];
+uint8_t serverClients[MAX_NUM_SERVERS];
 
 //#define sDebug 1
 /*-------------------------------------------------------------------*/
@@ -150,8 +159,12 @@ void setup() {
     }
 #endif
 
-    Serial.println("R");
-
+    Serial.print("R");
+    Serial.print(CMD_TERMINATOR);
+    client[0].setNoDelay(1);
+    client[1].setNoDelay(1);
+    client[2].setNoDelay(1);
+    client[3].setNoDelay(1);
 }
 
 void loop() {
@@ -191,10 +204,14 @@ void loop() {
 			if(validateParameters() == true){
 				runInstruction();
 			}else{
-				Serial.println("NEP");
+				/*No se encontro la cantidad necesaria de parametros para el comando*/
+				Serial.print("P");
+				Serial.print(CMD_TERMINATOR);
 			}
 		}else{
-			Serial.println("NOCMD");
+			/*No se encontro el comando*/
+			Serial.print("C");
+			Serial.print(CMD_TERMINATOR);
 		}
 
 		yield();
@@ -214,9 +231,9 @@ void loop() {
 	#ifdef sDebug
 		cMillis = millis();
 		loopTime = cMillis - pMillis;
-		Serial.print("Loop running time: ");
-		Serial.print(loopTime);
-		Serial.println("ms");
+		sendUART("Loop running time: ");
+		sendUART(loopTime);
+		sendUART("ms");
 	#endif
 	}
 	yield();
@@ -225,6 +242,8 @@ void loop() {
 	receiveFromServer();
 
 	yield();
+
+	refreshServerClients();
 
 }
 
@@ -257,31 +276,70 @@ bool validateParameters(){
 void runInstruction(){
 	unsigned long previousMillis;
 	unsigned long currentMillis;
-	int port;
+	uint16_t port;
+	uint8_t backlog;
+	uint8_t serverAcceptStatus;
 	int bytesToWrite, bytesWritten;
 	int numSsid;
 	uint8_t socket;
 	uint8_t i;
 	bool WFC_STATUS = 1, portInUse = false;
+	wl_status_t WF_STATUS;
+	int C_STATUS = 0;
+	IPAddress ip,dns,gateway,subnet;
+
 	switch(instructionIndex){
 	case 0:
 		/*WFC - WiFi Connect*/
 		WiFi.mode(WIFI_STA);
 		WiFi.begin(parametros[0],parametros[1]);
 		previousMillis = millis();
-		while (WiFi.status() != WL_CONNECTED) {
-			delay(20);
+		WF_STATUS = WiFi.status();
+		while (WF_STATUS != WL_CONNECTED) {
 			currentMillis = millis();
 			if((currentMillis - previousMillis) > MAX_WIFICONNECT_TO) {
 				WFC_STATUS = 0;
 				break;
 			}
+			WF_STATUS = WiFi.status();
+			delay(20);
 		}
 		if(WFC_STATUS==1){
-			Serial.println("OK");
+			Serial.print(CMD_RESP_OK);
+			Serial.print(CMD_TERMINATOR);
+			break;
 		}else{
-			Serial.println("TO");
+			Serial.print("2");
+			Serial.print(CMD_TERMINATOR);
+			break;
 		}
+		switch(WF_STATUS){
+		case WL_IDLE_STATUS:
+			Serial.print("7");
+			break;
+		case WL_NO_SSID_AVAIL:
+			Serial.print("4");
+			break;
+		case WL_SCAN_COMPLETED:
+			Serial.print("5");
+			break;
+		case WL_CONNECT_FAILED:
+			/*Significa que la contraseña es incorrecta*/
+			Serial.print("3");
+			break;
+		case WL_CONNECTION_LOST:
+			Serial.print("6");
+			break;
+		case WL_DISCONNECTED:
+			Serial.print("1");
+			break;
+		case WL_CONNECTED:
+			Serial.print(CMD_RESP_OK);
+			break;
+		default:
+			break;
+		}
+		Serial.print(CMD_TERMINATOR);
 		break;
 	case 1:
 		/*WFS - WiFi Scan*/
@@ -290,61 +348,108 @@ void runInstruction(){
 		delay(100);
 		numSsid = WiFi.scanNetworks();
 		if (numSsid == -1) {
-		Serial.println("NC");
+			Serial.print("1");
 		}else{
 			// print the list of networks seen:
-			Serial.println(numSsid);
+			Serial.print(numSsid);
 
 			// print the network number and name for each network found:
 			for (int thisNet = 0; thisNet < numSsid; thisNet++) {
-			Serial.print(thisNet);
-			Serial.print(") ");
-			Serial.print(WiFi.SSID(thisNet));
+				Serial.print(thisNet);
+				Serial.print(") ");
+				Serial.print(WiFi.SSID(thisNet));
 			//Serial.printf("SSID: %s", WiFi.SSID().c_str());
-			Serial.print("\tSignal: ");
-			Serial.print(WiFi.RSSI(thisNet));
-			Serial.println(" dBm");
+				Serial.print("\tSignal: ");
+				Serial.print(WiFi.RSSI(thisNet));
+				Serial.print(" dBm");
 			}
 		}
+		Serial.print(CMD_TERMINATOR);
 		break;
 	case 2:
 		/*WRI - WiFi RSSI*/
-		Serial.println(WiFi.RSSI());
+		Serial.print(WiFi.RSSI());
+		Serial.print(CMD_TERMINATOR);
 		break;
 	case 3:
 		/*WID - WiFi ID*/
-		Serial.println(WiFi.SSID());
+		Serial.print(WiFi.SSID());
+		Serial.print(CMD_TERMINATOR);
 		break;
 	case 4:
 		/*WFD - WiFi Disconnect*/
 		WiFi.disconnect();
 		delay(100);
-		Serial.println("OK");
+		Serial.print(CMD_RESP_OK);
+		Serial.print(CMD_TERMINATOR);
 		break;
 	case 5:
-		/*IPAddress addr;
-		if (addr.fromString(strIP)) {
-		  // it was a valid address, do something with it
-		}*/
-		/*WiFi Configuration*/
-		/*IPAddress local_ip();
-		WiFi.config();*/
-
+		/*WCF - WiFi Configuration*/
+		if(!ip.fromString(parametros[0])){
+			/*IP Invalida*/
+			Serial.print("1");
+			Serial.print(CMD_TERMINATOR);
+			break;
+		}
+		if(!dns.fromString(parametros[1])){
+			/*DNS Invalido*/
+			Serial.print("2");
+			Serial.print(CMD_TERMINATOR);
+			break;
+		}
+		if(!gateway.fromString(parametros[2])){
+			/*Gateway Invalido*/
+			Serial.print("3");
+			Serial.print(CMD_TERMINATOR);
+			break;
+		}
+		if(!subnet.fromString(parametros[3])){
+			/*Subnet Invalido*/
+			Serial.print("4");
+			Serial.print(CMD_TERMINATOR);
+			break;
+		}
+		if(WiFi.config(ip,gateway,subnet,dns)){
+			Serial.print(CMD_RESP_OK);
+		}else{
+			Serial.print("5");
+		}
+		Serial.print(CMD_TERMINATOR);
 		break;
 	case 6:
 		/*CCS - Client Connect to Server*/
 		port = atoi(parametros[1]);
 		if(!inRange(port,0,MAX_PORT_NUMBER)){
-			Serial.println("IP");
+			/*Puerto fuera de rango*/
+			Serial.print("1");
+			Serial.print(CMD_TERMINATOR);
+			break;
+		}
+		WF_STATUS = WiFi.status();
+		if( (WF_STATUS == WL_DISCONNECTED) || (WF_STATUS == WL_CONNECTION_LOST) ){
+			/*WiFi desconectado*/
+			Serial.print("2");
+			Serial.print(CMD_TERMINATOR);
 			break;
 		}
 		socket = getFreeSocket();
-		if(client[socket].connect(parametros[0],port)){
-			Serial.print("OK");
-			Serial.print(",");
-			Serial.println(socket);
+		if(socket == 255){
+			/*No hay socket disponible*/
+			Serial.print('3');
+			Serial.print(CMD_TERMINATOR);
+			break;
+		}
+		C_STATUS = client[socket].connect(parametros[0],port);
+		if(C_STATUS){
+			client[socket].setNoDelay(1);
+			Serial.print(CMD_RESP_OK);
+			Serial.print(CMD_DELIMITER);
+			Serial.print(socket);
+			Serial.print(CMD_TERMINATOR);
 		}else{
-			Serial.println("E");
+			/*No se pudo conectar*/
+			Serial.print('4');
+			Serial.print(CMD_TERMINATOR);
 		}
 		break;
 	case 7:
@@ -352,27 +457,48 @@ void runInstruction(){
 		/*Verificar primero si existe una conexion activa antes de intentar enviar el mensaje*/
 		socket = atoi(parametros[0]);
 		bytesToWrite = atoi(parametros[1]);
+		WF_STATUS = WiFi.status();
+		if( (WF_STATUS == WL_DISCONNECTED) || (WF_STATUS == WL_CONNECTION_LOST) ){
+			/*WiFi desconectado*/
+			Serial.print('5');
+			Serial.print(CMD_TERMINATOR);
+			break;
+		}
 		if(inRange(socket,0,MAX_NUM_CLIENTS) == true){
-			if( (bytesToWrite >= 0) && (bytesToWrite <= MAX_PACKET_SIZE) ){
+			if(inRange(bytesToWrite,0,MAX_PACKET_SIZE) == true){
 				if(client[socket].connected()){
 					/*data to print: char, byte, int, long, or string*/
 					/*The max packet size in TCP is 1460 bytes*/
+
+
+					 /* ======>  parametros[2] solo puede ser uint8_t ??*/
+					/*client.write() blocks until either data is sent and ACKed, or timeout occurs (currently hard-coded to 5 seconds)
+					 * @ https://github.com/esp8266/Arduino/issues/917#issuecomment-150304010*/
 					bytesWritten = client[socket].write(parametros[2],bytesToWrite);
-					/*Waits for the TX WiFi Buffer be empty.*/
-					client[socket].flush();
+
 					if(bytesToWrite != bytesWritten){
-						Serial.println("E");
+						/*No se pudo escribir los datos al socket*/
+						Serial.print("1");
+						Serial.print(CMD_TERMINATOR);
 					}else{
-						Serial.println("OK");
+						/*Los datos se enviaron correctamente*/
+						Serial.print(CMD_RESP_OK);
+						Serial.print(CMD_TERMINATOR);
 					}
 				}else{
-					Serial.println("NC");
+					/*El socket no esta conectado*/
+					Serial.print("2");
+					Serial.print(CMD_TERMINATOR);
 				}
 			}else{
-				Serial.println("IB");
+				/*Numero de bytes para escribir fuera de rango*/
+				Serial.print("3");
+				Serial.print(CMD_TERMINATOR);
 			}
 		}else{
-			Serial.println("IS");
+			/*Numero de socket fuera de rango*/
+			Serial.print("4");
+			Serial.print(CMD_TERMINATOR);
 		}
 		break;
 	case 8:
@@ -380,10 +506,23 @@ void runInstruction(){
 		socket = atoi(parametros[0]);
 		/*print received data from server*/
 		if(!inRange(socket,0,MAX_NUM_CLIENTS)){
-			Serial.println("IS");
+			Serial.print("1");
+			Serial.print(CMD_TERMINATOR);
 			break;
 		}
-		Serial.write(bufferReceivedFromServer[socket]);
+		WF_STATUS = WiFi.status();
+		if( (WF_STATUS == WL_DISCONNECTED) || (WF_STATUS == WL_CONNECTION_LOST) ){
+			/*WiFi desconectado*/
+			Serial.print('2');
+			Serial.print(CMD_TERMINATOR);
+			break;
+		}
+		Serial.print(CMD_RESP_OK);
+		Serial.print(CMD_DELIMITER);
+		Serial.print(bytesReceivedFromServer[socket],DEC);
+		Serial.print(CMD_DELIMITER);
+		Serial.print(bufferReceivedFromServer[socket]);
+		Serial.print(CMD_TERMINATOR);
 		bytesReceivedFromServer[socket] = 0;
 		/*Clear the buffer*/
 		for (int i=0; i < MAX_PACKET_SIZE; i++){
@@ -395,18 +534,46 @@ void runInstruction(){
 		/*SOC- Socket Close*/
 		socket = atoi(parametros[0]);
 		if(!inRange(socket,0,MAX_NUM_CLIENTS) == true){
-			Serial.println("IS");
+			Serial.print("1");
+			Serial.print(CMD_TERMINATOR);
+			break;
+		}
+		WF_STATUS = WiFi.status();
+		if( (WF_STATUS == WL_DISCONNECTED) || (WF_STATUS == WL_CONNECTION_LOST) ){
+			/*WiFi desconectado*/
+			Serial.print('2');
+			Serial.print(CMD_TERMINATOR);
 			break;
 		}
 		client[socket].stop();
-		Serial.println("OK");
+		Serial.print(CMD_RESP_OK);
+		Serial.print(CMD_TERMINATOR);
 		break;
 	case 10:
+		/*Agregar el parametro de cuantos clientes puede aceptar*/
 		/*SLC - Server Listen to Clients*/
 		port = atoi(parametros[0]);
+		backlog = atoi(parametros[1]);
 		/*Determinar primero si el puerto es valido*/
 		if(!inRange(port,0,MAX_PORT_NUMBER)){
-			Serial.println("IP");
+			/*El numero de puerto esta fuera de rango*/
+			Serial.print("1");
+			Serial.print(CMD_TERMINATOR);
+			break;
+		}
+		if(!inRange(backlog,0,MAX_NUM_CLIENTS)){
+			/*El numero de clientes esta fuera de rango*/
+			Serial.print("2");
+			Serial.print(CMD_TERMINATOR);
+			break;
+		}else{
+			/*Verificar que se tienen los recursos disponibles para escuchar la cantidad de clientes*/
+		}
+		WF_STATUS = WiFi.status();
+		if( (WF_STATUS == WL_DISCONNECTED) || (WF_STATUS == WL_CONNECTION_LOST) ){
+			/*WiFi desconectado*/
+			Serial.print('4');
+			Serial.print(CMD_TERMINATOR);
 			break;
 		}
 		/*Determinar si ya existe un servidor funcionando con ese puerto*/
@@ -421,47 +588,85 @@ void runInstruction(){
 		}
 		/*Si no existe un servidor con ese puerto, determinar que servidor esta libre y crear el servidor*/
 		if(!portInUse){
-			serverPortsInUse[i] = port;
 			for (i = 0; i < MAX_NUM_SERVERS; i++) {
 				if(server[i].status() == CLOSED){
+					serverPortsInUse[i] = port;
+					serverBacklog[i] = backlog;
 					server[i].begin(port);
-					Serial.print("OK,");
-					Serial.println(i,DEC);
+					Serial.print(CMD_RESP_OK);
+					Serial.print(CMD_DELIMITER);
+					Serial.print(i,DEC);
+					Serial.print(CMD_TERMINATOR);
 					serverOn[i] = true;
 					break;
 				}
 			}
 		}else{
-			Serial.println("UP");
+			/*Indica que ya existe un servidor escuchando en ese puerto*/
+			Serial.print("3");
+			Serial.print(CMD_TERMINATOR);
 		}
 		break;
 	case 11:
 		/*SCC - Server Close Connection*/
 		socket = atoi(parametros[0]);
 		if(!inRange(socket,0,MAX_NUM_SERVERS)){
-			Serial.println("IS");
+			/*El numero de socket esta fuera de rango*/
+			Serial.print("1");
+			Serial.print(CMD_TERMINATOR);
+			break;
+		}
+		WF_STATUS = WiFi.status();
+		if( (WF_STATUS == WL_DISCONNECTED) || (WF_STATUS == WL_CONNECTION_LOST) ){
+			/*WiFi desconectado*/
+			Serial.print('2');
+			Serial.print(CMD_TERMINATOR);
 			break;
 		}
 		server[socket].stop();
 		serverOn[socket] = false;
-		Serial.println("OK");
+		Serial.print(CMD_RESP_OK);
+		Serial.print(CMD_TERMINATOR);
 		break;
 	case 12:
 		/*SAC - Server Accept Clients*/
 		socket = atoi(parametros[0]);
 		if(!inRange(socket,0,MAX_NUM_SERVERS)){
-			Serial.println("IS");
+			/*El numero de socket esta fuera de rango*/
+			Serial.print("1");
+			Serial.print(CMD_TERMINATOR);
+			break;
+		}
+		WF_STATUS = WiFi.status();
+		if( (WF_STATUS == WL_DISCONNECTED) || (WF_STATUS == WL_CONNECTION_LOST) ){
+			/*WiFi desconectado*/
+			Serial.print('6');
+			Serial.print(CMD_TERMINATOR);
 			break;
 		}
 		if(serverOn[socket]){
 			if(server[socket].hasClient()){
-				acceptClients(server[socket]);
+				serverAcceptStatus = acceptClients(server[socket],socket);
+				if(serverAcceptStatus == 1){
+					/*Hay socket disponible*/
+				}
+				if(serverAcceptStatus == 2){
+					/*No hay socket disponible*/
+					Serial.print("2");
+				}
+				if(serverAcceptStatus == 3){
+					/*No se aceptan mas clientes en este servidor*/
+					Serial.print("3");
+				}
 			}else{
-				Serial.println("NC");
+				/*El servidor no tiene clientes*/
+				Serial.print("4");
 			}
 		}else{
-			Serial.println("SOFF");
+			/*El servidor se encuentra desactivado*/
+			Serial.print("5");
 		}
+		Serial.print(CMD_TERMINATOR);
 		break;
 	case 13:
 		socket = atoi(parametros[0]);
@@ -472,7 +677,13 @@ void runInstruction(){
 		break;
 	case 14:
 		/*GFH - Get Free Heap*/
-		Serial.println(ESP.getFreeHeap(),DEC);
+		Serial.print(ESP.getFreeHeap(),DEC);
+		Serial.print(CMD_TERMINATOR);
+		break;
+	case 15:
+		/*MIS - Module Is Alive*/
+		Serial.print(CMD_RESP_OK);
+		Serial.print(CMD_TERMINATOR);
 		break;
 	default:
 		break;
@@ -481,7 +692,7 @@ void runInstruction(){
 
 /* Descripcion: Recibe los datos seriales, byte por byte*/
 void recvWithEndMarker() {
-	char recvChar, dump = '\0';
+	char recvChar, dump;
 	char bufferCmd[4] = {'\0'};
 	char bufferNumBytes[4] = {'\0'};
 	char tempBuffer[MAX_PACKET_SIZE];
@@ -489,8 +700,6 @@ void recvWithEndMarker() {
 	uint16_t indxComa1=0, indxComa2=0, qComa=0, indxData = 0;
 	uint16_t cmdPacketSize = 0;
 	bool dataCmd = false, Coma2 = false, numBytes = false, runDataCmd = false;
-	unsigned long previousTime = 0;
-	unsigned long currentTime = 0;
 
 	/*Mientras haya datos serial disponibles*/
 
@@ -678,19 +887,44 @@ uint8_t	getFreeSocket(){
 }
 
 /* Descripcion: Se encarga de aceptar a clientes que se quieren conectar al servidor*/
-void acceptClients(WiFiServer& server){
+uint8_t acceptClients(WiFiServer& server, uint8_t serverId){
 	uint8_t socket;
-	socket = getFreeSocket();
-	if(socket!=255){
-		/*Se encontro socket libre*/
-		client[socket] = server.available();
-		Serial.print("OK,");
-		Serial.println(socket,DEC);
+	/*Verificar que todavia no se conectaron el numero maximo de clientes*/
+	if(serverClients[serverId] < serverBacklog[serverId]){
+		socket = getFreeSocket();
+		if(socket!=255){
+			/*Se encontro socket libre*/
+			/*Se acepta al cliente*/
+			client[socket] = server.available();
+			serverClients[serverId]++;
+			Serial.print(CMD_RESP_OK);
+			Serial.print(CMD_DELIMITER);
+			Serial.print(socket);
+			Serial.print(CMD_TERMINATOR);
+			return 1;
+		}else{
+			/*No hay socket disponible*/
+			WiFiClient serverClient = server.available();
+			serverClient.stop();
+			return 2;
+		}
 	}else{
-		/*No hay socket disponible*/
+		/*No se admiten mas clientes para este servidor*/
 		WiFiClient serverClient = server.available();
 		serverClient.stop();
-		Serial.println("NS");
+		return 3;
+	}
+	return 255;
+}
+
+void refreshServerClients(){
+	/*Aca se tiene que verificar si los servidores tienen clientes en cola, para rechazarlos si es necesario por el backlog*/
+	uint8_t i;
+	for (i = 0; i < MAX_NUM_SERVERS; i++){
+		if(server[i].hasClient() && (serverClients[i] == serverBacklog[i]) ){
+			WiFiClient serverClient = server[i].available();
+			serverClient.stop();
+		}
 	}
 }
 
