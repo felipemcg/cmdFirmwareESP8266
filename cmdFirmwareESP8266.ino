@@ -522,6 +522,8 @@ void runInstruction(){
 		Serial.print(bytesReceivedFromServer[socket],DEC);
 		Serial.print(CMD_DELIMITER);
 		Serial.print(bufferReceivedFromServer[socket]);
+		/*Revisar para llamar a la funcion correcta (la que recibe size como parametro)*/
+		Serial.write((const char*)bufferReceivedFromServer[socket],(uint16_t)bytesReceivedFromServer[socket]);
 		Serial.print(CMD_TERMINATOR);
 		bytesReceivedFromServer[socket] = 0;
 		/*Clear the buffer*/
@@ -834,7 +836,7 @@ void showParsedData() {
 /* Descripcion: Recibe un byte del servidor*/
 void receiveFromServer(){
 	uint16_t bytesAvailable;
-	char dump;
+	char dump, payload;
 	for(int i = 0; i < MAX_NUM_CLIENTS; i++){
 		if(client[i].connected()){
 			/*Retorna la cantidad de bytes disponibles*/
@@ -844,7 +846,19 @@ void receiveFromServer(){
 				if(!fullBufferRcvd[i]){
 					//Serial.println("Leido");
 					/*Lee el siguiente byte recibido*/
-					bufferReceivedFromServer[i][bytesReceivedFromServer[i]++] = client[i].read();
+					payload = client[i].read();
+					if(payload == -1){
+						/*Serial.print("Ouch");
+						Serial.print(CMD_TERMINATOR);*/
+					}else{
+						/*Serial.print(bytesReceivedFromServer[i]);
+						Serial.print('-');
+						Serial.print(payload);
+						Serial.print('=');*/
+						bufferReceivedFromServer[i][bytesReceivedFromServer[i]] = payload;
+						//Serial.print(bufferReceivedFromServer[i][bytesReceivedFromServer[i]]);
+						bytesReceivedFromServer[i]++;
+					}
 					/*Si la cantidad de bytes leidos por el servidor supero el tamaño
 					 * del buffer, se indica que se lleno el buffer.*/
 					if(bytesReceivedFromServer[i] > MAX_PACKET_SIZE){
