@@ -517,6 +517,12 @@ void runInstruction(){
 			Serial.print(CMD_TERMINATOR);
 			break;
 		}
+		/*Agregar verificacion de conexion a servidor antes de imprimir respuesta*/
+		if(!client[socket].connected()){
+			Serial.print('3');
+			Serial.print(CMD_TERMINATOR);
+			break;
+		}
 		Serial.print(CMD_RESP_OK);
 		Serial.print(CMD_DELIMITER);
 		Serial.print(bytesReceivedFromServer[socket],DEC);
