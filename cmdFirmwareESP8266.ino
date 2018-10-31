@@ -22,7 +22,7 @@
 
 
 /*Cantidad maxima de parametros por comando*/
-#define MAX_PARAMETERS 4
+#define MAX_PARAMETERS 5
 
 /*Cantidad maxima de caracteres que puede contener cada parametro*/
 #define MAX_CHARS_PARAMETERS 1024
@@ -31,7 +31,7 @@
 #define MAX_CHAR_INST 3
 
 /*Numero maximo de instrucciones*/
-#define MAX_INTS_SET 16
+#define MAX_INTS_SET 17
 
 /*---------------------*/
 /*El tiempo maxima para esperar una respuesta del servidor, em ms.*/
@@ -118,11 +118,12 @@ static const char instructionSet[MAX_INTS_SET][MAX_CHAR_INST+1] = {"WFC",	//0
 		"SAC",	//12
 		"SRC",	//13
 		"GFH",	//14
-		"MIS"};	//15
+		"MIS",	//15
+		"WFA"};	//16
 
 /*Matriz que almacena la cantidad de parametros necesarios
  *por cada comando, correspondencia por indice.*/
-const uint8_t qParametersInstruction[MAX_INTS_SET] ={2,0,0,0,0,4,2,3,1,1,2,1,1,1,0,0};
+const uint8_t qParametersInstruction[MAX_INTS_SET] ={2,0,0,0,0,4,2,3,1,1,2,1,1,1,0,0,5};
 
 /*Declaracion del objeto que se utilizara para el manejo del cliente, maximo 4
  * por limitacion del modulo.*/
@@ -196,7 +197,7 @@ void loop() {
 		/*Se muestran los datos separados en campos.*/
 
 	#endif
-		//showParsedData();
+		showParsedData();
 
 		yield();
 
@@ -283,6 +284,9 @@ void runInstruction(){
 	int numSsid;
 	uint8_t socket;
 	uint8_t i;
+	uint8_t channel = 1;
+	uint8_t hidden_opt = 0;
+	uint8_t max_connection = 4;
 	bool WFC_STATUS = 1, portInUse = false;
 	wl_status_t WF_STATUS;
 	int C_STATUS = 0;
@@ -690,6 +694,38 @@ void runInstruction(){
 		break;
 	case 15:
 		/*MIS - Module Is Alive*/
+		Serial.print(CMD_RESP_OK);
+		Serial.print(CMD_TERMINATOR);
+		break;
+	case 16:
+		/*WFA - WiFi Soft-AP Mode*/
+		channel = atoi(parametros[2]);
+		hidden_opt = atoi(parametros[3]);
+		max_connection = atoi(parametros[4]);
+		if(!inRange(channel,1,13)){
+			/*El numero de channel esta fuera de rango*/
+			Serial.print('1');
+			Serial.print(CMD_TERMINATOR);
+			break;
+		}
+		if(!inRange(hidden_opt,0,1)){
+			/*El numero de hidden_opt esta fuera de rango*/
+			Serial.print('2');
+			Serial.print(CMD_TERMINATOR);
+			break;
+		}
+		if(!inRange(max_connection,1,4)){
+			/*El numero de max_connection esta fuera de rango*/
+			Serial.print('3');
+			Serial.print(CMD_TERMINATOR);
+			break;
+		}
+		WFC_STATUS = WiFi.softAP(parametros[0], parametros[1], channel, hidden_opt, max_connection);
+		if(WFC_STATUS == 0){
+			Serial.print('4');
+			Serial.print(CMD_TERMINATOR);
+			break;
+		}
 		Serial.print(CMD_RESP_OK);
 		Serial.print(CMD_TERMINATOR);
 		break;
