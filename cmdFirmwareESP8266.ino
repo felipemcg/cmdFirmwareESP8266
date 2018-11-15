@@ -8,6 +8,9 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiScan.h>
 
+#include "test.h"
+#include "puerto_serial.h"
+
 /*Considerar usar client.setNoDelay para desactivar el algoritmo de naggle*/
 
 /*-------------------------DEFINE's--------------------------------*/
@@ -137,8 +140,10 @@ uint16_t serverPortsInUse[MAX_NUM_SERVERS];
 uint8_t serverBacklog[MAX_NUM_SERVERS];
 uint8_t serverClients[MAX_NUM_SERVERS];
 
+
 //#define sDebug 1
 /*-------------------------------------------------------------------*/
+
 
 
 void setup() {
@@ -166,6 +171,7 @@ void setup() {
     client[1].setNoDelay(1);
     client[2].setNoDelay(1);
     client[3].setNoDelay(1);
+    functionTest(4);
 }
 
 void loop() {
@@ -176,10 +182,10 @@ void loop() {
 	#endif
 
 	/*Recibe los datos por serial, hasta que se encuentra el caracter terminador.*/
-	recvWithEndMarker();
+	//recvWithEndMarker();
 
 	/*Una vez que se reciben todos los datos por serial, se conienza a procesar*/
-	if(newData == true){
+	if(recibir_paquete(serialCharsBuffer) == true){
 
 	#ifdef sDebug
 		pMillis = millis();
@@ -191,7 +197,7 @@ void loop() {
 		strcpy(tempChars, serialCharsBuffer);
 
 		/*Separar los datos en los campos correspondientes.*/
-		parseData();
+		separar_paquete();
 
 	#ifdef sDebug
 		/*Se muestran los datos separados en campos.*/
@@ -201,9 +207,9 @@ void loop() {
 
 		yield();
 
-		if(searchInstruction() == true){
-			if(validateParameters() == true){
-				runInstruction();
+		if(buscar_comando() == true){
+			if(validar_cantidad_parametros() == true){
+				ejectutar_comando();
 			}else{
 				/*No se encontro la cantidad necesaria de parametros para el comando*/
 				Serial.print("P");
@@ -253,7 +259,7 @@ void loop() {
  * de instrucciones(instructionSet). Si encuentra una coincidencia, guarda el indice y la
  * funcion retorna 1.
  * */
-bool searchInstruction(){
+bool buscar_comando(){
 	uint8_t j;
 	for(j=0; j<MAX_INTS_SET; j++){
 		if(strcmp(INST,instructionSet[j]) == 0){
@@ -266,7 +272,7 @@ bool searchInstruction(){
 }
 
 /* Descripcion: Comprueba que se hayan recibido la cantidad necesaria de parametros ejecutar el comando.*/
-bool validateParameters(){
+bool validar_cantidad_parametros(){
 	if(qParametersInstruction[instructionIndex] == parametersFound){
 		return 1;
 	}
@@ -274,7 +280,7 @@ bool validateParameters(){
 }
 
 /* Descripcion: Ejectua el comando solicitado.*/
-void runInstruction(){
+void ejectutar_comando(){
 	unsigned long previousMillis;
 	unsigned long currentMillis;
 	uint16_t port;
@@ -291,6 +297,7 @@ void runInstruction(){
 	wl_status_t WF_STATUS;
 	int C_STATUS = 0;
 	IPAddress ip,dns,gateway,subnet;
+	WiFiMode_t WiFiMode;
 
 	switch(instructionIndex){
 	case 0:
@@ -582,7 +589,8 @@ void runInstruction(){
 			/*Verificar que se tienen los recursos disponibles para escuchar la cantidad de clientes*/
 		}
 		WF_STATUS = WiFi.status();
-		if( (WF_STATUS == WL_DISCONNECTED) || (WF_STATUS == WL_CONNECTION_LOST) ){
+		WiFiMode = WiFi.getMode();
+		if( ( ((WF_STATUS == WL_DISCONNECTED) || (WF_STATUS == WL_CONNECTION_LOST)) && (WiFiMode == WIFI_STA) ) ){
 			/*WiFi desconectado*/
 			Serial.print('4');
 			Serial.print(CMD_TERMINATOR);
@@ -835,7 +843,7 @@ void showNewData() {
 }
 
 /* Descripcion: Separa los datos recibidos en campos*/
-void parseData() {
+void separar_paquete() {
 	int i;
 	char delim[2];
 	/*Copia el caracter que separa los parametros*/
