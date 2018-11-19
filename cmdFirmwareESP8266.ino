@@ -30,11 +30,12 @@
 /*Cantidad maxima de caracteres que puede contener cada parametro*/
 #define MAX_CHARS_PARAMETERS 1024
 
-/*Cantidad maxima de caracteres que puede contener el comando*/
+/*Cantidad maxima de caracteres que puede contener el nombre del comando*/
 #define MAX_CHAR_INST 3
 
-/*Numero maximo de instrucciones*/
+/*Numero maximo de comandos admitidos*/
 #define MAX_INTS_SET 17
+
 
 /*---------------------*/
 /*El tiempo maxima para esperar una respuesta del servidor, em ms.*/
@@ -71,9 +72,6 @@ uint8_t delimFound = 0;
 /*Cantidad de parametros que se encontro*/
 uint8_t parametersFound = 0;
 
-/*Caracter que termina la instruccion*/
-char endMarker = '\n';
-
 //Campo de instruccion, +1 para el NULL al final
 char INST[MAX_CHAR_INST+1] = {'\0'};
 
@@ -101,8 +99,6 @@ bool	fullBufferRcvd[MAX_NUM_CLIENTS];
 /*Bandera para indicar que el servidor esta activo*/
 bool	serverOn[MAX_NUM_SERVERS] = {false,false,false,false};
 
-/*Bandera utilizada para notificar que hay datos seriales nuevos*/
-boolean newData = false;
 
 /*Matriz que almacena los nombres de todas los comandos validos
 * dejar con static? Podria afectar la velocidad*/
@@ -135,7 +131,6 @@ WiFiClient client[MAX_NUM_CLIENTS];
 /*Declaracion de los objetos que se utilizaran para el manejo del servidor*/
 std::vector<WiFiServer> server(MAX_NUM_SERVERS, WiFiServer(DEFAULT_SERVER_PORT));
 
-uint8_t socketInUse[MAX_NUM_CLIENTS] = {0,0,0,0};
 uint16_t serverPortsInUse[MAX_NUM_SERVERS];
 uint8_t serverBacklog[MAX_NUM_SERVERS];
 uint8_t serverClients[MAX_NUM_SERVERS];
@@ -197,7 +192,7 @@ void loop() {
 		strcpy(tempChars, serialCharsBuffer);
 
 		/*Separar los datos en los campos correspondientes.*/
-		separar_paquete();
+		separar_paquete(serialCharsBuffer);
 
 	#ifdef sDebug
 		/*Se muestran los datos separados en campos.*/
@@ -745,14 +740,12 @@ void ejectutar_comando(){
 
 /* Descripcion: Muestra los datos recibidos por serial*/
 void showNewData() {
-	if (newData == true) {
-		Serial.print("Recibido:");
-		Serial.println(serialCharsBuffer);
-	}
+	Serial.print("Recibido:");
+	Serial.println(serialCharsBuffer);
 }
 
 /* Descripcion: Separa los datos recibidos en campos*/
-void separar_paquete() {
+void separar_paquete(char *paquete) {
 	int i;
 	char delim[2];
 	/*Copia el caracter que separa los parametros*/
