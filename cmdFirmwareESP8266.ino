@@ -41,13 +41,14 @@
 /*-------------------------------------------------------------------*/
 
 
+WiFiClient cliente_tcp[CANT_MAX_CLIENTES];
+
 /*Declaracion de los buffers utilizados para recibir datos del servidor*/
 char	buffer_datos_tcp_recibidos_servidor[CANT_MAX_CLIENTES][TAM_MAX_PAQUETE_DATOS_TCP+1];
 uint16_t cant_bytes_recibidos_tcp_servidor[CANT_MAX_CLIENTES];
 bool	b_buffer_servidor_tcp_lleno[CANT_MAX_CLIENTES];
 /*Declaracion del objeto que se utilizara para el manejo del cliente, maximo 4
  * por limitacion del modulo.*/
-WiFiClient cliente_tcp[CANT_MAX_CLIENTES];
 
 /*Bandera para indicar que el servidor esta activo*/
 bool	b_servidor_encendido[CANT_MAX_SERVIDORES] = {false,false,false,false};
@@ -65,7 +66,7 @@ std::vector<WiFiServer> server(CANT_MAX_SERVIDORES, WiFiServer(NUM_PUERTO_SERVID
 
 const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
   		{"WFC",2,&cmd_WFC}, //0
-  		{"WFS",2,&cmd_WFC}, //1
+  		{"WFS",2,&cmd_WFS}, //1
 		{"WRI",0,&cmd_WRI},	//2
 		{"WID",0,&cmd_WID},	//3
 		{"WFD",0,&cmd_WFD},	//4
@@ -86,8 +87,8 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
 struct cmd_recibido comando_recibido;
 char paquete_datos_tcp[TAM_MAX_PAQUETE_DATOS_TCP];
 
-
 void setup() {
+	Serial.setRxBufferSize(512);
 	Serial.begin(115200);
 	delay(10);
 	Serial.println();
@@ -116,6 +117,7 @@ void setup() {
 }
 
 void loop() {
+	uint8_t cant_maxima_caracteres_paquete_serial = CANT_MAX_CARACT_NOMBRE_CMD + CANT_MAX_CARACT_PARAMETRO*CANT_MAX_PARAMETROS_CMD + CANT_MAX_PARAMETROS_CMD;
 	char paquete_serial[64];
 	int indice_comando;
 
@@ -130,9 +132,10 @@ void loop() {
 
 	/*Se verifica que se haya recibido un nuevo paquete por el puerto serial.*/
 	if (recibir_paquetes(paquete_serial,paquete_datos_tcp) == 1){
-		Serial.println(paquete_serial);
+		//Serial.println(paquete_serial);
 		yield();
-		Serial.println("Antes de separar");
+		Serial.print("Antes de separar:");
+		Serial.println(paquete_serial);
 
 		/*Separar el paquete en los campos correspondientes.*/
 		comando_recibido = separar_comando_parametros(paquete_serial);
@@ -164,11 +167,13 @@ void loop() {
 	yield();
 
 	/*Se almacenan los datos recibidos en los sockets en sus respectivos buffer's*/
-	receiveFromServer();
+	//receiveFromServer();
 
 	yield();
 
 	refreshServerClients();
+
+	memset(paquete_datos_tcp,0,sizeof(paquete_datos_tcp));
 }
 
 
@@ -236,7 +241,7 @@ bool inRange(uint16_t val, uint16_t min, uint16_t max)
 }
 
 /* Descripcion: Devuelve el primer indice del socket dispoinible*/
-uint8_t	getFreeSocket(){
+uint8_t	obtener_socket_libre(){
 	uint8_t i=0;
 	for (i = 0; i < CANT_MAX_CLIENTES; i++) {
 		/*Si esta vacio y no esta conectado*/
@@ -259,7 +264,7 @@ uint8_t acceptClients(WiFiServer& server, uint8_t serverId){
 	uint8_t socket;
 	/*Verificar que todavia no se conectaron el numero maximo de clientes*/
 	if(cant_clientes_activos_en_servidor[serverId] < cant_clientes_permitidos_en_servidor[serverId]){
-		socket = getFreeSocket();
+		socket = obtener_socket_libre();
 		if(socket!=255){
 			/*Se encontro socket libre*/
 			/*Se acepta al cliente*/
@@ -411,7 +416,7 @@ void cmd_CCS(){
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
-	socket = getFreeSocket();
+	socket = obtener_socket_libre();
 	if(socket == 255){
 		/*No hay socket disponible*/
 		Serial.print('3');
@@ -720,6 +725,7 @@ void cmd_SOR(){
 	/*SOR - Socket Read*/
 	uint8_t socket;
 	wl_status_t estado_conexion_wifi;
+	uint16_t bytes_disponible_para_recibir = 0;
 
 	socket = atoi(comando_recibido.parametros[0]);
 	/*print received data from server*/
@@ -741,13 +747,18 @@ void cmd_SOR(){
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
+	bytes_disponible_para_recibir = cliente_tcp[socket].available();
 	Serial.print(CMD_RESP_OK);
 	Serial.print(CMD_DELIMITER);
-	Serial.print(cant_bytes_recibidos_tcp_servidor[socket],DEC);
+	Serial.print(bytes_disponible_para_recibir,DEC);
 	Serial.print(CMD_DELIMITER);
-	Serial.print(buffer_datos_tcp_recibidos_servidor[socket]);
+	while(bytes_disponible_para_recibir--){
+		Serial.print((char)cliente_tcp[socket].read());
+	}
+	//Serial.print(buffer_datos_tcp_recibidos_servidor[socket]);
 	/*Revisar para llamar a la funcion correcta (la que recibe size como parametro)*/
-	Serial.write((const char*)buffer_datos_tcp_recibidos_servidor[socket],(uint16_t)cant_bytes_recibidos_tcp_servidor[socket]);
+	//while
+	//Serial.write((const char*)buffer_datos_tcp_recibidos_servidor[socket],(uint16_t)cant_bytes_recibidos_tcp_servidor[socket]);
 	Serial.print(CMD_TERMINATOR);
 	cant_bytes_recibidos_tcp_servidor[socket] = 0;
 	/*Clear the buffer*/
