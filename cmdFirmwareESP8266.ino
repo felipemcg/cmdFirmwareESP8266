@@ -69,7 +69,7 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
   		{"WFS",2,&cmd_WFS}, //1
 		{"WRI",0,&cmd_WRI},	//2
 		{"WID",0,&cmd_WID},	//3
-		{"WFD",0,&cmd_WFD},	//4
+		{"WFD",1,&cmd_WFD},	//4
 		{"WCF",4,&cmd_WCF},	//5
 		{"CCS",2,&cmd_CCS},	//6
 		{"SOW",2,&cmd_SOW},	//7
@@ -84,7 +84,7 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
 		{"WFA",5,&cmd_WFA},	//16
   		{"WAC",3,&cmd_WAC},	//17
   		{"WAS",0,&cmd_WAS},	//18
-  		{"WAD",0,&cmd_WAD},	//19
+  		{"WAD",1,&cmd_WAD},	//19
   		{"WAI",0,&cmd_WAI}	//20
 };
 
@@ -485,9 +485,18 @@ void cmd_WID(){
 
 void cmd_WFD(){
 	/*WFD - WiFi Disconnect*/
-	WiFi.disconnect();
+	bool b_estacion_off = comando_recibido.parametros[0];
+	if(!inRange(b_estacion_off,0,1)){
+		Serial.print('1');
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	if( WiFi.disconnect(b_estacion_off) ){
+		Serial.print(CMD_RESP_OK);
+	}else{
+		Serial.print('2');
+	}
 	delay(100);
-	Serial.print(CMD_RESP_OK);
 	Serial.print(CMD_TERMINATOR);
 	return;
 }
@@ -904,11 +913,16 @@ void cmd_WAS(){
 
 void cmd_WAD(){
 	/*WAD - WiFi Acces Point Disconnect*/
-	bool b_softAP_off = true;
+	bool b_softAP_off = comando_recibido.parametros[0];
+	if(!inRange(b_softAP_off,0,1)){
+		Serial.print('1');
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
 	if( WiFi.softAPdisconnect(b_softAP_off) ){
 		Serial.print(CMD_RESP_OK);
 	}else{
-		Serial.print('1');
+		Serial.print('2');
 	}
 	Serial.print(CMD_TERMINATOR);
 	return;
