@@ -25,7 +25,7 @@
 #define CANT_MAX_CARACT_NOMBRE_CMD 3
 
 /*Numero maximo de comandos admitidos*/
-#define CANT_MAX_CMD 21
+#define CANT_MAX_CMD 22
 
 
 //extern void cmd_WFC(void);

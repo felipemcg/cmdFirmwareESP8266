@@ -69,6 +69,7 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
   		{"WFS",2,&cmd_WFS}, //1
 		{"WRI",0,&cmd_WRI},	//2
 		{"WID",0,&cmd_WID},	//3
+		{"WFI",0,&cmd_WFI},
 		{"WFD",1,&cmd_WFD},	//4
 		{"WCF",4,&cmd_WCF},	//5
 		{"CCS",2,&cmd_CCS},	//6
@@ -479,6 +480,25 @@ void cmd_WRI(){
 
 void cmd_WID(){
 	Serial.print(WiFi.SSID());
+	Serial.print(CMD_TERMINATOR);
+	return;
+}
+
+void cmd_WFI(){
+	/*WFI - WiFi Station Information
+	 * Descripcion: Imprime la direccion MAC e IP local de la  interfaz de estacion, ademas
+	 * de la mascara de subred, IP de la puerta de enlance y la direccion IP del servidor DNS #1*/
+	Serial.print(CMD_RESP_OK);
+	Serial.print(CMD_DELIMITER);
+	Serial.print(WiFi.macAddress());
+	Serial.print(CMD_DELIMITER);
+	Serial.print(WiFi.localIP());
+	Serial.print(CMD_DELIMITER);
+	Serial.print(WiFi.subnetMask());
+	Serial.print(CMD_DELIMITER);
+	Serial.print(WiFi.gatewayIP().toString().c_str());
+	Serial.print(CMD_DELIMITER);
+	Serial.print(WiFi.dnsIP());
 	Serial.print(CMD_TERMINATOR);
 	return;
 }
