@@ -473,12 +473,16 @@ void cmd_WFS(){
 
 void cmd_WRI(){
 	/*WRI - WiFi RSSI*/
+	Serial.print(CMD_RESP_OK);
+	Serial.print(CMD_DELIMITER);
 	Serial.print(WiFi.RSSI());
 	Serial.print(CMD_TERMINATOR);
 	return;
 }
 
 void cmd_WID(){
+	Serial.print(CMD_RESP_OK);
+	Serial.print(CMD_DELIMITER);
 	Serial.print(WiFi.SSID());
 	Serial.print(CMD_TERMINATOR);
 	return;
