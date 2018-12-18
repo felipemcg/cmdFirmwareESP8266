@@ -84,7 +84,8 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
 		{"WFA",5,&cmd_WFA},	//16
   		{"WAC",3,&cmd_WAC},	//17
   		{"WAS",0,&cmd_WAS},	//18
-  		{"WAD",0,&cmd_WAD}	//19
+  		{"WAD",0,&cmd_WAD},	//19
+  		{"WAI",0,&cmd_WAI}	//20
 };
 
 struct cmd_recibido comando_recibido;
@@ -906,10 +907,20 @@ void cmd_WAD(){
 	bool b_softAP_off = true;
 	if( WiFi.softAPdisconnect(b_softAP_off) ){
 		Serial.print(CMD_RESP_OK);
-		Serial.print(CMD_TERMINATOR);
 	}else{
 		Serial.print('1');
-		Serial.print(CMD_TERMINATOR);
 	}
+	Serial.print(CMD_TERMINATOR);
+	return;
+}
+
+void cmd_WAI(){
+	/*WAI - WiFi Acces Point Information, IP and MAC*/
+	Serial.print(CMD_RESP_OK);
+	Serial.print(CMD_DELIMITER);
+	Serial.print(WiFi.softAPIP());
+	Serial.print(CMD_DELIMITER);
+	Serial.print(WiFi.softAPmacAddress());
+	Serial.print(CMD_TERMINATOR);
 	return;
 }
