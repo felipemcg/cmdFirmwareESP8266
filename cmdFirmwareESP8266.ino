@@ -82,7 +82,8 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
 		{"GFH",0,&cmd_GFH},	//14
 		{"MIS",0,&cmd_MIS},	//15
 		{"WFA",5,&cmd_WFA},	//16
-  		{"WAC",3,&cmd_WAC}	//17
+  		{"WAC",3,&cmd_WAC},	//17
+  		{"WAS",0,&cmd_WAS}	//17
 };
 
 struct cmd_recibido comando_recibido;
@@ -853,7 +854,7 @@ void cmd_WFA(){
 }
 
 void cmd_WAC(){
-	/*WFA - WiFi Soft-AP Mode*/
+	/*WAC - WiFi Soft-AP Configuration*/
 	bool b_configuracion_punto_acceso = 0;
 	IPAddress ip_local;
 	IPAddress gateway;
@@ -886,4 +887,15 @@ void cmd_WAC(){
 	Serial.print(CMD_TERMINATOR);
 	return;
 
+}
+
+void cmd_WAS(){
+	/*WAS - WiFi Acces Point Connected Stations*/
+	uint8_t estaciones_conectadas = 0;
+	estaciones_conectadas = WiFi.softAPgetStationNum();
+	Serial.print(CMD_RESP_OK);
+	Serial.print(CMD_DELIMITER);
+	Serial.print(estaciones_conectadas);
+	Serial.print(CMD_TERMINATOR);
+	return;
 }
