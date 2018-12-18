@@ -83,7 +83,8 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
 		{"MIS",0,&cmd_MIS},	//15
 		{"WFA",5,&cmd_WFA},	//16
   		{"WAC",3,&cmd_WAC},	//17
-  		{"WAS",0,&cmd_WAS}	//17
+  		{"WAS",0,&cmd_WAS},	//18
+  		{"WAD",0,&cmd_WAD}	//19
 };
 
 struct cmd_recibido comando_recibido;
@@ -897,5 +898,18 @@ void cmd_WAS(){
 	Serial.print(CMD_DELIMITER);
 	Serial.print(estaciones_conectadas);
 	Serial.print(CMD_TERMINATOR);
+	return;
+}
+
+void cmd_WAD(){
+	/*WAD - WiFi Acces Point Disconnect*/
+	bool b_softAP_off = true;
+	if( WiFi.softAPdisconnect(b_softAP_off) ){
+		Serial.print(CMD_RESP_OK);
+		Serial.print(CMD_TERMINATOR);
+	}else{
+		Serial.print('1');
+		Serial.print(CMD_TERMINATOR);
+	}
 	return;
 }
