@@ -7,8 +7,8 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiScan.h>
 
-#include "test.h"
-#include "puerto_serial.h"
+//#include "test.h"
+//#include "puerto_serial.h"
 #include "operaciones_paquetes.h"
 #include "cmd_definicion.h"
 
@@ -64,8 +64,10 @@ std::vector<WiFiServer> server(CANT_MAX_SERVIDORES, WiFiServer(NUM_PUERTO_SERVID
 //#define sDebug 1
 /*-------------------------------------------------------------------*/
 
+void cmd_WFC(void);
+
 const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
-  		{"WFC",2,&cmd_WFC}, //0
+  		{"WFC",2,&cmd_WFC}, //0/
   		{"WFS",2,&cmd_WFS}, //1
 		{"WRI",0,&cmd_WRI},	//2
 		{"WID",0,&cmd_WID},	//3
@@ -91,12 +93,16 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
 
 struct cmd_recibido comando_recibido;
 char paquete_datos_tcp[TAM_MAX_PAQUETE_DATOS_TCP];
+char paquete_serial[64];
+
+size_t tam_buffer_serial = 0;
 
 void setup() {
-	Serial.setRxBufferSize(512);
 	Serial.begin(115200);
+	Serial.setRxBufferSize(1024);
 	delay(10);
 	Serial.println();
+
 	for(int i=0; i < CANT_MAX_CLIENTES; i++){
 		cant_bytes_recibidos_tcp_servidor[i] = 0;
 		b_buffer_servidor_tcp_lleno[i] = false;
@@ -112,18 +118,19 @@ void setup() {
     }
 #endif
 
-    Serial.print("R");
-    Serial.print(CMD_TERMINATOR);
+
     cliente_tcp[0].setNoDelay(1);
     cliente_tcp[1].setNoDelay(1);
     cliente_tcp[2].setNoDelay(1);
     cliente_tcp[3].setNoDelay(1);
-    functionTest(4);
+
+    Serial.print("R");
+    Serial.print(CMD_TERMINATOR);
 }
 
 void loop() {
 	uint8_t cant_maxima_caracteres_paquete_serial = CANT_MAX_CARACT_NOMBRE_CMD + CANT_MAX_CARACT_PARAMETRO*CANT_MAX_PARAMETROS_CMD + CANT_MAX_PARAMETROS_CMD;
-	char paquete_serial[64];
+
 	int indice_comando;
 
 	comando_recibido.nombre[0] = '\0';
@@ -133,20 +140,28 @@ void loop() {
 	comando_recibido.parametros[3][0] = '\0';
 	comando_recibido.parametros[4][0] = '\0';
 
+
 	yield();
 
+
 	/*Se verifica que se haya recibido un nuevo paquete por el puerto serial.*/
-	if (recibir_paquetes(paquete_serial,paquete_datos_tcp) == 1){
+	if (recibir_paquetes(paquete_serial, paquete_datos_tcp) == 1){
+		/*Serial.print("Dir serial: ");
+		Serial.printf("%p",paquete_serial);
+		Serial.println();
+		Serial.print("Dir datos: ");
+		Serial.printf("%p",paquete_datos_tcp);*/
+
 		//Serial.println(paquete_serial);
 		yield();
-		Serial.print("Antes de separar:");
-		Serial.println(paquete_serial);
+		//Serial.print("Antes de separar:");
+		//Serial.println(paquete_serial);
 
 		/*Separar el paquete en los campos correspondientes.*/
 		comando_recibido = separar_comando_parametros(paquete_serial);
 
 		/*Se muestran los datos separados en campos.*/
-		imprimir_datos_separados(comando_recibido);
+		//imprimir_datos_separados(comando_recibido);
 
 		/*Se busca el comando recibido dentro del conjunto de comandos.*/
 		indice_comando = buscar_comando(comando_recibido.nombre);
@@ -165,11 +180,12 @@ void loop() {
 		}else{
 			/*No se encontro el comando*/
 		}
+		memset(paquete_serial,0,sizeof(paquete_serial));
+		memset(paquete_datos_tcp,0,sizeof(paquete_datos_tcp));
 	}else{
 		/*Problemas en la recepcion de paquete serial*/
 	}
 
-	yield();
 
 	/*Se almacenan los datos recibidos en los sockets en sus respectivos buffer's*/
 	//receiveFromServer();
@@ -177,8 +193,6 @@ void loop() {
 	yield();
 
 	refreshServerClients();
-
-	memset(paquete_datos_tcp,0,sizeof(paquete_datos_tcp));
 }
 
 
@@ -586,13 +600,13 @@ void cmd_SLC(){
 	}else{
 		/*Verificar que se tienen los recursos disponibles para escuchar la cantidad de clientes*/
 	}
-	estado_conexion_wifi = WiFi.status();
+	/*estado_conexion_wifi = WiFi.status();
 	if( (estado_conexion_wifi == WL_DISCONNECTED) || (estado_conexion_wifi == WL_CONNECTION_LOST) ){
-		/*WiFi desconectado*/
+		WiFi desconectado
 		Serial.print('4');
 		Serial.print(CMD_TERMINATOR);
 		return;
-	}
+	}*/
 	/*Determinar si ya existe un servidor funcionando con ese puerto*/
 	for (i = 0; i < CANT_MAX_SERVIDORES; i++) {
 		if(puerto_tcp != num_puerto_en_uso_servidor[i]){
@@ -640,13 +654,13 @@ void cmd_SAC(){
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
-	estado_conexion_wifi = WiFi.status();
+	/*estado_conexion_wifi = WiFi.status();
 	if( (estado_conexion_wifi == WL_DISCONNECTED) || (estado_conexion_wifi == WL_CONNECTION_LOST) ){
-		/*WiFi desconectado*/
+		WiFi desconectado
 		Serial.print('6');
 		Serial.print(CMD_TERMINATOR);
 		return;
-	}
+	}*/
 	if(b_servidor_encendido[socket]){
 		if(server[socket].hasClient()){
 			serverAcceptStatus = acceptClients(server[socket],socket);
@@ -702,7 +716,7 @@ void cmd_SCC(){
 void cmd_SOW(){
 	/*SOW - Socket Write*/
 	/*Verificar primero si existe una conexion activa antes de intentar enviar el mensaje*/
-	Serial.println("Llegue a SOW:");
+	//Serial.println("Llegue a SOW:");
 	uint8_t socket = 255;
 	int cant_bytes_enviar_tcp = -1;
 	int cant_bytes_enviados_tcp = -2;
@@ -710,13 +724,13 @@ void cmd_SOW(){
 
 	socket = atoi(comando_recibido.parametros[0]);
 	cant_bytes_enviar_tcp = atoi(comando_recibido.parametros[1]);
-	estado_conexion_wifi = WiFi.status();
+	/*estado_conexion_wifi = WiFi.status();
 	if( (estado_conexion_wifi == WL_DISCONNECTED) || (estado_conexion_wifi == WL_CONNECTION_LOST) ){
-		/*WiFi desconectado*/
+		WiFi desconectado
 		Serial.print('5');
 		Serial.print(CMD_TERMINATOR);
 		return;
-	}
+	}*/
 	if(inRange(socket,0,CANT_MAX_CLIENTES) == true){
 		if(inRange(cant_bytes_enviar_tcp,0,TAM_MAX_PAQUETE_DATOS_TCP) == true){
 			if(cliente_tcp[socket].connected()){
@@ -727,8 +741,10 @@ void cmd_SOW(){
 				 /* ======>  comando_recibido.parametros[2] solo puede ser uint8_t ??*/
 				/*cliente_tcp.write() blocks until either data is sent and ACKed, or timeout occurs (currently hard-coded to 5 seconds)
 				 * @ https://github.com/esp8266/Arduino/issues/917#issuecomment-150304010*/
+				/*Serial.print("Cant bytes: ");
+				Serial.println(cant_bytes_enviar_tcp,DEC);
 				Serial.print("Voy a enviar: ");
-				Serial.println(paquete_datos_tcp);
+				Serial.println(paquete_datos_tcp);*/
 				cant_bytes_enviados_tcp = cliente_tcp[socket].write(paquete_datos_tcp,cant_bytes_enviar_tcp);
 
 				if(cant_bytes_enviar_tcp != cant_bytes_enviados_tcp){
@@ -771,13 +787,13 @@ void cmd_SOR(){
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
-	estado_conexion_wifi = WiFi.status();
+	/*estado_conexion_wifi = WiFi.status();
 	if( (estado_conexion_wifi == WL_DISCONNECTED) || (estado_conexion_wifi == WL_CONNECTION_LOST) ){
-		/*WiFi desconectado*/
+		WiFi desconectado
 		Serial.print('2');
 		Serial.print(CMD_TERMINATOR);
 		return;
-	}
+	}*/
 	/*Agregar verificacion de conexion a servidor antes de imprimir respuesta*/
 	if(!cliente_tcp[socket].connected()){
 		Serial.print('3');
@@ -877,7 +893,11 @@ void cmd_WFA(){
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
+
+	WiFi.disconnect();
+	delay(100);
 	b_punto_acceso_creado = WiFi.softAP(comando_recibido.parametros[0], comando_recibido.parametros[1], canal_wifi, hidden_opt, cant_max_clientes_wifi);
+	delay(5000);
 	if(b_punto_acceso_creado == 0){
 		Serial.print('4');
 		Serial.print(CMD_TERMINATOR);
@@ -925,7 +945,7 @@ void cmd_WAC(){
 }
 
 void cmd_WAS(){
-	/*WAS - WiFi Acces Point Connected Stations*/
+	/*WAS - WiFi Acces Point Stations connected*/
 	uint8_t estaciones_conectadas = 0;
 	estaciones_conectadas = WiFi.softAPgetStationNum();
 	Serial.print(CMD_RESP_OK);
@@ -962,3 +982,4 @@ void cmd_WAI(){
 	Serial.print(CMD_TERMINATOR);
 	return;
 }
+
