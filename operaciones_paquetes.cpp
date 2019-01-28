@@ -151,6 +151,8 @@ bool recibir_paquetes(char *paquete_serial, char *paquete_datos_recibidos_tcp){
 	#if DEBUG_COMANDO_DATOS
 						Serial.println("No se encontro LF al final, luego de los datos.");
 	#endif
+						Serial.print('5');
+						Serial.print(CMD_TERMINATOR);
 						paquete_serial[0] = '\0';
 						numero_caracter_recibido = 0;
 						b_ret_val = false;
