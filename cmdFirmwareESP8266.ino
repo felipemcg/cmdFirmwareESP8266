@@ -25,7 +25,7 @@
 #define TIEMPO_MS_ESPERA_CONEXION_WIFI 20000
 
 /*Maximum number of Bytes for a packet*/
-#define TAM_MAX_PAQUETE_DATOS_TCP 512
+#define TAM_MAX_PAQUETE_DATOS_TCP 1024
 
 /*Numero maximo de clientes que puede manejar el modulo*/
 #define CANT_MAX_CLIENTES 4
@@ -119,10 +119,10 @@ void setup() {
 #endif
 
 
-    cliente_tcp[0].setNoDelay(1);
+    /*cliente_tcp[0].setNoDelay(1);
     cliente_tcp[1].setNoDelay(1);
     cliente_tcp[2].setNoDelay(1);
-    cliente_tcp[3].setNoDelay(1);
+    cliente_tcp[3].setNoDelay(1);*/
 
     Serial.print("R");
     Serial.print(CMD_TERMINATOR);
@@ -167,7 +167,6 @@ void loop() {
 		indice_comando = buscar_comando(comando_recibido.nombre);
 
 		if(indice_comando != -1){
-
 			/*Se verifica que se recibio la cantidad necesaria de parametros para ejectuar el comando.*/
 			if( validar_cantidad_parametros(indice_comando, comando_recibido.cantidad_parametros_recibidos)){
 
@@ -444,7 +443,7 @@ void cmd_CCS(){
 	}
 	C_STATUS = cliente_tcp[socket].connect(comando_recibido.parametros[0],puerto_tcp);
 	if(C_STATUS){
-		cliente_tcp[socket].setNoDelay(1);
+		//cliente_tcp[socket].setNoDelay(1);
 		Serial.print(CMD_RESP_OK);
 		Serial.print(CMD_DELIMITER);
 		Serial.print(socket);
