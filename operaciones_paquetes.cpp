@@ -11,14 +11,16 @@
 #define DEBUG_COMANDO_DATOS 0
 #define DEBUG_TCP_BYTES 0
 #define DEBUG_COMANDO 0
+#define TIEMPO_MS_ESPERA_CARACTER 1
 
 char delimiter[2] = ",";
 
-bool recibir_paquetes(char *paquete_serial, char *paquete_datos_recibidos_tcp){
-	unsigned long millis_anterior;
-	unsigned long millis_actual;
-	millis_anterior = millis();
+static unsigned long tiempo_actual_caracter_recibido = 0;
+static unsigned long tiempo_anterior_caracter_recibido = 0;
+typedef enum  {puerto_serial_recibiendo, puerto_serial_inactivo} status_puerto_serial;
+static status_puerto_serial estado_puerto_serial = puerto_serial_inactivo;
 
+bool recibir_paquetes(char *paquete_serial, char *paquete_datos_recibidos_tcp){
 	bool b_ret_val = false;
 	static bool b_par_coma = false;
 	static bool b_tam_paquete_recibido = 0;
@@ -41,8 +43,36 @@ bool recibir_paquetes(char *paquete_serial, char *paquete_datos_recibidos_tcp){
 	static char buffer_comando[CANT_MAX_CARACT_NOMBRE_CMD + 1];
 	static char buffer_tam_paquete_datos[5];
 
+	tiempo_actual_caracter_recibido = millis();
+	/*Se verifica que no haya ocurrido un TIMEOUT en la recepcion de los datos serial.*/
+	if( ((tiempo_actual_caracter_recibido - tiempo_anterior_caracter_recibido) > TIEMPO_MS_ESPERA_CARACTER) && (estado_puerto_serial == puerto_serial_recibiendo)){
+		/*Se vuelve a poner el puerto serial a un estado inactivo, y a la espera de un nuevo comando.*/
+		estado_puerto_serial = puerto_serial_inactivo;
+		/*Limpiar las variables utilizadas para los comandos comunes*/
+		paquete_serial[0] = '\0';
+		/*Limpiar las variables utilizados para los comandos de datos.*/
+		b_par_coma = false;
+		b_tam_paquete_recibido = false;
+		b_cmd_enviar_datos = false;
+		cantidad_comas = 0;
+		pos_primera_coma = 0;
+		pos_segunda_coma = 0;
+		indice_buffer_tam_paquete_datos = 0;
+		cantidad_caracteres_paquete_datos_tcp = 0;
+		tam_paquete_datos_tcp = 0;
+		memset(buffer_comando,0,sizeof(buffer_comando));
+		memset(buffer_tam_paquete_datos,0,sizeof(buffer_tam_paquete_datos));
+		posicion_comienzo_datos = pos_segunda_coma + 1;
+		numero_caracter_recibido = 0;
+		b_ret_val = false;
+		Serial.print('T');
+		Serial.print(CMD_TERMINATOR);
+	}
+
 	/*Se verifica que hayan datos para leer del buffer serial.*/
 	if(Serial.available()){
+		tiempo_anterior_caracter_recibido = millis();
+		estado_puerto_serial = puerto_serial_recibiendo;
 
 		/*Se lee un byte del buffer.*/
 		caracter_recibido = Serial.read();
@@ -175,8 +205,8 @@ bool recibir_paquetes(char *paquete_serial, char *paquete_datos_recibidos_tcp){
 					memset(buffer_tam_paquete_datos,0,sizeof(buffer_tam_paquete_datos));
 					posicion_comienzo_datos = pos_segunda_coma + 1;
 					numero_caracter_recibido = 0;
+					estado_puerto_serial = puerto_serial_inactivo;
 				}
-				millis_actual = millis();
 				//Serial.println(millis_actual - millis_anterior);
 			}else{
 				//Se leen los datos como siempre
@@ -185,6 +215,7 @@ bool recibir_paquetes(char *paquete_serial, char *paquete_datos_recibidos_tcp){
 					paquete_serial[numero_caracter_recibido] = '\0';
 					//Serial.println("Se encontro LF al final, luego de los datos.");
 					numero_caracter_recibido = 0;
+					estado_puerto_serial = puerto_serial_inactivo;
 					b_ret_val = true;
 				}else{
 	#if DEBUG_COMANDO
