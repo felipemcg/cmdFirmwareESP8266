@@ -65,6 +65,7 @@ std::vector<WiFiServer> server(CANT_MAX_SERVIDORES, WiFiServer(NUM_PUERTO_SERVID
 /*-------------------------------------------------------------------*/
 
 void cmd_WFC(void);
+void cmd_MRS(void);
 
 const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
   		{"WFC",2,&cmd_WFC}, //0/
@@ -84,6 +85,7 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
 		{"SRC",1,&cmd_SRC},	//13
 		{"GFH",0,&cmd_GFH},	//14
 		{"MIS",0,&cmd_MIS},	//15
+		{"MRS",0,&cmd_MRS},
 		{"WFA",5,&cmd_WFA},	//16
   		{"WAC",3,&cmd_WAC},	//17
   		{"WAS",0,&cmd_WAS},	//18
@@ -364,6 +366,19 @@ void liberar_recursos(void){
 	return;
 }
 
+void cmd_MIS(){
+	/*MIS - Module Is Alive*/
+	Serial.print(CMD_RESP_OK);
+	Serial.print(CMD_TERMINATOR);
+	return;
+}
+
+void cmd_MRS(){
+	/*MRS - Module Reset*/
+	ESP.restart();
+	return;
+}
+
 void cmd_WFC(){
 	/*WFC - WiFi Connect*/
 	unsigned long millis_anterior;
@@ -430,12 +445,7 @@ void cmd_WFC(){
 	return;
 }
 
-void cmd_MIS(){
-	/*MIS - Module Is Alive*/
-	Serial.print(CMD_RESP_OK);
-	Serial.print(CMD_TERMINATOR);
-	return;
-}
+
 
 void cmd_CCS(){
 	/*CCS - cliente_tcp Connect to Server*/
