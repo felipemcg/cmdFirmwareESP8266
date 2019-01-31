@@ -97,6 +97,9 @@ char paquete_serial[64];
 
 size_t tam_buffer_serial = 0;
 
+WiFiMode_t modo_wifi;
+
+
 void setup() {
 	Serial.begin(115200);
 	Serial.setRxBufferSize(1024);
@@ -123,7 +126,7 @@ void setup() {
     cliente_tcp[1].setNoDelay(1);
     cliente_tcp[2].setNoDelay(1);
     cliente_tcp[3].setNoDelay(1);*/
-
+    modo_wifi = WiFi.getMode();
     Serial.print("R");
     Serial.print(CMD_TERMINATOR);
 }
@@ -291,7 +294,6 @@ uint8_t acceptClients(WiFiServer& server, uint8_t serverId){
 			Serial.print(CMD_RESP_OK);
 			Serial.print(CMD_DELIMITER);
 			Serial.print(socket);
-			Serial.print(CMD_TERMINATOR);
 			return 1;
 		}else{
 			/*No hay socket disponible*/
@@ -345,6 +347,22 @@ bool validar_cantidad_parametros(uint8_t indice_comando, uint8_t cantidad_parame
 	return 0;
 }
 
+void liberar_recursos(void){
+	for (uint8_t indice_clientes = 0; indice_clientes < CANT_MAX_CLIENTES; ++indice_clientes) {
+		cliente_tcp[indice_clientes].stop();
+		cant_bytes_recibidos_tcp_servidor[indice_clientes] = 0;
+		b_buffer_servidor_tcp_lleno[indice_clientes] = false;
+	}
+	memset(buffer_datos_tcp_recibidos_servidor,0,sizeof(buffer_datos_tcp_recibidos_servidor));
+	for (uint8_t indice_servidores = 0; indice_servidores < CANT_MAX_SERVIDORES; ++indice_servidores) {
+		server[indice_servidores].stop();
+		b_servidor_encendido[indice_servidores] = false;
+		num_puerto_en_uso_servidor[indice_servidores] = 0;
+		cant_clientes_permitidos_en_servidor[indice_servidores] = 0;
+		cant_clientes_activos_en_servidor[indice_servidores] = 0;
+	}
+	return;
+}
 
 void cmd_WFC(){
 	/*WFC - WiFi Connect*/
@@ -352,6 +370,7 @@ void cmd_WFC(){
 	unsigned long millis_actual;
 	wl_status_t estado_conexion_wifi;
 	bool b_conexion_wifi_timeout = 0;
+	WiFiMode_t modo_wifi_actual;
 
 	WiFi.mode(WIFI_STA);
 	WiFi.begin(comando_recibido.parametros[0],comando_recibido.parametros[1]);
@@ -365,6 +384,12 @@ void cmd_WFC(){
 		}
 		estado_conexion_wifi = WiFi.status();
 		delay(20);
+	}
+	modo_wifi_actual = WiFi.getMode();
+	if(modo_wifi != modo_wifi_actual){
+		//Si cambio el modo liberar todos los sockets.
+		modo_wifi = modo_wifi_actual;
+		liberar_recursos();
 	}
 	if(b_conexion_wifi_timeout == 0){
 		Serial.print(CMD_RESP_OK);
@@ -869,6 +894,7 @@ void cmd_WFA(){
 	uint8_t canal_wifi = 1;
 	uint8_t hidden_opt = 0;
 	uint8_t cant_max_clientes_wifi = 4;
+	WiFiMode_t modo_wifi_actual;
 
 	canal_wifi = atoi(comando_recibido.parametros[2]);
 	hidden_opt = atoi(comando_recibido.parametros[3]);
@@ -897,6 +923,12 @@ void cmd_WFA(){
 	delay(100);
 	b_punto_acceso_creado = WiFi.softAP(comando_recibido.parametros[0], comando_recibido.parametros[1], canal_wifi, hidden_opt, cant_max_clientes_wifi);
 	delay(5000);
+	modo_wifi_actual = WiFi.getMode();
+	if(modo_wifi != modo_wifi_actual){
+		//Si cambio el modo liberar todos los sockets.
+		modo_wifi = modo_wifi_actual;
+		liberar_recursos();
+	}
 	if(b_punto_acceso_creado == 0){
 		Serial.print('4');
 		Serial.print(CMD_TERMINATOR);
