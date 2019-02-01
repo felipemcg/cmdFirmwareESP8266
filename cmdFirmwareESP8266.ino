@@ -38,6 +38,8 @@
 
 /*Puerto por default que el server escuchara*/
 #define NUM_PUERTO_SERVIDOR_DEFECTO 80
+
+#define MAX_BAUD_RATE 921600
 /*-------------------------------------------------------------------*/
 
 
@@ -66,6 +68,8 @@ std::vector<WiFiServer> server(CANT_MAX_SERVIDORES, WiFiServer(NUM_PUERTO_SERVID
 
 void cmd_WFC(void);
 void cmd_MRS(void);
+void cmd_MUC(void);
+bool dentro_intervalo(uint32_t val, uint32_t min, uint32_t max);
 
 const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
   		{"WFC",2,&cmd_WFC}, //0/
@@ -86,6 +90,7 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
 		{"GFH",0,&cmd_GFH},	//14
 		{"MIS",0,&cmd_MIS},	//15
 		{"MRS",0,&cmd_MRS},
+		{"MUC",1,&cmd_MUC},
 		{"WFA",5,&cmd_WFA},	//16
   		{"WAC",3,&cmd_WAC},	//17
   		{"WAS",0,&cmd_WAS},	//18
@@ -258,7 +263,7 @@ void receiveFromServer(){
 }
 
 /* Descripcion: Verifica el numero val este dentro del rango limitado por min y max*/
-bool inRange(uint16_t val, uint16_t min, uint16_t max)
+bool dentro_intervalo(uint32_t val, uint32_t min, uint32_t max)
 {
   return ((min <= val) && (val <= max));
 }
@@ -379,6 +384,27 @@ void cmd_MRS(){
 	return;
 }
 
+void cmd_MUC(){
+	/*Module UART Configuration*/
+	uint32_t baud_rate = atoi(comando_recibido.parametros[0]);
+	Serial.print(baud_rate);
+	Serial.print('\n');
+	if(!dentro_intervalo(baud_rate,9600,MAX_BAUD_RATE)){
+		/*Baud rate fuera de rango*/
+		Serial.print("1");
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	Serial.print(CMD_RESP_OK);
+	Serial.print(CMD_TERMINATOR);
+	Serial.flush();
+	Serial.end();
+	delay(1);
+	Serial.begin(baud_rate);
+	Serial.setRxBufferSize(1024);
+	return;
+}
+
 void cmd_WFC(){
 	/*WFC - WiFi Connect*/
 	unsigned long millis_anterior;
@@ -445,8 +471,6 @@ void cmd_WFC(){
 	return;
 }
 
-
-
 void cmd_CCS(){
 	/*CCS - cliente_tcp Connect to Server*/
 
@@ -456,7 +480,7 @@ void cmd_CCS(){
 	wl_status_t estado_conexion_wifi;
 
 	puerto_tcp = atoi(comando_recibido.parametros[1]);
-	if(!inRange(puerto_tcp,0,NUM_MAX_PUERTO)){
+	if(!dentro_intervalo(puerto_tcp,0,NUM_MAX_PUERTO)){
 		/*Puerto fuera de rango*/
 		Serial.print("1");
 		Serial.print(CMD_TERMINATOR);
@@ -558,7 +582,7 @@ void cmd_WFI(){
 void cmd_WFD(){
 	/*WFD - WiFi Disconnect*/
 	bool b_estacion_off = comando_recibido.parametros[0];
-	if(!inRange(b_estacion_off,0,1)){
+	if(!dentro_intervalo(b_estacion_off,0,1)){
 		Serial.print('1');
 		Serial.print(CMD_TERMINATOR);
 		return;
@@ -620,13 +644,13 @@ void cmd_SLC(){
 	puerto_tcp = atoi(comando_recibido.parametros[0]);
 	backlog = atoi(comando_recibido.parametros[1]);
 	/*Determinar primero si el puerto es valido*/
-	if(!inRange(puerto_tcp,0,NUM_MAX_PUERTO)){
+	if(!dentro_intervalo(puerto_tcp,0,NUM_MAX_PUERTO)){
 		/*El numero de puerto esta fuera de rango*/
 		Serial.print("1");
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
-	if(!inRange(backlog,0,CANT_MAX_CLIENTES)){
+	if(!dentro_intervalo(backlog,0,CANT_MAX_CLIENTES)){
 		/*El numero de clientes esta fuera de rango*/
 		Serial.print("2");
 		Serial.print(CMD_TERMINATOR);
@@ -682,7 +706,7 @@ void cmd_SAC(){
 	uint8_t serverAcceptStatus;
 
 	socket = atoi(comando_recibido.parametros[0]);
-	if(!inRange(socket,0,CANT_MAX_SERVIDORES)){
+	if(!dentro_intervalo(socket,0,CANT_MAX_SERVIDORES)){
 		/*El numero de socket esta fuera de rango*/
 		Serial.print("1");
 		Serial.print(CMD_TERMINATOR);
@@ -727,7 +751,7 @@ void cmd_SCC(){
 	wl_status_t estado_conexion_wifi;
 
 	socket = atoi(comando_recibido.parametros[0]);
-	if(!inRange(socket,0,CANT_MAX_SERVIDORES)){
+	if(!dentro_intervalo(socket,0,CANT_MAX_SERVIDORES)){
 		/*El numero de socket esta fuera de rango*/
 		Serial.print("1");
 		Serial.print(CMD_TERMINATOR);
@@ -765,8 +789,8 @@ void cmd_SOW(){
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}*/
-	if(inRange(socket,0,CANT_MAX_CLIENTES) == true){
-		if(inRange(cant_bytes_enviar_tcp,0,TAM_MAX_PAQUETE_DATOS_TCP) == true){
+	if(dentro_intervalo(socket,0,CANT_MAX_CLIENTES) == true){
+		if(dentro_intervalo(cant_bytes_enviar_tcp,0,TAM_MAX_PAQUETE_DATOS_TCP) == true){
 			if(cliente_tcp[socket].connected()){
 				/*data to print: char, byte, int, long, or string*/
 				/*The max packet size in TCP is 1460 bytes*/
@@ -816,7 +840,7 @@ void cmd_SOR(){
 
 	socket = atoi(comando_recibido.parametros[0]);
 	/*print received data from server*/
-	if(!inRange(socket,0,CANT_MAX_CLIENTES)){
+	if(!dentro_intervalo(socket,0,CANT_MAX_CLIENTES)){
 		Serial.print("1");
 		Serial.print(CMD_TERMINATOR);
 		return;
@@ -863,7 +887,7 @@ void cmd_SOC(){
 	wl_status_t estado_conexion_wifi;
 
 	socket = atoi(comando_recibido.parametros[0]);
-	if(!inRange(socket,0,CANT_MAX_CLIENTES) == true){
+	if(!dentro_intervalo(socket,0,CANT_MAX_CLIENTES) == true){
 		Serial.print("1");
 		Serial.print(CMD_TERMINATOR);
 		return;
@@ -910,19 +934,19 @@ void cmd_WFA(){
 	hidden_opt = atoi(comando_recibido.parametros[3]);
 	cant_max_clientes_wifi = atoi(comando_recibido.parametros[4]);
 
-	if(!inRange(canal_wifi,1,13)){
+	if(!dentro_intervalo(canal_wifi,1,13)){
 		/*El numero de canal_wifi esta fuera de rango*/
 		Serial.print('1');
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
-	if(!inRange(hidden_opt,0,1)){
+	if(!dentro_intervalo(hidden_opt,0,1)){
 		/*El numero de hidden_opt esta fuera de rango*/
 		Serial.print('2');
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
-	if(!inRange(cant_max_clientes_wifi,1,4)){
+	if(!dentro_intervalo(cant_max_clientes_wifi,1,4)){
 		/*El numero de cant_max_clientes_wifi esta fuera de rango*/
 		Serial.print('3');
 		Serial.print(CMD_TERMINATOR);
@@ -999,7 +1023,7 @@ void cmd_WAS(){
 void cmd_WAD(){
 	/*WAD - WiFi Acces Point Disconnect*/
 	bool b_softAP_off = comando_recibido.parametros[0];
-	if(!inRange(b_softAP_off,0,1)){
+	if(!dentro_intervalo(b_softAP_off,0,1)){
 		Serial.print('1');
 		Serial.print(CMD_TERMINATOR);
 		return;
