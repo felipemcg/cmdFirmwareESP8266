@@ -47,11 +47,6 @@
  * por limitacion del modulo.*/
 WiFiClient cliente_tcp[CANT_MAX_CLIENTES];
 
-/*Declaracion de los buffers utilizados para recibir datos del servidor*/
-char	buffer_datos_tcp_recibidos_servidor[CANT_MAX_CLIENTES][TAM_MAX_PAQUETE_DATOS_TCP+1];
-uint16_t cant_bytes_recibidos_tcp_servidor[CANT_MAX_CLIENTES];
-bool	b_buffer_servidor_tcp_lleno[CANT_MAX_CLIENTES];
-
 std::vector<WiFiServer> servidor_obj(CANT_MAX_SERVIDORES, WiFiServer(NUM_PUERTO_SERVIDOR_DEFECTO));
 struct elementos_servidor{
 	bool b_activo;
@@ -110,11 +105,6 @@ void setup() {
 	Serial.setRxBufferSize(1024);
 	delay(10);
 	Serial.println();
-
-	for(int i=0; i < CANT_MAX_CLIENTES; i++){
-		cant_bytes_recibidos_tcp_servidor[i] = 0;
-		b_buffer_servidor_tcp_lleno[i] = false;
-	}
 
 #ifdef sDebug
 	Serial.println();
@@ -193,10 +183,6 @@ void loop() {
 		/*Problemas en la recepcion de paquete serial*/
 	}
 
-
-	/*Se almacenan los datos recibidos en los sockets en sus respectivos buffer's*/
-	//receiveFromServer();
-
 	yield();
 
 	refreshServerClients();
@@ -216,48 +202,6 @@ void imprimir_datos_separados(struct cmd_recibido comando){
 		Serial.println(comando.parametros[i]);
 	}
 	return;
-}
-
-/* Descripcion: Recibe un byte del servidor*/
-void receiveFromServer(){
-	uint16_t bytesAvailable;
-	char dump, payload;
-	for(int i = 0; i < CANT_MAX_CLIENTES; i++){
-		if(cliente_tcp[i].connected()){
-			/*Retorna la cantidad de bytes disponibles*/
-			bytesAvailable = cliente_tcp[i].available();
-			/*Si hay bytes disponibles y el buffer no esta lleno*/
-			if (bytesAvailable) {
-				if(!b_buffer_servidor_tcp_lleno[i]){
-					//Serial.println("Leido");
-					/*Lee el siguiente byte recibido*/
-					payload = cliente_tcp[i].read();
-					if(payload == -1){
-						/*Serial.print("Ouch");
-						Serial.print(CMD_TERMINATOR);*/
-					}else{
-						/*Serial.print(cant_bytes_recibidos_tcp_servidor[i]);
-						Serial.print('-');
-						Serial.print(payload);
-						Serial.print('=');*/
-						buffer_datos_tcp_recibidos_servidor[i][cant_bytes_recibidos_tcp_servidor[i]] = payload;
-						//Serial.print(buffer_datos_tcp_recibidos_servidor[i][cant_bytes_recibidos_tcp_servidor[i]]);
-						cant_bytes_recibidos_tcp_servidor[i]++;
-					}
-					/*Si la cantidad de bytes leidos por el servidor supero el tamaño
-					 * del buffer, se indica que se lleno el buffer.*/
-					if(cant_bytes_recibidos_tcp_servidor[i] > TAM_MAX_PAQUETE_DATOS_TCP){
-						//Serial.println("Me llene");
-						b_buffer_servidor_tcp_lleno[i] = true;
-					}
-				}else{
-					//Serial.println("Dump");
-					dump = cliente_tcp[i].read();
-
-				}
-			}
-		}
-	}
 }
 
 /* Descripcion: Verifica el numero val este dentro del rango limitado por min y max*/
@@ -355,10 +299,7 @@ bool validar_cantidad_parametros(uint8_t indice_comando, uint8_t cantidad_parame
 void liberar_recursos(void){
 	for (uint8_t indice_clientes = 0; indice_clientes < CANT_MAX_CLIENTES; ++indice_clientes) {
 		cliente_tcp[indice_clientes].stop();
-		cant_bytes_recibidos_tcp_servidor[indice_clientes] = 0;
-		b_buffer_servidor_tcp_lleno[indice_clientes] = false;
 	}
-	memset(buffer_datos_tcp_recibidos_servidor,0,sizeof(buffer_datos_tcp_recibidos_servidor));
 	for (uint8_t indice_servidores = 0; indice_servidores < CANT_MAX_SERVIDORES; ++indice_servidores) {
 		servidor_obj[indice_servidores].stop();
 		servidor[indice_servidores].b_activo = false;
@@ -864,18 +805,7 @@ void cmd_SOR(){
 	while(bytes_disponible_para_recibir--){
 		Serial.print((char)cliente_tcp[socket].read());
 	}
-	//Serial.print(buffer_datos_tcp_recibidos_servidor[socket]);
-	/*Revisar para llamar a la funcion correcta (la que recibe size como parametro)*/
-	//while
-	//Serial.write((const char*)buffer_datos_tcp_recibidos_servidor[socket],(uint16_t)cant_bytes_recibidos_tcp_servidor[socket]);
 	Serial.print(CMD_TERMINATOR);
-	cant_bytes_recibidos_tcp_servidor[socket] = 0;
-	/*Clear the buffer*/
-	for (int i=0; i < TAM_MAX_PAQUETE_DATOS_TCP; i++){
-		buffer_datos_tcp_recibidos_servidor[socket][i] = 0;
-	}
-	b_buffer_servidor_tcp_lleno[socket] = false;
-
 	return;
 }
 
