@@ -43,25 +43,23 @@
 /*-------------------------------------------------------------------*/
 
 
+/*Declaracion del objeto que se utilizara para el manejo del cliente, maximo 4
+ * por limitacion del modulo.*/
 WiFiClient cliente_tcp[CANT_MAX_CLIENTES];
 
 /*Declaracion de los buffers utilizados para recibir datos del servidor*/
 char	buffer_datos_tcp_recibidos_servidor[CANT_MAX_CLIENTES][TAM_MAX_PAQUETE_DATOS_TCP+1];
 uint16_t cant_bytes_recibidos_tcp_servidor[CANT_MAX_CLIENTES];
 bool	b_buffer_servidor_tcp_lleno[CANT_MAX_CLIENTES];
-/*Declaracion del objeto que se utilizara para el manejo del cliente, maximo 4
- * por limitacion del modulo.*/
 
-/*Bandera para indicar que el servidor esta activo*/
-bool	b_servidor_encendido[CANT_MAX_SERVIDORES] = {false,false,false,false};
-uint16_t num_puerto_en_uso_servidor[CANT_MAX_SERVIDORES];
-uint8_t cant_clientes_permitidos_en_servidor[CANT_MAX_SERVIDORES];
-uint8_t cant_clientes_activos_en_servidor[CANT_MAX_SERVIDORES];
-/*Declaracion de los objetos que se utilizaran para el manejo del servidor*/
-std::vector<WiFiServer> server(CANT_MAX_SERVIDORES, WiFiServer(NUM_PUERTO_SERVIDOR_DEFECTO));
-
-
-
+std::vector<WiFiServer> servidor_obj(CANT_MAX_SERVIDORES, WiFiServer(NUM_PUERTO_SERVIDOR_DEFECTO));
+struct elementos_servidor{
+	bool b_activo;
+	uint16_t num_puerto_en_uso;
+	uint8_t cant_maxima_clientes_permitidos;
+	uint8_t cant_clientes_activos;
+};
+struct elementos_servidor servidor[CANT_MAX_SERVIDORES];
 
 //#define sDebug 1
 /*-------------------------------------------------------------------*/
@@ -291,13 +289,13 @@ uint8_t	obtener_socket_libre(){
 uint8_t acceptClients(WiFiServer& server, uint8_t serverId){
 	uint8_t socket;
 	/*Verificar que todavia no se conectaron el numero maximo de clientes*/
-	if(cant_clientes_activos_en_servidor[serverId] < cant_clientes_permitidos_en_servidor[serverId]){
+	if(servidor[serverId].cant_clientes_activos < servidor[serverId].cant_maxima_clientes_permitidos){
 		socket = obtener_socket_libre();
 		if(socket!=255){
 			/*Se encontro socket libre*/
 			/*Se acepta al cliente*/
 			cliente_tcp[socket] = server.available();
-			cant_clientes_activos_en_servidor[serverId]++;
+			servidor[serverId].cant_clientes_activos++;
 			Serial.print(CMD_RESP_OK);
 			Serial.print(CMD_DELIMITER);
 			Serial.print(socket);
@@ -321,8 +319,8 @@ void refreshServerClients(){
 	/*Aca se tiene que verificar si los servidores tienen clientes en cola, para rechazarlos si es necesario por el backlog*/
 	uint8_t i;
 	for (i = 0; i < CANT_MAX_SERVIDORES; i++){
-		if(server[i].hasClient() && (cant_clientes_activos_en_servidor[i] == cant_clientes_permitidos_en_servidor[i]) ){
-			WiFiClient serverClient = server[i].available();
+		if(servidor_obj[i].hasClient() && (servidor[i].cant_clientes_activos == servidor[i].cant_maxima_clientes_permitidos) ){
+			WiFiClient serverClient = servidor_obj[i].available();
 			serverClient.stop();
 		}
 	}
@@ -362,11 +360,11 @@ void liberar_recursos(void){
 	}
 	memset(buffer_datos_tcp_recibidos_servidor,0,sizeof(buffer_datos_tcp_recibidos_servidor));
 	for (uint8_t indice_servidores = 0; indice_servidores < CANT_MAX_SERVIDORES; ++indice_servidores) {
-		server[indice_servidores].stop();
-		b_servidor_encendido[indice_servidores] = false;
-		num_puerto_en_uso_servidor[indice_servidores] = 0;
-		cant_clientes_permitidos_en_servidor[indice_servidores] = 0;
-		cant_clientes_activos_en_servidor[indice_servidores] = 0;
+		servidor_obj[indice_servidores].stop();
+		servidor[indice_servidores].b_activo = false;
+		servidor[indice_servidores].num_puerto_en_uso = 0;
+		servidor[indice_servidores].cant_maxima_clientes_permitidos = 0;
+		servidor[indice_servidores].cant_clientes_activos = 0;
 	}
 	return;
 }
@@ -667,7 +665,7 @@ void cmd_SLC(){
 	}*/
 	/*Determinar si ya existe un servidor funcionando con ese puerto*/
 	for (i = 0; i < CANT_MAX_SERVIDORES; i++) {
-		if(puerto_tcp != num_puerto_en_uso_servidor[i]){
+		if(puerto_tcp != servidor[i].num_puerto_en_uso){
 			b_puerto_tcp_en_uso = false;
 			break;
 		}else{
@@ -678,15 +676,15 @@ void cmd_SLC(){
 	/*Si no existe un servidor con ese puerto, determinar que servidor esta libre y crear el servidor*/
 	if(!b_puerto_tcp_en_uso){
 		for (i = 0; i < CANT_MAX_SERVIDORES; i++) {
-			if(server[i].status() == CLOSED){
-				num_puerto_en_uso_servidor[i] = puerto_tcp;
-				cant_clientes_permitidos_en_servidor[i] = backlog;
-				server[i].begin(puerto_tcp);
+			if(servidor_obj[i].status() == CLOSED){
+				servidor[i].num_puerto_en_uso = puerto_tcp;
+				servidor[i].cant_maxima_clientes_permitidos= backlog;
+				servidor_obj[i].begin(puerto_tcp);
 				Serial.print(CMD_RESP_OK);
 				Serial.print(CMD_DELIMITER);
 				Serial.print(i,DEC);
 				Serial.print(CMD_TERMINATOR);
-				b_servidor_encendido[i] = true;
+				servidor[i].b_activo = true;
 				break;
 			}
 		}
@@ -719,9 +717,9 @@ void cmd_SAC(){
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}*/
-	if(b_servidor_encendido[socket]){
-		if(server[socket].hasClient()){
-			serverAcceptStatus = acceptClients(server[socket],socket);
+	if(servidor[socket].b_activo){
+		if(servidor_obj[socket].hasClient()){
+			serverAcceptStatus = acceptClients(servidor_obj[socket],socket);
 			if(serverAcceptStatus == 1){
 				/*Hay socket disponible*/
 			}
@@ -764,8 +762,8 @@ void cmd_SCC(){
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
-	server[socket].stop();
-	b_servidor_encendido[socket] = false;
+	servidor_obj[socket].stop();
+	servidor[socket].b_activo = false;
 	Serial.print(CMD_RESP_OK);
 	Serial.print(CMD_TERMINATOR);
 	return;
