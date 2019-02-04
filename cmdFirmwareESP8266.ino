@@ -128,9 +128,7 @@ void setup() {
 
 void loop() {
 	uint8_t cant_maxima_caracteres_paquete_serial = CANT_MAX_CARACT_NOMBRE_CMD + CANT_MAX_CARACT_PARAMETRO*CANT_MAX_PARAMETROS_CMD + CANT_MAX_PARAMETROS_CMD;
-
 	int indice_comando;
-
 	comando_recibido.nombre[0] = '\0';
 	comando_recibido.parametros[0][0] = '\0';
 	comando_recibido.parametros[1][0] = '\0';
@@ -138,9 +136,7 @@ void loop() {
 	comando_recibido.parametros[3][0] = '\0';
 	comando_recibido.parametros[4][0] = '\0';
 
-
 	yield();
-
 
 	/*Se verifica que se haya recibido un nuevo paquete por el puerto serial.*/
 	if (recibir_paquetes(paquete_serial, paquete_datos_tcp) == 1){
@@ -185,7 +181,7 @@ void loop() {
 
 	yield();
 
-	refreshServerClients();
+	servidor_verificar_backlog();
 }
 
 
@@ -230,7 +226,7 @@ uint8_t	obtener_socket_libre(){
 }
 
 /* Descripcion: Se encarga de aceptar a clientes que se quieren conectar al servidor*/
-uint8_t acceptClients(WiFiServer& server, uint8_t serverId){
+uint8_t servidor_acepta_clientes(WiFiServer& server, uint8_t serverId){
 	uint8_t socket;
 	/*Verificar que todavia no se conectaron el numero maximo de clientes*/
 	if(servidor[serverId].cant_clientes_activos < servidor[serverId].cant_maxima_clientes_permitidos){
@@ -259,7 +255,7 @@ uint8_t acceptClients(WiFiServer& server, uint8_t serverId){
 	return 255;
 }
 
-void refreshServerClients(){
+void servidor_verificar_backlog(){
 	/*Aca se tiene que verificar si los servidores tienen clientes en cola, para rechazarlos si es necesario por el backlog*/
 	uint8_t i;
 	for (i = 0; i < CANT_MAX_SERVIDORES; i++){
@@ -269,7 +265,6 @@ void refreshServerClients(){
 		}
 	}
 }
-
 
 /*
  * Descripcion: Compara la cadena que contiene el campo de instruccion(INST) con el array
@@ -660,7 +655,7 @@ void cmd_SAC(){
 	}*/
 	if(servidor[socket].b_activo){
 		if(servidor_obj[socket].hasClient()){
-			serverAcceptStatus = acceptClients(servidor_obj[socket],socket);
+			serverAcceptStatus = servidor_acepta_clientes(servidor_obj[socket],socket);
 			if(serverAcceptStatus == 1){
 				/*Hay socket disponible*/
 			}
