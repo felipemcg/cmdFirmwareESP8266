@@ -66,7 +66,7 @@ bool dentro_intervalo(uint32_t val, uint32_t min, uint32_t max);
 
 const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
   		{"WFC",2,&cmd_WFC}, //0/
-  		{"WFS",2,&cmd_WFS}, //1
+  		{"WFS",0,&cmd_WFS}, //1
 		{"WRI",0,&cmd_WRI},	//2
 		{"WID",0,&cmd_WID},	//3
 		{"WFI",0,&cmd_WFI},
@@ -451,26 +451,20 @@ void cmd_CCS(){
 
 void cmd_WFS(){
 	/*WFS - WiFi Scan*/
+	ESP8266WiFiScanClass WiFiScan;
 	int cant_punto_acceso_encontrados;
-	WiFi.mode(WIFI_STA);
-	WiFi.disconnect();
-	delay(100);
-	cant_punto_acceso_encontrados = WiFi.scanNetworks();
+	cant_punto_acceso_encontrados = WiFiScan.scanNetworks();
 	if (cant_punto_acceso_encontrados == -1) {
 		Serial.print("1");
 	}else{
-		// print the list of networks seen:
+		Serial.print(CMD_RESP_OK);
+		Serial.print(CMD_DELIMITER);
 		Serial.print(cant_punto_acceso_encontrados);
-
-		// print the network number and name for each network found:
-		for (int thisNet = 0; thisNet < cant_punto_acceso_encontrados; thisNet++) {
-			Serial.print(thisNet);
-			Serial.print(") ");
-			Serial.print(WiFi.SSID(thisNet));
-		//Serial.printf("SSID: %s", WiFi.SSID().c_str());
-			Serial.print("\tSignal: ");
-			Serial.print(WiFi.RSSI(thisNet));
-			Serial.print(" dBm");
+		for (int esta_red = 0; esta_red < cant_punto_acceso_encontrados; esta_red++) {
+			Serial.print(CMD_DELIMITER);
+			Serial.print((WiFiScan.SSID(esta_red)));
+			Serial.print(';');
+			Serial.print(WiFiScan.RSSI(esta_red));
 		}
 	}
 	Serial.print(CMD_TERMINATOR);
