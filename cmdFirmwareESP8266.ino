@@ -487,9 +487,15 @@ void cmd_WRI(){
 }
 
 void cmd_WID(){
-	Serial.print(CMD_RESP_OK);
-	Serial.print(CMD_DELIMITER);
-	Serial.print(WiFi.SSID());
+	int ssid_longitud;
+	ssid_longitud = strlen(WiFi.SSID().c_str());
+	if(ssid_longitud == 0){
+		Serial.print('1');
+	}else{
+		Serial.print(CMD_RESP_OK);
+		Serial.print(CMD_DELIMITER);
+		Serial.print(WiFi.SSID().c_str());
+	}
 	Serial.print(CMD_TERMINATOR);
 	return;
 }
