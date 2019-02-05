@@ -473,9 +473,15 @@ void cmd_WFS(){
 
 void cmd_WRI(){
 	/*WRI - WiFi RSSI*/
-	Serial.print(CMD_RESP_OK);
-	Serial.print(CMD_DELIMITER);
-	Serial.print(WiFi.RSSI());
+	int32_t rssi = WiFi.RSSI();
+	if(rssi == 31){
+		/*Valor invalido, ver documentacion del SDK: wifi_station_get_rssi*/
+		Serial.print('1');
+	}else{
+		Serial.print(CMD_RESP_OK);
+		Serial.print(CMD_DELIMITER);
+		Serial.print(rssi);
+	}
 	Serial.print(CMD_TERMINATOR);
 	return;
 }
