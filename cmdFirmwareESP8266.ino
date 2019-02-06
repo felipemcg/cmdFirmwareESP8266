@@ -305,6 +305,7 @@ void liberar_recursos(void){
 	return;
 }
 
+/*Comandos basicos para el manejo del modulo*/
 void cmd_MIS(){
 	/*MIS - Module Is Alive*/
 	Serial.print(CMD_RESP_OK);
@@ -336,6 +337,71 @@ void cmd_MUC(){
 	delay(1);
 	Serial.begin(baud_rate);
 	Serial.setRxBufferSize(1024);
+	return;
+}
+
+void cmd_GFH(){
+	/*GFH - Get Free Heap*/
+	Serial.print(ESP.getFreeHeap(),DEC);
+	Serial.print(CMD_TERMINATOR);
+	return;
+}
+
+/*Comandos para configuracion del WiFi*/
+void cmd_WFS(){
+	/*WFS - WiFi Scan*/
+	ESP8266WiFiScanClass WiFiScan;
+	int cant_punto_acceso_encontrados;
+	cant_punto_acceso_encontrados = WiFiScan.scanNetworks();
+	if (cant_punto_acceso_encontrados == -1) {
+		Serial.print("1");
+	}else{
+		Serial.print(CMD_RESP_OK);
+		Serial.print(CMD_DELIMITER);
+		Serial.print(cant_punto_acceso_encontrados);
+		for (int esta_red = 0; esta_red < cant_punto_acceso_encontrados; esta_red++) {
+			Serial.print(CMD_DELIMITER);
+			Serial.print((WiFiScan.SSID(esta_red)));
+			Serial.print(';');
+			Serial.print(WiFiScan.RSSI(esta_red));
+		}
+	}
+	Serial.print(CMD_TERMINATOR);
+	return;
+}
+
+void cmd_WCF(){
+	IPAddress ip,dns,gateway,subnet;
+	if(!ip.fromString(comando_recibido.parametros[0])){
+		/*IP Invalida*/
+		Serial.print("1");
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	if(!dns.fromString(comando_recibido.parametros[1])){
+		/*DNS Invalido*/
+		Serial.print("2");
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	if(!gateway.fromString(comando_recibido.parametros[2])){
+		/*Gateway Invalido*/
+		Serial.print("3");
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	if(!subnet.fromString(comando_recibido.parametros[3])){
+		/*Subnet Invalido*/
+		Serial.print("4");
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	if(WiFi.config(ip,gateway,subnet,dns)){
+		Serial.print(CMD_RESP_OK);
+	}else{
+		Serial.print("5");
+	}
+	Serial.print(CMD_TERMINATOR);
 	return;
 }
 
@@ -400,72 +466,6 @@ void cmd_WFC(){
 			break;
 		default:
 			break;
-	}
-	Serial.print(CMD_TERMINATOR);
-	return;
-}
-
-void cmd_CCS(){
-	/*CCS - cliente_tcp Connect to Server*/
-
-	uint16_t puerto_tcp;
-	uint8_t socket;
-	int C_STATUS = 0;
-	wl_status_t estado_conexion_wifi;
-
-	puerto_tcp = atoi(comando_recibido.parametros[1]);
-	if(!dentro_intervalo(puerto_tcp,0,NUM_MAX_PUERTO)){
-		/*Puerto fuera de rango*/
-		Serial.print("1");
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-	estado_conexion_wifi = WiFi.status();
-	if( (estado_conexion_wifi == WL_DISCONNECTED) || (estado_conexion_wifi == WL_CONNECTION_LOST) ){
-		/*WiFi desconectado*/
-		Serial.print("2");
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-	socket = obtener_socket_libre();
-	if(socket == 255){
-		/*No hay socket disponible*/
-		Serial.print('3');
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-	C_STATUS = cliente_tcp[socket].connect(comando_recibido.parametros[0],puerto_tcp);
-	if(C_STATUS){
-		//cliente_tcp[socket].setNoDelay(1);
-		Serial.print(CMD_RESP_OK);
-		Serial.print(CMD_DELIMITER);
-		Serial.print(socket);
-		Serial.print(CMD_TERMINATOR);
-	}else{
-		/*No se pudo conectar*/
-		Serial.print('4');
-		Serial.print(CMD_TERMINATOR);
-	}
-	return;
-}
-
-void cmd_WFS(){
-	/*WFS - WiFi Scan*/
-	ESP8266WiFiScanClass WiFiScan;
-	int cant_punto_acceso_encontrados;
-	cant_punto_acceso_encontrados = WiFiScan.scanNetworks();
-	if (cant_punto_acceso_encontrados == -1) {
-		Serial.print("1");
-	}else{
-		Serial.print(CMD_RESP_OK);
-		Serial.print(CMD_DELIMITER);
-		Serial.print(cant_punto_acceso_encontrados);
-		for (int esta_red = 0; esta_red < cant_punto_acceso_encontrados; esta_red++) {
-			Serial.print(CMD_DELIMITER);
-			Serial.print((WiFiScan.SSID(esta_red)));
-			Serial.print(';');
-			Serial.print(WiFiScan.RSSI(esta_red));
-		}
 	}
 	Serial.print(CMD_TERMINATOR);
 	return;
@@ -537,38 +537,173 @@ void cmd_WFD(){
 	return;
 }
 
-void cmd_WCF(){
-	IPAddress ip,dns,gateway,subnet;
-	if(!ip.fromString(comando_recibido.parametros[0])){
-		/*IP Invalida*/
+void cmd_WAC(){
+	/*WAC - WiFi Soft-AP Configuration*/
+	bool b_configuracion_punto_acceso = 0;
+	IPAddress ip_local;
+	IPAddress gateway;
+	IPAddress subnet;
+	if(!ip_local.fromString(comando_recibido.parametros[0])){
+		/*IP local Invalido*/
 		Serial.print("1");
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
-	if(!dns.fromString(comando_recibido.parametros[1])){
-		/*DNS Invalido*/
+	if(!gateway.fromString(comando_recibido.parametros[1])){
+		/*Gateway Invalido*/
 		Serial.print("2");
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
-	if(!gateway.fromString(comando_recibido.parametros[2])){
-		/*Gateway Invalido*/
+	if(!subnet.fromString(comando_recibido.parametros[2])){
+		/*Subnet Invalido*/
 		Serial.print("3");
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
-	if(!subnet.fromString(comando_recibido.parametros[3])){
-		/*Subnet Invalido*/
-		Serial.print("4");
+	b_configuracion_punto_acceso = WiFi.softAPConfig(ip_local, gateway, subnet);
+	if(b_configuracion_punto_acceso == 0){
+		Serial.print('4');
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
-	if(WiFi.config(ip,gateway,subnet,dns)){
+	Serial.print(CMD_RESP_OK);
+	Serial.print(CMD_TERMINATOR);
+	return;
+
+}
+
+void cmd_WFA(){
+	/*WFA - WiFi Soft-AP Mode*/
+	bool b_punto_acceso_creado = 0;
+	uint8_t canal_wifi = 1;
+	uint8_t hidden_opt = 0;
+	uint8_t cant_max_clientes_wifi = 4;
+	WiFiMode_t modo_wifi_actual;
+
+	canal_wifi = atoi(comando_recibido.parametros[2]);
+	hidden_opt = atoi(comando_recibido.parametros[3]);
+	cant_max_clientes_wifi = atoi(comando_recibido.parametros[4]);
+
+	if(!dentro_intervalo(canal_wifi,1,13)){
+		/*El numero de canal_wifi esta fuera de rango*/
+		Serial.print('1');
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	if(!dentro_intervalo(hidden_opt,0,1)){
+		/*El numero de hidden_opt esta fuera de rango*/
+		Serial.print('2');
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	if(!dentro_intervalo(cant_max_clientes_wifi,1,4)){
+		/*El numero de cant_max_clientes_wifi esta fuera de rango*/
+		Serial.print('3');
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+
+	WiFi.disconnect();
+	delay(100);
+	b_punto_acceso_creado = WiFi.softAP(comando_recibido.parametros[0], comando_recibido.parametros[1], canal_wifi, hidden_opt, cant_max_clientes_wifi);
+	delay(5000);
+	modo_wifi_actual = WiFi.getMode();
+	if(modo_wifi != modo_wifi_actual){
+		//Si cambio el modo liberar todos los sockets.
+		modo_wifi = modo_wifi_actual;
+		liberar_recursos();
+	}
+	if(b_punto_acceso_creado == 0){
+		Serial.print('4');
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	Serial.print(CMD_RESP_OK);
+	Serial.print(CMD_TERMINATOR);
+	return;
+}
+
+void cmd_WAS(){
+	/*WAS - WiFi Acces Point Stations connected*/
+	uint8_t estaciones_conectadas = 0;
+	estaciones_conectadas = WiFi.softAPgetStationNum();
+	Serial.print(CMD_RESP_OK);
+	Serial.print(CMD_DELIMITER);
+	Serial.print(estaciones_conectadas);
+	Serial.print(CMD_TERMINATOR);
+	return;
+}
+
+void cmd_WAD(){
+	/*WAD - WiFi Acces Point Disconnect*/
+	bool b_softAP_off = comando_recibido.parametros[0];
+	if(!dentro_intervalo(b_softAP_off,0,1)){
+		Serial.print('1');
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	if( WiFi.softAPdisconnect(b_softAP_off) ){
 		Serial.print(CMD_RESP_OK);
 	}else{
-		Serial.print("5");
+		Serial.print('2');
 	}
 	Serial.print(CMD_TERMINATOR);
+	return;
+}
+
+void cmd_WAI(){
+	/*WAI - WiFi Acces Point Information, IP and MAC*/
+	Serial.print(CMD_RESP_OK);
+	Serial.print(CMD_DELIMITER);
+	Serial.print(WiFi.softAPIP());
+	Serial.print(CMD_DELIMITER);
+	Serial.print(WiFi.softAPmacAddress());
+	Serial.print(CMD_TERMINATOR);
+	return;
+}
+
+/*Comandos para el manejo de las operaciones TCP*/
+void cmd_CCS(){
+	/*CCS - cliente_tcp Connect to Server*/
+	uint16_t puerto_tcp;
+	uint8_t socket;
+	int C_STATUS = 0;
+	wl_status_t estado_conexion_wifi;
+
+	puerto_tcp = atoi(comando_recibido.parametros[1]);
+	if(!dentro_intervalo(puerto_tcp,0,NUM_MAX_PUERTO)){
+		/*Puerto fuera de rango*/
+		Serial.print("1");
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	estado_conexion_wifi = WiFi.status();
+	if( (estado_conexion_wifi == WL_DISCONNECTED) || (estado_conexion_wifi == WL_CONNECTION_LOST) ){
+		/*WiFi desconectado*/
+		Serial.print("2");
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	socket = obtener_socket_libre();
+	if(socket == 255){
+		/*No hay socket disponible*/
+		Serial.print('3');
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	C_STATUS = cliente_tcp[socket].connect(comando_recibido.parametros[0],puerto_tcp);
+	if(C_STATUS){
+		//cliente_tcp[socket].setNoDelay(1);
+		Serial.print(CMD_RESP_OK);
+		Serial.print(CMD_DELIMITER);
+		Serial.print(socket);
+		Serial.print(CMD_TERMINATOR);
+	}else{
+		/*No se pudo conectar*/
+		Serial.print('4');
+		Serial.print(CMD_TERMINATOR);
+	}
 	return;
 }
 
@@ -843,137 +978,3 @@ void cmd_SRC(){
 	Serial.println("Closed.");
 	return;
 }
-
-void cmd_GFH(){
-	/*GFH - Get Free Heap*/
-	Serial.print(ESP.getFreeHeap(),DEC);
-	Serial.print(CMD_TERMINATOR);
-	return;
-}
-
-void cmd_WFA(){
-	/*WFA - WiFi Soft-AP Mode*/
-	bool b_punto_acceso_creado = 0;
-	uint8_t canal_wifi = 1;
-	uint8_t hidden_opt = 0;
-	uint8_t cant_max_clientes_wifi = 4;
-	WiFiMode_t modo_wifi_actual;
-
-	canal_wifi = atoi(comando_recibido.parametros[2]);
-	hidden_opt = atoi(comando_recibido.parametros[3]);
-	cant_max_clientes_wifi = atoi(comando_recibido.parametros[4]);
-
-	if(!dentro_intervalo(canal_wifi,1,13)){
-		/*El numero de canal_wifi esta fuera de rango*/
-		Serial.print('1');
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-	if(!dentro_intervalo(hidden_opt,0,1)){
-		/*El numero de hidden_opt esta fuera de rango*/
-		Serial.print('2');
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-	if(!dentro_intervalo(cant_max_clientes_wifi,1,4)){
-		/*El numero de cant_max_clientes_wifi esta fuera de rango*/
-		Serial.print('3');
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-
-	WiFi.disconnect();
-	delay(100);
-	b_punto_acceso_creado = WiFi.softAP(comando_recibido.parametros[0], comando_recibido.parametros[1], canal_wifi, hidden_opt, cant_max_clientes_wifi);
-	delay(5000);
-	modo_wifi_actual = WiFi.getMode();
-	if(modo_wifi != modo_wifi_actual){
-		//Si cambio el modo liberar todos los sockets.
-		modo_wifi = modo_wifi_actual;
-		liberar_recursos();
-	}
-	if(b_punto_acceso_creado == 0){
-		Serial.print('4');
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-	Serial.print(CMD_RESP_OK);
-	Serial.print(CMD_TERMINATOR);
-	return;
-}
-
-void cmd_WAC(){
-	/*WAC - WiFi Soft-AP Configuration*/
-	bool b_configuracion_punto_acceso = 0;
-	IPAddress ip_local;
-	IPAddress gateway;
-	IPAddress subnet;
-	if(!ip_local.fromString(comando_recibido.parametros[0])){
-		/*IP local Invalido*/
-		Serial.print("1");
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-	if(!gateway.fromString(comando_recibido.parametros[1])){
-		/*Gateway Invalido*/
-		Serial.print("2");
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-	if(!subnet.fromString(comando_recibido.parametros[2])){
-		/*Subnet Invalido*/
-		Serial.print("3");
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-	b_configuracion_punto_acceso = WiFi.softAPConfig(ip_local, gateway, subnet);
-	if(b_configuracion_punto_acceso == 0){
-		Serial.print('4');
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-	Serial.print(CMD_RESP_OK);
-	Serial.print(CMD_TERMINATOR);
-	return;
-
-}
-
-void cmd_WAS(){
-	/*WAS - WiFi Acces Point Stations connected*/
-	uint8_t estaciones_conectadas = 0;
-	estaciones_conectadas = WiFi.softAPgetStationNum();
-	Serial.print(CMD_RESP_OK);
-	Serial.print(CMD_DELIMITER);
-	Serial.print(estaciones_conectadas);
-	Serial.print(CMD_TERMINATOR);
-	return;
-}
-
-void cmd_WAD(){
-	/*WAD - WiFi Acces Point Disconnect*/
-	bool b_softAP_off = comando_recibido.parametros[0];
-	if(!dentro_intervalo(b_softAP_off,0,1)){
-		Serial.print('1');
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-	if( WiFi.softAPdisconnect(b_softAP_off) ){
-		Serial.print(CMD_RESP_OK);
-	}else{
-		Serial.print('2');
-	}
-	Serial.print(CMD_TERMINATOR);
-	return;
-}
-
-void cmd_WAI(){
-	/*WAI - WiFi Acces Point Information, IP and MAC*/
-	Serial.print(CMD_RESP_OK);
-	Serial.print(CMD_DELIMITER);
-	Serial.print(WiFi.softAPIP());
-	Serial.print(CMD_DELIMITER);
-	Serial.print(WiFi.softAPmacAddress());
-	Serial.print(CMD_TERMINATOR);
-	return;
-}
-
