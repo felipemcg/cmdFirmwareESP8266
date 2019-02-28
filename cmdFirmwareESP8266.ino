@@ -25,7 +25,7 @@
 #define TIEMPO_MS_ESPERA_CONEXION_WIFI 20000
 
 /*Maximum number of Bytes for a packet*/
-#define TAM_MAX_PAQUETE_DATOS_TCP 1024
+#define TAM_MAX_PAQUETE_DATOS_TCP 1460
 
 /*Numero maximo de clientes que puede manejar el modulo*/
 #define CANT_MAX_CLIENTES 4
