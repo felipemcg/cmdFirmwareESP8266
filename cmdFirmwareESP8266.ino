@@ -87,7 +87,8 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
 		{"WFA",5,&cmd_WFA},	//16
   		{"WAC",3,&cmd_WAC},	//17
   		{"WAS",0,&cmd_WAS},	//18
-  		{"WAD",1,&cmd_WAD},	//19
+  		{"WAD",1,&cmd_WAD},
+		{"WFM",1,&cmd_WFM},
   		{"WAI",0,&cmd_WAI}	//20
 };
 
@@ -413,7 +414,7 @@ void cmd_WFC(){
 	bool b_conexion_wifi_timeout = 0;
 	WiFiMode_t modo_wifi_actual;
 
-	WiFi.mode(WIFI_STA);
+	//WiFi.mode(WIFI_STA);
 	WiFi.begin(comando_recibido.parametros[0],comando_recibido.parametros[1]);
 	millis_anterior = millis();
 	estado_conexion_wifi = WiFi.status();
@@ -430,7 +431,7 @@ void cmd_WFC(){
 	if(modo_wifi != modo_wifi_actual){
 		//Si cambio el modo liberar todos los sockets.
 		modo_wifi = modo_wifi_actual;
-		liberar_recursos();
+		//liberar_recursos();
 	}
 	if(b_conexion_wifi_timeout == 0){
 		Serial.print(CMD_RESP_OK);
@@ -604,7 +605,7 @@ void cmd_WFA(){
 		return;
 	}
 
-	WiFi.disconnect();
+	//WiFi.disconnect();
 	delay(100);
 	b_punto_acceso_creado = WiFi.softAP(comando_recibido.parametros[0], comando_recibido.parametros[1], canal_wifi, hidden_opt, cant_max_clientes_wifi);
 	delay(5000);
@@ -612,7 +613,7 @@ void cmd_WFA(){
 	if(modo_wifi != modo_wifi_actual){
 		//Si cambio el modo liberar todos los sockets.
 		modo_wifi = modo_wifi_actual;
-		liberar_recursos();
+		//liberar_recursos();
 	}
 	if(b_punto_acceso_creado == 0){
 		Serial.print('4');
@@ -976,5 +977,42 @@ void cmd_SRC(){
 	  cliente_tcp[socket].stop();
 	}
 	Serial.println("Closed.");
+	return;
+}
+
+void cmd_WFM(){
+	uint8_t parametro_modo_wifi;
+	WiFiMode_t modo_wifi;
+	bool ret_val;
+	parametro_modo_wifi = atoi(comando_recibido.parametros[0]);
+	if(!dentro_intervalo(parametro_modo_wifi,0,3) == true){
+		Serial.print('1');
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	switch (parametro_modo_wifi) {
+		case 0:
+			modo_wifi = WIFI_OFF;
+			break;
+		case 1:
+			modo_wifi = WIFI_STA;
+			break;
+		case 2:
+			modo_wifi = WIFI_AP;
+			break;
+		case 3:
+			modo_wifi = WIFI_AP_STA;
+			break;
+		default:
+			break;
+	}
+	ret_val = WiFi.mode(modo_wifi);
+	if(ret_val == true){
+		Serial.print(CMD_RESP_OK);
+		Serial.print(CMD_TERMINATOR);
+	}else{
+		Serial.print('2');
+		Serial.print(CMD_TERMINATOR);
+	}
 	return;
 }
