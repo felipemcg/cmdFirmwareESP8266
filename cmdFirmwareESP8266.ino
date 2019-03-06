@@ -727,7 +727,6 @@ void cmd_CCS(){
 }
 
 void cmd_SLC(){
-	/*Agregar el parametro de cuantos clientes puede aceptar*/
 	/*SLC - Server Listen to Clients*/
 	wl_status_t estado_conexion_wifi;
 	uint8_t i;
@@ -765,8 +764,11 @@ void cmd_SLC(){
 			b_puerto_tcp_en_uso = false;
 			break;
 		}else{
-			b_puerto_tcp_en_uso = true;
-			break;
+			Serial.print(CMD_RESP_OK);
+			Serial.print(CMD_DELIMITER);
+			Serial.print(i,DEC);
+			Serial.print(CMD_TERMINATOR);
+			return;
 		}
 	}
 	/*Si no existe un servidor con ese puerto, determinar que servidor esta libre y crear el servidor*/
@@ -784,10 +786,6 @@ void cmd_SLC(){
 				break;
 			}
 		}
-	}else{
-		/*Indica que ya existe un servidor escuchando en ese puerto*/
-		Serial.print("3");
-		Serial.print(CMD_TERMINATOR);
 	}
 	return;
 }
