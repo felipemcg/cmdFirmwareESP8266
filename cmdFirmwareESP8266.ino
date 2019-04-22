@@ -28,6 +28,8 @@
 /*Maximum number of Bytes for a packet*/
 #define TAM_MAX_PAQUETE_DATOS_TCP 1460
 
+#define TAM_MAX_PAQUETE_DATOS_UDP 255
+
 /*Numero maximo de clientes que puede manejar el modulo*/
 #define CANT_MAX_CLIENTES 4
 
@@ -90,6 +92,7 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
 		{"CCS",{2,3},&cmd_CCS},	//6
 		{"SOW",{2,0},&cmd_SOW},	//7
 		{"SOR",{1,0},&cmd_SOR},	//8
+		{"SDU",{2,0},&cmd_SDU},	//7
 		{"SOC",{1,0},&cmd_SOC},	//9
 		{"SLC",{2,0},&cmd_SLC},	//10
 		{"SCC",{1,0},&cmd_SCC},	//11
@@ -943,6 +946,42 @@ void cmd_SOW(){
 	}else{
 		/*Numero de socket fuera de rango*/
 		Serial.print("4");
+		Serial.print(CMD_TERMINATOR);
+	}
+	return;
+}
+
+//Comando SendTo, para enviar datos con el protocolo UDP
+void cmd_SDU()
+{
+	uint8_t socket;
+	uint16_t cant_bytes_enviar;
+	socket = atoi(comando_recibido.parametros[0]);
+	cant_bytes_enviar = atoi(comando_recibido.parametros[1]);
+	if(!dentro_intervalo(socket,0,CANT_MAX_CLIENTES))
+	{
+		Serial.print('1');
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	if(!dentro_intervalo(cant_bytes_enviar,0,TAM_MAX_PAQUETE_DATOS_UDP))
+	{
+		Serial.print('2');
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	if ( Udp.write(paquete_datos_tcp,cant_bytes_enviar) )
+	{
+		if(Udp.endPacket())
+		{
+			Serial.print('0');
+			Serial.print(CMD_TERMINATOR);
+		}else{
+			Serial.print('4');
+			Serial.print(CMD_TERMINATOR);
+		}
+	}else{
+		Serial.print('3');
 		Serial.print(CMD_TERMINATOR);
 	}
 	return;
