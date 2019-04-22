@@ -723,7 +723,7 @@ void cmd_CCS(){
 			Serial.print(CMD_TERMINATOR);
 			return;
 		}
-		C_STATUS = cliente_tcp[socket].connect(comando_recibido.parametros[0],puerto_conexion);
+		C_STATUS = cliente_tcp[socket].connect(comando_recibido.parametros[1],puerto_conexion);
 		if(C_STATUS){
 			//cliente_tcp[socket].setNoDelay(1);
 			socket_info[socket].tipo = TIPO_CLIENTE;
@@ -740,7 +740,7 @@ void cmd_CCS(){
 	{
 		if( Udp.beginPacket(comando_recibido.parametros[1],puerto_conexion) )
 		{
-			Serial.print('0');
+			Serial.print(CMD_RESP_OK);
 			Serial.print(CMD_TERMINATOR);
 		}else{
 			Serial.print('5');
@@ -748,7 +748,8 @@ void cmd_CCS(){
 		}
 	}else{
 		/*Dar mensaje de error en el tipo de conexion*/
-		//Serial.print()
+		Serial.print('6');
+		Serial.print(CMD_TERMINATOR);
 	}
 	return;
 }
