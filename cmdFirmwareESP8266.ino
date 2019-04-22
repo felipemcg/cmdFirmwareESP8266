@@ -6,6 +6,7 @@
 
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiScan.h>
+#include <WiFiUdp.h>
 
 //#include "test.h"
 //#include "puerto_serial.h"
@@ -47,6 +48,8 @@
  * por limitacion del modulo.*/
 WiFiClient cliente_tcp[CANT_MAX_CLIENTES];
 
+WiFiUDP Udp;
+
 std::vector<WiFiServer> servidor_obj(CANT_MAX_SERVIDORES, WiFiServer(NUM_PUERTO_SERVIDOR_DEFECTO));
 struct elementos_servidor{
 	bool b_activo;
@@ -75,32 +78,33 @@ void cmd_MRS(void);
 void cmd_MUC(void);
 bool dentro_intervalo(uint32_t val, uint32_t min, uint32_t max);
 
+
 const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
-  		{"WFC",2,&cmd_WFC}, //0/
-  		{"WFS",0,&cmd_WFS}, //1
-		{"WRI",0,&cmd_WRI},	//2
-		{"WID",0,&cmd_WID},	//3
-		{"WFI",0,&cmd_WFI},
-		{"WFD",1,&cmd_WFD},	//4
-		{"WCF",4,&cmd_WCF},	//5
-		{"CCS",2,&cmd_CCS},	//6
-		{"SOW",2,&cmd_SOW},	//7
-		{"SOR",1,&cmd_SOR},	//8
-		{"SOC",1,&cmd_SOC},	//9
-		{"SLC",2,&cmd_SLC},	//10
-		{"SCC",1,&cmd_SCC},	//11
-		{"SAC",1,&cmd_SAC},	//12
-		{"SRC",1,&cmd_SRC},	//13
-		{"GFH",0,&cmd_GFH},	//14
-		{"MIS",0,&cmd_MIS},	//15
-		{"MRS",0,&cmd_MRS},
-		{"MUC",1,&cmd_MUC},
-		{"WFA",5,&cmd_WFA},	//16
-  		{"WAC",3,&cmd_WAC},	//17
-  		{"WAS",0,&cmd_WAS},	//18
-  		{"WAD",1,&cmd_WAD},
-		{"WFM",1,&cmd_WFM},
-  		{"WAI",0,&cmd_WAI}	//20
+  		{"WFC",{2,0},&cmd_WFC}, //0/
+  		{"WFS",{0,0},&cmd_WFS}, //1
+		{"WRI",{0,0},&cmd_WRI},	//2
+		{"WID",{0,0},&cmd_WID},	//3
+		{"WFI",{0,0},&cmd_WFI},
+		{"WFD",{1,0},&cmd_WFD},	//4
+		{"WCF",{4,0},&cmd_WCF},	//5
+		{"CCS",{2,3},&cmd_CCS},	//6
+		{"SOW",{2,0},&cmd_SOW},	//7
+		{"SOR",{1,0},&cmd_SOR},	//8
+		{"SOC",{1,0},&cmd_SOC},	//9
+		{"SLC",{2,0},&cmd_SLC},	//10
+		{"SCC",{1,0},&cmd_SCC},	//11
+		{"SAC",{1,0},&cmd_SAC},	//12
+		{"SRC",{1,0},&cmd_SRC},	//13
+		{"GFH",{0,0},&cmd_GFH},	//14
+		{"MIS",{0,0},&cmd_MIS},	//15
+		{"MRS",{0,0},&cmd_MRS},
+		{"MUC",{1,0},&cmd_MUC},
+		{"WFA",{5,0},&cmd_WFA},	//16
+  		{"WAC",{3,0},&cmd_WAC},	//17
+  		{"WAS",{0,0},&cmd_WAS},	//18
+  		{"WAD",{1,0},&cmd_WAD},
+		{"WFM",{1,0},&cmd_WFM},
+  		{"WAI",{0,0},&cmd_WAI}	//20
 };
 
 struct cmd_recibido comando_recibido;
@@ -303,7 +307,8 @@ int buscar_comando(char cmd_nombre[4]){
 /* Descripcion: Comprueba que se hayan recibido la cantidad necesaria de parametros ejecutar el comando.*/
 bool validar_cantidad_parametros(uint8_t indice_comando, uint8_t cantidad_parametros){
 
-	if((conjunto_comandos[indice_comando].cantidad_parametros == cantidad_parametros)){
+	if( (conjunto_comandos[indice_comando].cantidad_parametros[0] == cantidad_parametros)
+			||  (conjunto_comandos[indice_comando].cantidad_parametros[1] == cantidad_parametros)){
 		return 1;
 	}
 	return 0;
@@ -684,14 +689,17 @@ void cmd_WAI(){
 /*Comandos para el manejo de las operaciones TCP*/
 void cmd_CCS(){
 	/*CCS - cliente_tcp Connect to Server*/
-	uint16_t puerto_tcp;
+	char tipo_conexion[4];
+	uint16_t puerto_conexion;
 	uint8_t socket;
 	int C_STATUS = 0;
 	wl_status_t estado_conexion_wifi;
 
-	puerto_tcp = atoi(comando_recibido.parametros[1]);
-	if(!dentro_intervalo(puerto_tcp,0,NUM_MAX_PUERTO)){
-		/*Puerto fuera de rango*/
+	strcpy(tipo_conexion,comando_recibido.parametros[0]);
+	puerto_conexion = atoi(comando_recibido.parametros[2]);
+
+	if(!dentro_intervalo(puerto_conexion,0,NUM_MAX_PUERTO)){
+		/*Puerto TCP fuera de rango*/
 		Serial.print("1");
 		Serial.print(CMD_TERMINATOR);
 		return;
@@ -703,25 +711,41 @@ void cmd_CCS(){
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
-	socket = obtener_socket_libre();
-	if(socket == 255){
-		/*No hay socket disponible*/
-		Serial.print('3');
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-	C_STATUS = cliente_tcp[socket].connect(comando_recibido.parametros[0],puerto_tcp);
-	if(C_STATUS){
-		//cliente_tcp[socket].setNoDelay(1);
-		socket_info[socket].tipo = TIPO_CLIENTE;
-		Serial.print(CMD_RESP_OK);
-		Serial.print(CMD_DELIMITER);
-		Serial.print(socket);
-		Serial.print(CMD_TERMINATOR);
+	if(strcmp(tipo_conexion,"TCP") == 0)
+	{
+		socket = obtener_socket_libre();
+		if(socket == 255){
+			/*No hay socket disponible*/
+			Serial.print('3');
+			Serial.print(CMD_TERMINATOR);
+			return;
+		}
+		C_STATUS = cliente_tcp[socket].connect(comando_recibido.parametros[0],puerto_conexion);
+		if(C_STATUS){
+			//cliente_tcp[socket].setNoDelay(1);
+			socket_info[socket].tipo = TIPO_CLIENTE;
+			Serial.print(CMD_RESP_OK);
+			Serial.print(CMD_DELIMITER);
+			Serial.print(socket);
+			Serial.print(CMD_TERMINATOR);
+		}else{
+			/*No se pudo conectar*/
+			Serial.print('4');
+			Serial.print(CMD_TERMINATOR);
+		}
+	}else if(strcmp(tipo_conexion,"UDP") == 0)
+	{
+		if( Udp.beginPacket(comando_recibido.parametros[1],puerto_conexion) )
+		{
+			Serial.print('0');
+			Serial.print(CMD_TERMINATOR);
+		}else{
+			Serial.print('5');
+			Serial.print(CMD_TERMINATOR);
+		}
 	}else{
-		/*No se pudo conectar*/
-		Serial.print('4');
-		Serial.print(CMD_TERMINATOR);
+		/*Dar mensaje de error en el tipo de conexion*/
+		//Serial.print()
 	}
 	return;
 }

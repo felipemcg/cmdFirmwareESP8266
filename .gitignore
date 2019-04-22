@@ -4,3 +4,4 @@ Release/
 .cproject
 .settings/
 spec.d
+/Wemos_debug/

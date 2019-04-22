@@ -27,6 +27,9 @@
 /*Numero maximo de comandos admitidos*/
 #define CANT_MAX_CMD 25
 
+/*Cantidad maxima de parametros variables que puede permitir un comando*/
+#define CANT_MAX_PARAM_VARIABLES 2
+
 
 //extern void cmd_WFC(void);
 //void cmd_WFS(void);
@@ -39,7 +42,7 @@
 typedef void(*functionPointerType)(void);
 struct cmd{
 	char const nombre[4];
-	uint8_t const cantidad_parametros;
+	uint8_t const cantidad_parametros[CANT_MAX_PARAM_VARIABLES];
 	functionPointerType ejecutar;
 };
 
