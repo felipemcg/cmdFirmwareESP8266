@@ -7,6 +7,7 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiScan.h>
 #include <WiFiUdp.h>
+#include <WiFiClient.h>
 
 //#include "test.h"
 //#include "puerto_serial.h"
@@ -116,7 +117,8 @@ char paquete_serial[64];
 
 size_t tam_buffer_serial = 0;
 
-WiFiMode_t modo_wifi;
+WiFiMode_t modo_wifi_actual;
+wl_status_t estado_conexion_wifi_interfaz_sta_actual;
 
 
 void setup() {
@@ -144,7 +146,8 @@ void setup() {
     cliente_tcp[1].setNoDelay(1);
     cliente_tcp[2].setNoDelay(1);
     cliente_tcp[3].setNoDelay(1);*/
-    modo_wifi = WiFi.getMode();
+    modo_wifi_actual = WiFi.getMode();
+    estado_conexion_wifi_interfaz_sta_actual = WiFi.status();
     Serial.print("R");
     Serial.print(CMD_TERMINATOR);
 }
@@ -437,7 +440,6 @@ void cmd_WFC(){
 	unsigned long millis_actual;
 	wl_status_t estado_conexion_wifi;
 	bool b_conexion_wifi_timeout = 0;
-	WiFiMode_t modo_wifi_actual;
 
 	//WiFi.mode(WIFI_STA);
 	WiFi.begin(comando_recibido.parametros[0],comando_recibido.parametros[1]);
@@ -453,11 +455,11 @@ void cmd_WFC(){
 		delay(20);
 	}
 	modo_wifi_actual = WiFi.getMode();
-	if(modo_wifi != modo_wifi_actual){
+	/*if(modo_wifi != modo_wifi_actual){
 		//Si cambio el modo liberar todos los sockets.
 		modo_wifi = modo_wifi_actual;
 		//liberar_recursos();
-	}
+	}*/
 	if(b_conexion_wifi_timeout == 0){
 		Serial.print(CMD_RESP_OK);
 		Serial.print(CMD_TERMINATOR);
@@ -605,7 +607,6 @@ void cmd_WFA(){
 	uint8_t canal_wifi = 1;
 	uint8_t hidden_opt = 0;
 	uint8_t cant_max_clientes_wifi = 4;
-	WiFiMode_t modo_wifi_actual;
 
 	canal_wifi = atoi(comando_recibido.parametros[2]);
 	hidden_opt = atoi(comando_recibido.parametros[3]);
@@ -635,11 +636,11 @@ void cmd_WFA(){
 	b_punto_acceso_creado = WiFi.softAP(comando_recibido.parametros[0], comando_recibido.parametros[1], canal_wifi, hidden_opt, cant_max_clientes_wifi);
 	delay(5000);
 	modo_wifi_actual = WiFi.getMode();
-	if(modo_wifi != modo_wifi_actual){
+/*	if(modo_wifi != modo_wifi_actual){
 		//Si cambio el modo liberar todos los sockets.
 		modo_wifi = modo_wifi_actual;
 		//liberar_recursos();
-	}
+	}*/
 	if(b_punto_acceso_creado == 0){
 		Serial.print('4');
 		Serial.print(CMD_TERMINATOR);
@@ -695,8 +696,8 @@ void cmd_CCS(){
 	char tipo_conexion[4];
 	uint16_t puerto_conexion;
 	uint8_t socket;
-	int C_STATUS = 0;
-	wl_status_t estado_conexion_wifi;
+	int estado_conexion_al_servidor_tcp = 0;
+	uint8_t cant_clientes_conectados_interfaz_softap = 0;
 
 	strcpy(tipo_conexion,comando_recibido.parametros[0]);
 	puerto_conexion = atoi(comando_recibido.parametros[2]);
@@ -707,24 +708,61 @@ void cmd_CCS(){
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
-	estado_conexion_wifi = WiFi.status();
-	if( (estado_conexion_wifi == WL_DISCONNECTED) || (estado_conexion_wifi == WL_CONNECTION_LOST) ){
-		/*WiFi desconectado*/
-		Serial.print("2");
-		Serial.print(CMD_TERMINATOR);
-		return;
+	modo_wifi_actual = WiFi.getMode();
+	/* Se verifica si el ESP8266 se encuentra conectado a alguna estacion, o si
+	 * alguna estacion esta conectado a el.
+	 */
+	switch (modo_wifi_actual) {
+		case WIFI_OFF:
+			Serial.print("2");
+			Serial.print(CMD_TERMINATOR);
+			return;
+			break;
+		case WIFI_AP:
+			cant_clientes_conectados_interfaz_softap = WiFi.softAPgetStationNum();
+			if(cant_clientes_conectados_interfaz_softap == 0)
+			{
+				Serial.print("3");
+				Serial.print(CMD_TERMINATOR);
+				return;
+			}
+			break;
+		case WIFI_STA:
+			estado_conexion_wifi_interfaz_sta_actual = WiFi.status();
+			if( (estado_conexion_wifi_interfaz_sta_actual == WL_DISCONNECTED)
+				|| (estado_conexion_wifi_interfaz_sta_actual == WL_CONNECTION_LOST))
+			{
+				Serial.print("3");
+				Serial.print(CMD_TERMINATOR);
+				return;
+			}
+			break;
+		case WIFI_AP_STA:
+			cant_clientes_conectados_interfaz_softap = WiFi.softAPgetStationNum();
+			estado_conexion_wifi_interfaz_sta_actual = WiFi.status();
+			if( (estado_conexion_wifi_interfaz_sta_actual == WL_DISCONNECTED)
+				|| (estado_conexion_wifi_interfaz_sta_actual == WL_CONNECTION_LOST)
+				|| (cant_clientes_conectados_interfaz_softap == 0) )
+			{
+				Serial.print("3");
+				Serial.print(CMD_TERMINATOR);
+				return;
+			}
+			break;
+		default:
+			break;
 	}
 	if(strcmp(tipo_conexion,"TCP") == 0)
 	{
 		socket = obtener_socket_libre();
 		if(socket == 255){
 			/*No hay socket disponible*/
-			Serial.print('3');
+			Serial.print('4');
 			Serial.print(CMD_TERMINATOR);
 			return;
 		}
-		C_STATUS = cliente_tcp[socket].connect(comando_recibido.parametros[1],puerto_conexion);
-		if(C_STATUS){
+		estado_conexion_al_servidor_tcp = cliente_tcp[socket].connect(comando_recibido.parametros[1],puerto_conexion);
+		if(estado_conexion_al_servidor_tcp){
 			//cliente_tcp[socket].setNoDelay(1);
 			socket_info[socket].tipo = TIPO_CLIENTE;
 			Serial.print(CMD_RESP_OK);
@@ -733,7 +771,7 @@ void cmd_CCS(){
 			Serial.print(CMD_TERMINATOR);
 		}else{
 			/*No se pudo conectar*/
-			Serial.print('4');
+			Serial.print('5');
 			Serial.print(CMD_TERMINATOR);
 		}
 	}else if(strcmp(tipo_conexion,"UDP") == 0)
@@ -743,12 +781,12 @@ void cmd_CCS(){
 			Serial.print(CMD_RESP_OK);
 			Serial.print(CMD_TERMINATOR);
 		}else{
-			Serial.print('5');
+			Serial.print('6');
 			Serial.print(CMD_TERMINATOR);
 		}
 	}else{
 		/*Dar mensaje de error en el tipo de conexion*/
-		Serial.print('6');
+		Serial.print('7');
 		Serial.print(CMD_TERMINATOR);
 	}
 	return;
