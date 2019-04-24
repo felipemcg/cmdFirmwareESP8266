@@ -990,7 +990,7 @@ void cmd_SOW(){
 	return;
 }
 
-//Comando SendTo, para enviar datos con el protocolo UDP
+//SDU-Send UDP, para enviar datos con el protocolo UDP
 void cmd_SDU()
 {
 	uint8_t socket;
@@ -1023,6 +1023,30 @@ void cmd_SDU()
 		Serial.print('3');
 		Serial.print(CMD_TERMINATOR);
 	}
+	return;
+}
+
+/*Comando RVU - Receive UDP Data.
+ * */
+void RVU()
+{
+	int cant_bytes_paquete_udp_recibido;
+	uint8_t socket;
+	socket = atoi(comando_recibido.parametros[0]);
+	if(!dentro_intervalo(socket,0,CANT_MAX_CLIENTES)){
+		Serial.print('1');
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	cant_bytes_paquete_udp_recibido = Udp.parsePacket();
+	Serial.print(CMD_RESP_OK);
+	Serial.print(CMD_DELIMITER);
+	Serial.print(cant_bytes_paquete_udp_recibido,DEC);
+	Serial.print(CMD_DELIMITER);
+	while(cant_bytes_paquete_udp_recibido--){
+		Serial.print((char)Udp.read());
+	}
+	Serial.print(CMD_TERMINATOR);
 	return;
 }
 
