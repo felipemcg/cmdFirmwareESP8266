@@ -334,6 +334,51 @@ void liberar_recursos(void){
 	return;
 }
 
+/* Se verifica si el ESP8266 se encuentra conectado a alguna estacion, o si
+ * alguna estacion esta conectado a el.
+ */
+int8_t verificar_conexion_wifi()
+{
+	uint8_t cant_clientes_conectados_interfaz_softap = 0;
+	int8_t ret_val = 0;
+	modo_wifi_actual = WiFi.getMode();
+	switch (modo_wifi_actual)
+	{
+		case WIFI_OFF:
+			ret_val = -1;
+			break;
+		case WIFI_AP:
+			cant_clientes_conectados_interfaz_softap = WiFi.softAPgetStationNum();
+			if(cant_clientes_conectados_interfaz_softap == 0)
+			{
+				ret_val = -2;
+			}
+			break;
+		case WIFI_STA:
+			estado_conexion_wifi_interfaz_sta_actual = WiFi.status();
+			if( (estado_conexion_wifi_interfaz_sta_actual == WL_DISCONNECTED)
+				|| (estado_conexion_wifi_interfaz_sta_actual == WL_CONNECTION_LOST))
+			{
+				ret_val = -2;
+			}
+			break;
+		case WIFI_AP_STA:
+			cant_clientes_conectados_interfaz_softap = WiFi.softAPgetStationNum();
+			estado_conexion_wifi_interfaz_sta_actual = WiFi.status();
+			if( (estado_conexion_wifi_interfaz_sta_actual == WL_DISCONNECTED)
+				|| (estado_conexion_wifi_interfaz_sta_actual == WL_CONNECTION_LOST)
+				|| (cant_clientes_conectados_interfaz_softap == 0) )
+			{
+				ret_val = -2;
+			}
+			break;
+		default:
+			ret_val = -3;
+			break;
+	}
+	return ret_val;
+}
+
 /*Comandos basicos para el manejo del modulo*/
 void cmd_MIS(){
 	/*MIS - Module Is Alive*/
@@ -697,7 +742,6 @@ void cmd_CCS(){
 	uint16_t puerto_conexion;
 	uint8_t socket;
 	int estado_conexion_al_servidor_tcp = 0;
-	uint8_t cant_clientes_conectados_interfaz_softap = 0;
 
 	strcpy(tipo_conexion,comando_recibido.parametros[0]);
 	puerto_conexion = atoi(comando_recibido.parametros[2]);
@@ -708,50 +752,9 @@ void cmd_CCS(){
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
-	modo_wifi_actual = WiFi.getMode();
-	/* Se verifica si el ESP8266 se encuentra conectado a alguna estacion, o si
-	 * alguna estacion esta conectado a el.
-	 */
-	switch (modo_wifi_actual) {
-		case WIFI_OFF:
-			Serial.print("2");
-			Serial.print(CMD_TERMINATOR);
-			return;
-			break;
-		case WIFI_AP:
-			cant_clientes_conectados_interfaz_softap = WiFi.softAPgetStationNum();
-			if(cant_clientes_conectados_interfaz_softap == 0)
-			{
-				Serial.print("3");
-				Serial.print(CMD_TERMINATOR);
-				return;
-			}
-			break;
-		case WIFI_STA:
-			estado_conexion_wifi_interfaz_sta_actual = WiFi.status();
-			if( (estado_conexion_wifi_interfaz_sta_actual == WL_DISCONNECTED)
-				|| (estado_conexion_wifi_interfaz_sta_actual == WL_CONNECTION_LOST))
-			{
-				Serial.print("3");
-				Serial.print(CMD_TERMINATOR);
-				return;
-			}
-			break;
-		case WIFI_AP_STA:
-			cant_clientes_conectados_interfaz_softap = WiFi.softAPgetStationNum();
-			estado_conexion_wifi_interfaz_sta_actual = WiFi.status();
-			if( (estado_conexion_wifi_interfaz_sta_actual == WL_DISCONNECTED)
-				|| (estado_conexion_wifi_interfaz_sta_actual == WL_CONNECTION_LOST)
-				|| (cant_clientes_conectados_interfaz_softap == 0) )
-			{
-				Serial.print("3");
-				Serial.print(CMD_TERMINATOR);
-				return;
-			}
-			break;
-		default:
-			break;
-	}
+
+	/*Verificar conexion WiFi*/
+
 	if(strcmp(tipo_conexion,"TCP") == 0)
 	{
 		socket = obtener_socket_libre();
