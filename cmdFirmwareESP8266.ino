@@ -79,6 +79,7 @@ sock_info socket_info[CANT_MAX_CLIENTES];
 void cmd_WFC(void);
 void cmd_MRS(void);
 void cmd_MUC(void);
+void cmd_RVU(void);
 bool dentro_intervalo(uint32_t val, uint32_t min, uint32_t max);
 
 
@@ -94,6 +95,7 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
 		{"SOW",{2,0},&cmd_SOW},	//7
 		{"SOR",{1,0},&cmd_SOR},	//8
 		{"SDU",{2,0},&cmd_SDU},	//7
+		{"RVU",{1,0},&cmd_RVU},	//7
 		{"SOC",{1,0},&cmd_SOC},	//9
 		{"SLC",{2,0},&cmd_SLC},	//10
 		{"SCC",{1,0},&cmd_SCC},	//11
@@ -1037,15 +1039,23 @@ void cmd_SDU()
 
 /*Comando RVU - Receive UDP Data.
  * */
-void RVU()
+void cmd_RVU()
 {
 	int cant_bytes_paquete_udp_recibido;
 	uint8_t socket;
+	int8_t conexion_wifi;
 	socket = atoi(comando_recibido.parametros[0]);
 	if(!dentro_intervalo(socket,0,CANT_MAX_CLIENTES)){
 		Serial.print('1');
 		Serial.print(CMD_TERMINATOR);
 		return;
+	}
+	/*Verificar conexion WiFi*/
+	conexion_wifi = verificar_conexion_wifi();
+	if(conexion_wifi != 0)
+	{
+		Serial.print('2');
+		Serial.print(CMD_TERMINATOR);
 	}
 	cant_bytes_paquete_udp_recibido = Udp.parsePacket();
 	Serial.print(CMD_RESP_OK);
