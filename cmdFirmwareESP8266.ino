@@ -809,6 +809,7 @@ void cmd_SLC(){
 	uint8_t i;
 	uint8_t backlog;
 	uint16_t puerto_tcp;
+	int8_t conexion_wifi;
 	bool b_puerto_tcp_en_uso = false;
 
 	puerto_tcp = atoi(comando_recibido.parametros[0]);
@@ -828,13 +829,14 @@ void cmd_SLC(){
 	}else{
 		/*Verificar que se tienen los recursos disponibles para escuchar la cantidad de clientes*/
 	}
-	/*estado_conexion_wifi = WiFi.status();
-	if( (estado_conexion_wifi == WL_DISCONNECTED) || (estado_conexion_wifi == WL_CONNECTION_LOST) ){
-		WiFi desconectado
-		Serial.print('4');
+	/*Verificar conexion WiFi*/
+	conexion_wifi = verificar_conexion_wifi();
+	if(conexion_wifi != 0)
+	{
+		Serial.print('3');
 		Serial.print(CMD_TERMINATOR);
 		return;
-	}*/
+	}
 	/*Determinar si ya existe un servidor funcionando con ese puerto*/
 	for (i = 0; i < CANT_MAX_SERVIDORES; i++) {
 		if(puerto_tcp != servidor[i].num_puerto_en_uso){
@@ -1056,6 +1058,7 @@ void cmd_RVU()
 	{
 		Serial.print('2');
 		Serial.print(CMD_TERMINATOR);
+		return;
 	}
 	cant_bytes_paquete_udp_recibido = Udp.parsePacket();
 	Serial.print(CMD_RESP_OK);
