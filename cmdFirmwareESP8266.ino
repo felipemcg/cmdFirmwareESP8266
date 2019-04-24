@@ -455,6 +455,12 @@ void cmd_GFH(){
 
 /*Comandos para configuracion del WiFi*/
 
+/**
+ *  Comando que explora los puntos de acceso dentro del alcance del modulo.
+ *
+ *  @param 	Ninguno.
+ *  @return 0,NRO_APS_DISPONIBLES,SSID1;RSSI1,SSID2;RSSI2,SSIDn;RSSIn\n
+ */
 void cmd_WFS(){
 	/*WFS - WiFi Scan*/
 	ESP8266WiFiScanClass WiFiScan;
