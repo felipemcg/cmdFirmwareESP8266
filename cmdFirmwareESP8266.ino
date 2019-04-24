@@ -440,6 +440,12 @@ void cmd_MUC(){
 	return;
 }
 
+/**
+ *  Comando que imprime la cantidad de RAM disponible en Bytes.
+ *
+ *  @param 	Ninguno.
+ *  @return Bytes disponibles de RAM en el modulo.
+ */
 void cmd_GFH(){
 	/*GFH - Get Free Heap*/
 	Serial.print(ESP.getFreeHeap(),DEC);
@@ -448,6 +454,7 @@ void cmd_GFH(){
 }
 
 /*Comandos para configuracion del WiFi*/
+
 void cmd_WFS(){
 	/*WFS - WiFi Scan*/
 	ESP8266WiFiScanClass WiFiScan;
