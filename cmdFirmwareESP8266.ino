@@ -483,6 +483,18 @@ void cmd_WFS(){
 	return;
 }
 
+/**
+ * Comando para configurar de forma manual los parametros de la interfaz de red.
+ *
+ *  @param 	IP
+ *  @param  DNS
+ *  @param  Gateway
+ *  @param  Subnet
+ *  @retval	1 Direccion IP invalida.
+ *  @retval 2 Direccion DNS invalida.
+ *  @retval 3 Direccion de gateway invalida.
+ *  @retval 4 Direccion de subnet invalida.
+ */
 void cmd_WCF(){
 	IPAddress ip,dns,gateway,subnet;
 	if(!ip.fromString(comando_recibido.parametros[0])){
