@@ -398,12 +398,27 @@ void cmd_MIS(){
 	return;
 }
 
+/**
+ *  Comando que reinicia el modulo ESP8266.
+ *
+ *  @param Ninguno.
+ *  @return Nada.
+ */
 void cmd_MRS(){
 	/*MRS - Module Reset*/
 	ESP.restart();
 	return;
 }
 
+/**
+ *  Comando que modifica la velocidad de puerto UART.
+ *
+ *	El rango de velocidad permitido va desde 9600 hasta 921600
+ *
+ *  @param baud_rate nueva velocidad de operacion para el UART.
+ *  @retval 0 Si no hay errores.
+ *  @retval 1 Si el valor de velocidad se encuentra fuera de rango.
+ */
 void cmd_MUC(){
 	/*Module UART Configuration*/
 	uint32_t baud_rate = atoi(comando_recibido.parametros[0]);
