@@ -490,10 +490,10 @@ void cmd_WFS(){
  *  @param  DNS
  *  @param  Gateway
  *  @param  Subnet
- *  @retval	1 Direccion IP invalida.
- *  @retval 2 Direccion DNS invalida.
- *  @retval 3 Direccion de gateway invalida.
- *  @retval 4 Direccion de subnet invalida.
+ *  @retval	1\n Direccion IP invalida.
+ *  @retval 2\n Direccion DNS invalida.
+ *  @retval 3\n Direccion de gateway invalida.
+ *  @retval 4\n Direccion de subnet invalida.
  */
 void cmd_WCF(){
 	IPAddress ip,dns,gateway,subnet;
@@ -531,14 +531,14 @@ void cmd_WCF(){
 }
 
 /**
- *  Comando para conectar el modulo a un punto de acceso.
+ * Comando para conectar el modulo a un punto de acceso.
  *
  *  @param 	SSID 		Del punto de acceso al cual se quiere conectar.
  *  @param 	Contraseña 	Del punto de acceso al cual se quiere conectar.
- *  @retval 1 Si no se pudo conectar al punto de acceso.
- *  @retval 2 Si se alcanzo el timeout para conectarse (20 segundos).
- *  @retval 3 La contraseña es incorrecta.
- *  @retval 4 El SSID no esta disponible.
+ *  @retval 1\n Si no se pudo conectar al punto de acceso.
+ *  @retval 2\n Si se alcanzo el timeout para conectarse (20 segundos).
+ *  @retval 3\n La contraseña es incorrecta.
+ *  @retval 4\n El SSID no esta disponible.
  */
 void cmd_WFC(){
 	/*WFC - WiFi Connect*/
@@ -605,6 +605,14 @@ void cmd_WFC(){
 	return;
 }
 
+/**
+ * Comando para obtener el RSSI del punto de acceso al cual se encuentra
+ * conectado.
+ *
+ *  @param 	Ninguno.
+ *  @retval 0,RSSI(dB) Sin error, se retorna el RSSI en decibeles.
+ *  @retval 1 Error al obtener el RSSI.
+ */
 void cmd_WRI(){
 	/*WRI - WiFi RSSI*/
 	int32_t rssi = WiFi.RSSI();
@@ -620,6 +628,15 @@ void cmd_WRI(){
 	return;
 }
 
+/**
+ * Comando para obtener el SSID de la estacion a la que se encuentra conectado
+ * actualmente el modulo.
+ *
+ *  @param 	Ninguno.
+ *  @retval 0,SSID\n	Sin error, se retorna el SSID.
+ *  @retval 1 Error al obtener el SSID, no se encuentra conectada a ningun red.
+ */
+
 void cmd_WID(){
 	int ssid_longitud;
 	ssid_longitud = strlen(WiFi.SSID().c_str());
@@ -633,6 +650,7 @@ void cmd_WID(){
 	Serial.print(CMD_TERMINATOR);
 	return;
 }
+
 
 void cmd_WFI(){
 	/*WFI - WiFi Station Information
