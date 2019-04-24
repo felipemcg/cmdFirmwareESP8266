@@ -741,6 +741,7 @@ void cmd_CCS(){
 	char tipo_conexion[4];
 	uint16_t puerto_conexion;
 	uint8_t socket;
+	int8_t conexion_wifi;
 	int estado_conexion_al_servidor_tcp = 0;
 
 	strcpy(tipo_conexion,comando_recibido.parametros[0]);
@@ -754,7 +755,12 @@ void cmd_CCS(){
 	}
 
 	/*Verificar conexion WiFi*/
-
+	conexion_wifi = verificar_conexion_wifi();
+	if(conexion_wifi != 0)
+	{
+		Serial.print('2');
+		Serial.print(CMD_TERMINATOR);
+	}
 	if(strcmp(tipo_conexion,"TCP") == 0)
 	{
 		socket = obtener_socket_libre();
