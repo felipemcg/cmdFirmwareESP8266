@@ -382,6 +382,15 @@ int8_t verificar_conexion_wifi()
 }
 
 /*Comandos basicos para el manejo del modulo*/
+
+/**
+ *  Comando que verifica que el modulo se encuentra encendido.
+ *
+ *  Hace un simple Serial.print para verificar que el modulo esta funcionando.
+ *
+ *  @param Ninguno.
+ *  @return 0\n
+ */
 void cmd_MIS(){
 	/*MIS - Module Is Alive*/
 	Serial.print(CMD_RESP_OK);
