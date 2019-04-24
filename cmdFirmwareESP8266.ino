@@ -530,6 +530,16 @@ void cmd_WCF(){
 	return;
 }
 
+/**
+ *  Comando para conectar el modulo a un punto de acceso.
+ *
+ *  @param 	SSID 		Del punto de acceso al cual se quiere conectar.
+ *  @param 	Contraseña 	Del punto de acceso al cual se quiere conectar.
+ *  @retval 1 Si no se pudo conectar al punto de acceso.
+ *  @retval 2 Si se alcanzo el timeout para conectarse (20 segundos).
+ *  @retval 3 La contraseña es incorrecta.
+ *  @retval 4 El SSID no esta disponible.
+ */
 void cmd_WFC(){
 	/*WFC - WiFi Connect*/
 	unsigned long millis_anterior;
