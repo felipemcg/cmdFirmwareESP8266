@@ -788,6 +788,8 @@ void cmd_WFA(){
 	return;
 }
 
+
+
 void cmd_WAS(){
 	/*WAS - WiFi Acces Point Stations connected*/
 	uint8_t estaciones_conectadas = 0;
@@ -827,6 +829,20 @@ void cmd_WAI(){
 	return;
 }
 
+/**
+ * CCS - Client Connect Server
+ * Comando para conectarse a un servidor, sea TCP o UDP.
+ * @param SSID			Nombre del AP, 63 caracteres maximo.
+ * @param Contraseña    Minimo 8 caracteres.
+ * @param Canal         Numero del canal WiFi, del 1 al 13.
+ * @param SSID_Oculto   0 para mostrar el SSID, 1 para ocultar.
+ * @param MAX_CONEX    	Numero de conexiones simultaneas, del 1 al 4.
+ * @retval 0			Sin error, el punto de acceso se creo correctamente.
+ * @retval 1 			Error, el numero de canal esta fuera de rango.
+ * @retval 2 			Error, la opcion de SSID_oculto esta fuera de rango.
+ * @retval 3 			Error, la cantidad de conexiones esta fuera de rango.
+ * @retval 4 			Error, no se pudo crear el punto de acceso.
+ */
 /*Comandos para el manejo de las operaciones TCP*/
 void cmd_CCS(){
 	/*CCS - cliente_tcp Connect to Server*/
