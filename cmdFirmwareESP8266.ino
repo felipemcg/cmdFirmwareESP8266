@@ -912,7 +912,7 @@ void cmd_CCS(){
 void cmd_SLC(){
 	/*SLC - Server Listen to Clients*/
 	wl_status_t estado_conexion_wifi;
-	uint8_t i;
+	uint8_t socket_pasivo;
 	uint8_t backlog;
 	uint16_t puerto_tcp;
 	int8_t conexion_wifi;
@@ -944,30 +944,30 @@ void cmd_SLC(){
 		return;
 	}
 	/*Determinar si ya existe un servidor funcionando con ese puerto*/
-	for (i = 0; i < CANT_MAX_SERVIDORES; i++) {
-		if(puerto_tcp != servidor[i].num_puerto_en_uso){
+	for (socket_pasivo = 0; socket_pasivo < CANT_MAX_SERVIDORES; socket_pasivo++) {
+		if(puerto_tcp != servidor[socket_pasivo].num_puerto_en_uso){
 			b_puerto_tcp_en_uso = false;
 			break;
 		}else{
 			Serial.print(CMD_RESP_OK);
 			Serial.print(CMD_DELIMITER);
-			Serial.print(i,DEC);
+			Serial.print(socket_pasivo,DEC);
 			Serial.print(CMD_TERMINATOR);
 			return;
 		}
 	}
 	/*Si no existe un servidor con ese puerto, determinar que servidor esta libre y crear el servidor*/
 	if(!b_puerto_tcp_en_uso){
-		for (i = 0; i < CANT_MAX_SERVIDORES; i++) {
-			if(servidor_obj[i].status() == CLOSED){
-				servidor[i].num_puerto_en_uso = puerto_tcp;
-				servidor[i].cant_maxima_clientes_permitidos= backlog;
-				servidor_obj[i].begin(puerto_tcp);
+		for (socket_pasivo = 0; socket_pasivo < CANT_MAX_SERVIDORES; socket_pasivo++) {
+			if(servidor_obj[socket_pasivo].status() == CLOSED){
+				servidor[socket_pasivo].num_puerto_en_uso = puerto_tcp;
+				servidor[socket_pasivo].cant_maxima_clientes_permitidos= backlog;
+				servidor_obj[socket_pasivo].begin(puerto_tcp);
 				Serial.print(CMD_RESP_OK);
 				Serial.print(CMD_DELIMITER);
-				Serial.print(i,DEC);
+				Serial.print(socket_pasivo,DEC);
 				Serial.print(CMD_TERMINATOR);
-				servidor[i].b_activo = true;
+				servidor[socket_pasivo].b_activo = true;
 				break;
 			}
 		}
