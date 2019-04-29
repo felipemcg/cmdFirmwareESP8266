@@ -69,10 +69,14 @@ struct elementos_servidor servidor[CANT_MAX_SERVIDORES];
 typedef enum
 { TIPO_SERVIDOR, TIPO_CLIENTE, NINGUNO } tipoSocket;
 
+typedef enum
+{ TCP, UDP, NINGUNO} protocol;
+
 struct sock_info
 {
 	bool en_uso;
 	tipoSocket  tipo;
+	protocol protocolo;
 	int8_t indice_servidor;
 };
 
@@ -170,6 +174,7 @@ void setup() {
     for (uint8_t indice_socket = 0; indice_socket < CANT_MAX_CLIENTES; ++indice_socket) {
     	sockets[indice_socket].en_uso = false;
 		sockets[indice_socket].tipo = NINGUNO;
+		sockets[indice_socket].protocolo = NINGUNO;
 		sockets[indice_socket].indice_servidor = -1;
 	}
 
@@ -913,6 +918,7 @@ void cmd_CCS(){
 			//cliente_tcp[socket].setNoDelay(1);
 			sockets[socket].en_uso = true;
 			sockets[socket].tipo = TIPO_CLIENTE;
+			sockets[socket].protocolo = TCP;
 			Serial.print(CMD_RESP_OK);
 			Serial.print(CMD_DELIMITER);
 			Serial.print(socket);
@@ -926,6 +932,8 @@ void cmd_CCS(){
 	{
 		if( Udp.beginPacket(comando_recibido.parametros[1],puerto_conexion) )
 		{
+			sockets[socket].en_uso = true;
+			sockets[socket].protocolo = UDP;
 			Serial.print(CMD_RESP_OK);
 			Serial.print(CMD_TERMINATOR);
 		}else{
