@@ -167,7 +167,8 @@ void setup() {
     }
 #endif
 
-    for (int indice_socket = 0; indice_socket < CANT_MAX_CLIENTES; ++indice_socket) {
+    for (uint8_t indice_socket = 0; indice_socket < CANT_MAX_CLIENTES; ++indice_socket) {
+    	sockets[indice_socket].en_uso = false;
 		sockets[indice_socket].tipo = NINGUNO;
 		sockets[indice_socket].indice_servidor = -1;
 	}
