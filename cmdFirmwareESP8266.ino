@@ -76,7 +76,7 @@ struct sock_info
 	int8_t indice_servidor;
 };
 
-sock_info socket_info[CANT_MAX_CLIENTES];
+sock_info sockets[CANT_MAX_CLIENTES];
 
 //#define sDebug 1
 /*-------------------------------------------------------------------*/
@@ -168,8 +168,8 @@ void setup() {
 #endif
 
     for (int indice_socket = 0; indice_socket < CANT_MAX_CLIENTES; ++indice_socket) {
-		socket_info[indice_socket].tipo = NINGUNO;
-		socket_info[indice_socket].indice_servidor = -1;
+		sockets[indice_socket].tipo = NINGUNO;
+		sockets[indice_socket].indice_servidor = -1;
 	}
 
     /*cliente_tcp[0].setNoDelay(1);
@@ -292,8 +292,8 @@ uint8_t servidor_acepta_clientes(WiFiServer& server, uint8_t serverId){
 			/*Se acepta al cliente*/
 			cliente_tcp[socket] = server.available();
 			servidor[serverId].cant_clientes_activos++;
-			socket_info[socket].tipo = TIPO_SERVIDOR;
-			socket_info[socket].indice_servidor = serverId;
+			sockets[socket].tipo = TIPO_SERVIDOR;
+			sockets[socket].indice_servidor = serverId;
 			Serial.print(CMD_RESP_OK);
 			Serial.print(CMD_DELIMITER);
 			Serial.print(socket);
@@ -909,7 +909,7 @@ void cmd_CCS(){
 		estado_conexion_al_servidor_tcp = cliente_tcp[socket].connect(comando_recibido.parametros[1],puerto_conexion);
 		if(estado_conexion_al_servidor_tcp){
 			//cliente_tcp[socket].setNoDelay(1);
-			socket_info[socket].tipo = TIPO_CLIENTE;
+			sockets[socket].tipo = TIPO_CLIENTE;
 			Serial.print(CMD_RESP_OK);
 			Serial.print(CMD_DELIMITER);
 			Serial.print(socket);
@@ -1264,13 +1264,13 @@ void cmd_SOC(){
 		return;
 	}
 	cliente_tcp[socket].stop();
-	if(socket_info[socket].tipo == TIPO_SERVIDOR)
+	if(sockets[socket].tipo == TIPO_SERVIDOR)
 	{
-		server_id = socket_info[socket].indice_servidor;
+		server_id = sockets[socket].indice_servidor;
 		servidor[server_id].cant_clientes_activos--;
-		socket_info[socket].indice_servidor = -1;
+		sockets[socket].indice_servidor = -1;
 	}
-	socket_info[socket].tipo = NINGUNO;
+	sockets[socket].tipo = NINGUNO;
 	Serial.print(CMD_RESP_OK);
 	Serial.print(CMD_TERMINATOR);
 	return;
