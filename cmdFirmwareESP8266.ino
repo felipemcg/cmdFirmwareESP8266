@@ -53,7 +53,11 @@ WiFiClient cliente_tcp[CANT_MAX_CLIENTES];
 
 WiFiUDP Udp;
 
-std::vector<WiFiServer> servidor_obj(CANT_MAX_SERVIDORES, WiFiServer(NUM_PUERTO_SERVIDOR_DEFECTO));
+std::vector<WiFiServer> servidor_obj(CANT_MAX_SERVIDORES,
+		WiFiServer(NUM_PUERTO_SERVIDOR_DEFECTO));
+
+std::vector<WiFiUDP> udp_obj(CANT_MAX_SERVIDORES,
+		WiFiUDP());
 struct elementos_servidor{
 	bool b_activo;
 	uint16_t num_puerto_en_uso;
