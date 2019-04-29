@@ -295,6 +295,7 @@ uint8_t servidor_acepta_clientes(WiFiServer& server, uint8_t serverId){
 			servidor[serverId].cant_clientes_activos++;
 			sockets[socket].tipo = TIPO_SERVIDOR;
 			sockets[socket].indice_servidor = serverId;
+			sockets[socket].en_uso = true;
 			Serial.print(CMD_RESP_OK);
 			Serial.print(CMD_DELIMITER);
 			Serial.print(socket);
@@ -910,6 +911,7 @@ void cmd_CCS(){
 		estado_conexion_al_servidor_tcp = cliente_tcp[socket].connect(comando_recibido.parametros[1],puerto_conexion);
 		if(estado_conexion_al_servidor_tcp){
 			//cliente_tcp[socket].setNoDelay(1);
+			sockets[socket].en_uso = true;
 			sockets[socket].tipo = TIPO_CLIENTE;
 			Serial.print(CMD_RESP_OK);
 			Serial.print(CMD_DELIMITER);
@@ -1122,6 +1124,7 @@ void cmd_SOW(){
 				}
 			}else{
 				/*El socket no esta conectado*/
+				sockets[socket].en_uso = false;
 				Serial.print("2");
 				Serial.print(CMD_TERMINATOR);
 			}
@@ -1229,6 +1232,7 @@ void cmd_SOR(){
 	}*/
 	/*Agregar verificacion de conexion a servidor antes de imprimir respuesta*/
 	if(!cliente_tcp[socket].connected()){
+		sockets[socket].en_uso = false;
 		Serial.print('3');
 		Serial.print(CMD_TERMINATOR);
 		return;
@@ -1272,6 +1276,7 @@ void cmd_SOC(){
 		sockets[socket].indice_servidor = -1;
 	}
 	sockets[socket].tipo = NINGUNO;
+	sockets[socket].en_uso = false;
 	Serial.print(CMD_RESP_OK);
 	Serial.print(CMD_TERMINATOR);
 	return;
@@ -1281,7 +1286,8 @@ void cmd_SRC(){
 	uint8_t socket;
 	socket = atoi(comando_recibido.parametros[0]);
 	if (cliente_tcp[socket]) {
-	  cliente_tcp[socket].stop();
+		sockets[socket].en_uso = false;
+		cliente_tcp[socket].stop();
 	}
 	Serial.println("Closed.");
 	return;
