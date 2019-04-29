@@ -70,7 +70,7 @@ typedef enum
 { TIPO_SERVIDOR, TIPO_CLIENTE, NINGUNO } tipoSocket;
 
 typedef enum
-{ TCP, UDP, NINGUNO} protocol;
+{ TCP, UDP, NONE} protocol;
 
 struct sock_info
 {
@@ -78,6 +78,7 @@ struct sock_info
 	tipoSocket  tipo;
 	protocol protocolo;
 	int8_t indice_servidor;
+	int8_t indice_objeto;
 };
 
 sock_info sockets[CANT_MAX_CLIENTES];
@@ -174,7 +175,7 @@ void setup() {
     for (uint8_t indice_socket = 0; indice_socket < CANT_MAX_CLIENTES; ++indice_socket) {
     	sockets[indice_socket].en_uso = false;
 		sockets[indice_socket].tipo = NINGUNO;
-		sockets[indice_socket].protocolo = NINGUNO;
+		sockets[indice_socket].protocolo = NONE;
 		sockets[indice_socket].indice_servidor = -1;
 	}
 
@@ -269,21 +270,54 @@ bool dentro_intervalo(uint32_t val, uint32_t min, uint32_t max)
 }
 
 /* Descripcion: Devuelve el primer indice del socket dispoinible*/
-uint8_t	obtener_socket_libre(){
-	uint8_t i=0;
-	for (i = 0; i < CANT_MAX_CLIENTES; i++) {
-		/*Si esta vacio y no esta conectado*/
-		if (!cliente_tcp[i] || !cliente_tcp[i].connected()) {
-			if (cliente_tcp[i]) {
-			  cliente_tcp[i].stop();
-			}
-			return i;
+uint8_t	obtener_socket_libre(uint8_t protocolo)
+{
+	int8_t indice_socket_disponible;
+	for (uint8_t indice_socket = 0; indice_socket < CANT_MAX_CLIENTES;
+		++indice_socket)
+	{
+		if(sockets[indice_socket].en_uso == false)
+		{
+			indice_socket_disponible = indice_socket;
+			break;
 		}
+		indice_socket_disponible = -1;
 	}
-	/*Si no hay ningun lugar disponible*/
-	if (i == CANT_MAX_CLIENTES) {
+
+	if(indice_socket_disponible == -1)
+	{
+		//No hay ningun socket disponible.
 		return 255;
 	}
+
+	if(protocolo == TCP)
+	{
+		uint8_t i=0;
+		for (i = 0; i < CANT_MAX_CLIENTES; i++)
+		{
+			/*Si esta vacio y no esta conectado*/
+			if (!cliente_tcp[i] || !cliente_tcp[i].connected())
+			{
+				if (cliente_tcp[i])
+				{
+				  cliente_tcp[i].stop();
+				}
+				sockets[indice_socket_disponible].indice_objeto = i;
+				return indice_socket_disponible;
+			}
+		}
+		/*Si no hay ningun lugar disponible*/
+		if (i == CANT_MAX_CLIENTES)
+		{
+			return 255;
+		}
+	}
+
+	if(protocolo == UDP)
+	{
+		return indice_socket_disponible;
+	}
+
 	return 255;
 }
 
@@ -292,11 +326,11 @@ uint8_t servidor_acepta_clientes(WiFiServer& server, uint8_t serverId){
 	uint8_t socket;
 	/*Verificar que todavia no se conectaron el numero maximo de clientes*/
 	if(servidor[serverId].cant_clientes_activos < servidor[serverId].cant_maxima_clientes_permitidos){
-		socket = obtener_socket_libre();
+		socket = obtener_socket_libre(TCP);
 		if(socket!=255){
 			/*Se encontro socket libre*/
 			/*Se acepta al cliente*/
-			cliente_tcp[socket] = server.available();
+			cliente_tcp[sockets[socket].indice_objeto] = server.available();
 			servidor[serverId].cant_clientes_activos++;
 			sockets[socket].tipo = TIPO_SERVIDOR;
 			sockets[socket].indice_servidor = serverId;
@@ -906,14 +940,14 @@ void cmd_CCS(){
 	}
 	if(strcmp(tipo_conexion,"TCP") == 0)
 	{
-		socket = obtener_socket_libre();
+		socket = obtener_socket_libre(TCP);
 		if(socket == 255){
 			/*No hay socket disponible*/
 			Serial.print('4');
 			Serial.print(CMD_TERMINATOR);
 			return;
 		}
-		estado_conexion_al_servidor_tcp = cliente_tcp[socket].connect(comando_recibido.parametros[1],puerto_conexion);
+		estado_conexion_al_servidor_tcp = cliente_tcp[sockets[socket].indice_objeto].connect(comando_recibido.parametros[1],puerto_conexion);
 		if(estado_conexion_al_servidor_tcp){
 			//cliente_tcp[socket].setNoDelay(1);
 			sockets[socket].en_uso = true;
