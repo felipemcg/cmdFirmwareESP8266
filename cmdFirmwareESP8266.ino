@@ -76,12 +76,35 @@ sock_info socket_info[CANT_MAX_CLIENTES];
 //#define sDebug 1
 /*-------------------------------------------------------------------*/
 
+bool dentro_intervalo(uint32_t val, uint32_t min, uint32_t max);
 void cmd_WFC(void);
 void cmd_MRS(void);
 void cmd_MUC(void);
 void cmd_RVU(void);
-bool dentro_intervalo(uint32_t val, uint32_t min, uint32_t max);
-
+void cmd_WFS(void);
+void cmd_WRI(void);
+void cmd_WID(void);
+void cmd_WFI(void);
+void cmd_WFD(void);
+void cmd_WCF(void);
+void cmd_CCS(void);
+void cmd_SOW(void);
+void cmd_SOR(void);
+void cmd_SDU(void);
+void cmd_RVU(void);
+void cmd_SOC(void);
+void cmd_SLC(void);
+void cmd_SCC(void);
+void cmd_SAC(void);
+void cmd_SRC(void);
+void cmd_GFH(void);
+void cmd_MIS(void);
+void cmd_WFA(void);
+void cmd_WAC(void);
+void cmd_WAS(void);
+void cmd_WAD(void);
+void cmd_WFM(void);
+void cmd_WAI(void);
 
 const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
   		{"WFC",{2,0},&cmd_WFC}, //0/
