@@ -1052,7 +1052,7 @@ void cmd_SAC(){
 	/*SAC - Server Accept Clients*/
 
 	uint8_t socket;
-	wl_status_t estado_conexion_wifi;
+	int8_t conexion_wifi;
 	uint8_t serverAcceptStatus;
 
 	socket = atoi(comando_recibido.parametros[0]);
@@ -1062,13 +1062,12 @@ void cmd_SAC(){
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
-	/*estado_conexion_wifi = WiFi.status();
-	if( (estado_conexion_wifi == WL_DISCONNECTED) || (estado_conexion_wifi == WL_CONNECTION_LOST) ){
-		WiFi desconectado
+	conexion_wifi = verificar_conexion_wifi();
+	if(conexion_wifi != 0)
+	{
 		Serial.print('6');
 		Serial.print(CMD_TERMINATOR);
-		return;
-	}*/
+	}
 	if(servidor[socket].b_activo){
 		if(servidor_obj[socket].hasClient()){
 			serverAcceptStatus = servidor_acepta_clientes(servidor_obj[socket],socket);
@@ -1128,17 +1127,16 @@ void cmd_SOW(){
 	uint8_t socket = 255;
 	int cant_bytes_enviar_tcp = -1;
 	int cant_bytes_enviados_tcp = -2;
-	wl_status_t estado_conexion_wifi;
+	int8_t conexion_wifi;
 
 	socket = atoi(comando_recibido.parametros[0]);
 	cant_bytes_enviar_tcp = atoi(comando_recibido.parametros[1]);
-	/*estado_conexion_wifi = WiFi.status();
-	if( (estado_conexion_wifi == WL_DISCONNECTED) || (estado_conexion_wifi == WL_CONNECTION_LOST) ){
-		WiFi desconectado
+	conexion_wifi = verificar_conexion_wifi();
+	if(conexion_wifi != 0)
+	{
 		Serial.print('5');
 		Serial.print(CMD_TERMINATOR);
-		return;
-	}*/
+	}
 	if(dentro_intervalo(socket,0,CANT_MAX_CLIENTES) == true){
 		if(dentro_intervalo(cant_bytes_enviar_tcp,0,TAM_MAX_PAQUETE_DATOS_TCP) == true){
 			if(cliente_tcp[socket].connected()){
@@ -1255,7 +1253,7 @@ void cmd_RVU()
 void cmd_SOR(){
 	/*SOR - Socket Read*/
 	uint8_t socket;
-	wl_status_t estado_conexion_wifi;
+	int8_t conexion_wifi;
 	uint16_t bytes_disponible_para_recibir = 0;
 
 	socket = atoi(comando_recibido.parametros[0]);
@@ -1265,13 +1263,13 @@ void cmd_SOR(){
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
-	/*estado_conexion_wifi = WiFi.status();
-	if( (estado_conexion_wifi == WL_DISCONNECTED) || (estado_conexion_wifi == WL_CONNECTION_LOST) ){
-		WiFi desconectado
+	conexion_wifi = verificar_conexion_wifi();
+	if(conexion_wifi != 0)
+	{
 		Serial.print('2');
 		Serial.print(CMD_TERMINATOR);
-		return;
-	}*/
+	}
+
 	/*Agregar verificacion de conexion a servidor antes de imprimir respuesta*/
 	if(!cliente_tcp[socket].connected()){
 		sockets[socket].en_uso = false;
@@ -1294,7 +1292,7 @@ void cmd_SOR(){
 void cmd_SOC(){
 	/*SOC- Socket Close*/
 	uint8_t socket;
-	wl_status_t estado_conexion_wifi;
+	int8_t conexion_wifi;
 	uint8_t server_id;
 
 	socket = atoi(comando_recibido.parametros[0]);
@@ -1303,12 +1301,11 @@ void cmd_SOC(){
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
-	estado_conexion_wifi = WiFi.status();
-	if( (estado_conexion_wifi == WL_DISCONNECTED) || (estado_conexion_wifi == WL_CONNECTION_LOST) ){
-		/*WiFi desconectado*/
+	conexion_wifi = verificar_conexion_wifi();
+	if(conexion_wifi != 0)
+	{
 		Serial.print('2');
 		Serial.print(CMD_TERMINATOR);
-		return;
 	}
 	cliente_tcp[socket].stop();
 	if(sockets[socket].tipo == TIPO_SERVIDOR)
