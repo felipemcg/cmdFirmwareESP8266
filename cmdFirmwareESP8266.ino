@@ -71,6 +71,7 @@ typedef enum
 
 struct sock_info
 {
+	bool socket_en_uso;
 	tipoSocket  tipo;
 	int8_t indice_servidor;
 };
