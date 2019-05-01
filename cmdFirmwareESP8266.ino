@@ -1154,10 +1154,9 @@ void cmd_SCC(){
 	return;
 }
 
-void cmd_SOW(){
-	/*SOW - Socket Write*/
-	/*Verificar primero si existe una conexion activa antes de intentar enviar el mensaje*/
-	//Serial.println("Llegue a SOW:");
+/*SOW - Socket Write*/
+void cmd_SOW()
+{
 	uint8_t socket = 255;
 	int cant_bytes_enviar_tcp = -1;
 	int cant_bytes_enviados_tcp = -2;
@@ -1166,50 +1165,49 @@ void cmd_SOW(){
 	socket = atoi(comando_recibido.parametros[0]);
 	cant_bytes_enviar_tcp = atoi(comando_recibido.parametros[1]);
 	conexion_wifi = verificar_conexion_wifi();
+
 	if(conexion_wifi != 0)
 	{
 		Serial.print('5');
 		Serial.print(CMD_TERMINATOR);
+		return;
 	}
-	if(dentro_intervalo(socket,0,CANT_MAX_CLIENTES) == true){
-		if(dentro_intervalo(cant_bytes_enviar_tcp,0,TAM_MAX_PAQUETE_DATOS_TCP) == true){
-			if(cliente_tcp[socket].connected()){
-				/*data to print: char, byte, int, long, or string*/
-				/*The max packet size in TCP is 1460 bytes*/
 
-
-				 /* ======>  comando_recibido.parametros[2] solo puede ser uint8_t ??*/
-				/*cliente_tcp.write() blocks until either data is sent and ACKed, or timeout occurs (currently hard-coded to 5 seconds)
-				 * @ https://github.com/esp8266/Arduino/issues/917#issuecomment-150304010*/
-				/*Serial.print("Cant bytes: ");
-				Serial.println(cant_bytes_enviar_tcp,DEC);
-				Serial.print("Voy a enviar: ");
-				Serial.println(paquete_datos_tcp);*/
-				cant_bytes_enviados_tcp = cliente_tcp[socket].write(paquete_datos_tcp,cant_bytes_enviar_tcp);
-
-				if(cant_bytes_enviar_tcp != cant_bytes_enviados_tcp){
-					/*No se pudo escribir los datos al socket*/
-					Serial.print("1");
-					Serial.print(CMD_TERMINATOR);
-				}else{
-					/*Los datos se enviaron correctamente*/
-					Serial.print(CMD_RESP_OK);
-					Serial.print(CMD_TERMINATOR);
-				}
-			}else{
-				/*El socket no esta conectado*/
-				sockets[socket].en_uso = false;
-				Serial.print("2");
-				Serial.print(CMD_TERMINATOR);
-			}
-		}else{
-			/*Numero de bytes para escribir fuera de rango*/
-			Serial.print("3");
-			Serial.print(CMD_TERMINATOR);
-		}
-	}else{
+	if(!dentro_intervalo(socket,0,CANT_MAX_CLIENTES))
+	{
 		/*Numero de socket fuera de rango*/
-		Serial.print("4");
+		Serial.print('4');
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	if(!dentro_intervalo(cant_bytes_enviar_tcp,0,TAM_MAX_PAQUETE_DATOS_TCP))
+	{
+		/*Numero de bytes para escribir fuera de rango*/
+		Serial.print('3');
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+
+	if(!cliente_tcp[sockets[socket].indice_objeto].connected())
+	{
+		/*El socket no esta conectado*/
+		sockets[socket].en_uso = false;
+		Serial.print('2');
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	cant_bytes_enviados_tcp = cliente_tcp[sockets[socket].indice_objeto].write(paquete_datos_tcp,
+			cant_bytes_enviar_tcp);
+	if(cant_bytes_enviar_tcp != cant_bytes_enviados_tcp)
+	{
+		/*No se pudo escribir los datos al socket*/
+		Serial.print('1');
+		Serial.print(CMD_TERMINATOR);
+	}
+	else
+	{
+		/*Los datos se enviaron correctamente*/
+		Serial.print(CMD_RESP_OK);
 		Serial.print(CMD_TERMINATOR);
 	}
 	return;
