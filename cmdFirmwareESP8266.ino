@@ -1337,11 +1337,20 @@ void cmd_SOC()
 		return;
 	}
 	conexion_wifi = verificar_conexion_wifi();
+
 	if(conexion_wifi != 0)
 	{
 		Serial.print('2');
 		Serial.print(CMD_TERMINATOR);
 	}
+
+	if(sockets[socket].en_uso == false)
+	{
+		//El socket no esta siendo utilizado.
+		Serial.print('3');
+		Serial.print(CMD_TERMINATOR);
+	}
+
 	if(sockets[socket].protocolo == TCP)
 	{
 		cliente_tcp[sockets[socket].indice_objeto].stop();
