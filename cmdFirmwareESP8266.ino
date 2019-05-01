@@ -1323,7 +1323,8 @@ void cmd_SOR(){
 	return;
 }
 
-void cmd_SOC(){
+void cmd_SOC()
+{
 	/*SOC- Socket Close*/
 	uint8_t socket;
 	int8_t conexion_wifi;
@@ -1341,7 +1342,15 @@ void cmd_SOC(){
 		Serial.print('2');
 		Serial.print(CMD_TERMINATOR);
 	}
-	cliente_tcp[socket].stop();
+	if(sockets[socket].protocolo == TCP)
+	{
+		cliente_tcp[sockets[socket].indice_objeto].stop();
+	}
+	else if(sockets[socket].protocolo == UDP)
+	{
+		udp_obj[sockets[socket].indice_objeto].stop();
+	}
+
 	if(sockets[socket].tipo == TIPO_SERVIDOR)
 	{
 		server_id = sockets[socket].indice_servidor;
