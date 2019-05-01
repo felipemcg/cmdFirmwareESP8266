@@ -1013,6 +1013,8 @@ void cmd_CCS(){
 		Serial.print('7');
 		Serial.print(CMD_TERMINATOR);
 	}
+	//Serial.print("Objeto Numero: ");
+	//Serial.println(sockets[socket].indice_objeto,DEC);
 	return;
 }
 
