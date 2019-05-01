@@ -273,6 +273,9 @@ bool dentro_intervalo(uint32_t val, uint32_t min, uint32_t max)
 uint8_t	obtener_socket_libre(uint8_t protocolo)
 {
 	int8_t indice_socket_disponible;
+	int8_t indice_objetos_udp_en_uso[CANT_MAX_CLIENTES];
+	uint8_t indice_aux = 0;
+	uint8_t indice_barrido;
 	for (uint8_t indice_socket = 0; indice_socket < CANT_MAX_CLIENTES;
 		++indice_socket)
 	{
@@ -315,9 +318,30 @@ uint8_t	obtener_socket_libre(uint8_t protocolo)
 
 	if(protocolo == UDP)
 	{
+		//Almacenar primero cuales objetos ya esta siendo utilizados
+		for (uint8_t indice_socket = 0; indice_socket < CANT_MAX_CLIENTES;
+			++indice_socket)
+		{
+			for (indice_barrido = 0; indice_barrido < CANT_MAX_CLIENTES;
+					++indice_barrido)
+			{
+				if( (sockets[indice_barrido].en_uso == true) 	&&
+					(sockets[indice_barrido].protocolo == UDP))
+				{
+					if(sockets[indice_barrido].indice_objeto == indice_socket)
+					{
+						break;
+					}
+				}
+			}
+			if(indice_barrido == CANT_MAX_CLIENTES)
+			{
+				sockets[indice_socket_disponible].indice_objeto = indice_socket;
+				break;
+			}
+		}
 		return indice_socket_disponible;
 	}
-
 	return 255;
 }
 
@@ -964,11 +988,15 @@ void cmd_CCS(){
 		}
 	}else if(strcmp(tipo_conexion,"UDP") == 0)
 	{
-		if( Udp.beginPacket(comando_recibido.parametros[1],puerto_conexion) )
+		socket = obtener_socket_libre(UDP);
+		if( udp_obj[sockets[socket].indice_objeto].beginPacket(comando_recibido.parametros[1],puerto_conexion) )
 		{
 			sockets[socket].en_uso = true;
+			sockets[socket].tipo = TIPO_CLIENTE;
 			sockets[socket].protocolo = UDP;
 			Serial.print(CMD_RESP_OK);
+			Serial.print(CMD_DELIMITER);
+			Serial.print(socket);
 			Serial.print(CMD_TERMINATOR);
 		}else{
 			Serial.print('6');
@@ -1200,9 +1228,9 @@ void cmd_SDU()
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
-	if ( Udp.write(paquete_datos_tcp,cant_bytes_enviar) )
+	if ( udp_obj[sockets[socket].indice_objeto].write(paquete_datos_tcp,cant_bytes_enviar) )
 	{
-		if(Udp.endPacket())
+		if(udp_obj[sockets[socket].indice_objeto].endPacket())
 		{
 			Serial.print('0');
 			Serial.print(CMD_TERMINATOR);
@@ -1238,13 +1266,13 @@ void cmd_RVU()
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
-	cant_bytes_paquete_udp_recibido = Udp.parsePacket();
+	cant_bytes_paquete_udp_recibido = udp_obj[sockets[socket].indice_objeto].parsePacket();
 	Serial.print(CMD_RESP_OK);
 	Serial.print(CMD_DELIMITER);
 	Serial.print(cant_bytes_paquete_udp_recibido,DEC);
 	Serial.print(CMD_DELIMITER);
 	while(cant_bytes_paquete_udp_recibido--){
-		Serial.print((char)Udp.read());
+		Serial.print((char)udp_obj[sockets[socket].indice_objeto].read());
 	}
 	Serial.print(CMD_TERMINATOR);
 	return;
