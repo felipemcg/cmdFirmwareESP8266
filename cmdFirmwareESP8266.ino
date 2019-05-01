@@ -270,7 +270,7 @@ bool dentro_intervalo(uint32_t val, uint32_t min, uint32_t max)
 }
 
 /* Descripcion: Devuelve el primer indice del socket dispoinible*/
-uint8_t	obtener_socket_libre(uint8_t protocolo)
+int8_t	obtener_socket_libre(uint8_t protocolo)
 {
 	int8_t indice_socket_disponible;
 	uint8_t indice_barrido;
@@ -288,7 +288,7 @@ uint8_t	obtener_socket_libre(uint8_t protocolo)
 	if(indice_socket_disponible == -1)
 	{
 		//No hay ningun socket disponible.
-		return 255;
+		return -1;
 	}
 
 	if(protocolo == TCP)
@@ -310,7 +310,7 @@ uint8_t	obtener_socket_libre(uint8_t protocolo)
 		/*Si no hay ningun lugar disponible*/
 		if (i == CANT_MAX_CLIENTES)
 		{
-			return 255;
+			return -1;
 		}
 	}
 
@@ -340,7 +340,7 @@ uint8_t	obtener_socket_libre(uint8_t protocolo)
 		}
 		return indice_socket_disponible;
 	}
-	return 255;
+	return -1;
 }
 
 /* Descripcion: Se encarga de aceptar a clientes que se quieren conectar al servidor*/
@@ -939,7 +939,7 @@ void cmd_CCS(){
 	/*CCS - cliente_tcp Connect to Server*/
 	char tipo_conexion[4];
 	uint16_t puerto_conexion;
-	uint8_t socket;
+	int8_t socket;
 	int8_t conexion_wifi;
 	int estado_conexion_al_servidor_tcp = 0;
 
@@ -963,7 +963,8 @@ void cmd_CCS(){
 	if(strcmp(tipo_conexion,"TCP") == 0)
 	{
 		socket = obtener_socket_libre(TCP);
-		if(socket == 255){
+		if(socket == -1)
+		{
 			/*No hay socket disponible*/
 			Serial.print('4');
 			Serial.print(CMD_TERMINATOR);
@@ -986,7 +987,14 @@ void cmd_CCS(){
 		}
 	}else if(strcmp(tipo_conexion,"UDP") == 0)
 	{
-		socket = obtener_socket_libre(UDP);
+		socket = obtener_socket_libre(TCP);
+		if(socket == -1)
+		{
+			/*No hay socket disponible*/
+			Serial.print('4');
+			Serial.print(CMD_TERMINATOR);
+			return;
+		}
 		if( udp_obj[sockets[socket].indice_objeto].beginPacket(comando_recibido.parametros[1],puerto_conexion) )
 		{
 			sockets[socket].en_uso = true;
