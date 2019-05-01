@@ -987,7 +987,7 @@ void cmd_CCS(){
 		}
 	}else if(strcmp(tipo_conexion,"UDP") == 0)
 	{
-		socket = obtener_socket_libre(TCP);
+		socket = obtener_socket_libre(UDP);
 		if(socket == -1)
 		{
 			/*No hay socket disponible*/
