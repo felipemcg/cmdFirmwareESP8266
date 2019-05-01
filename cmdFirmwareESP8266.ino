@@ -273,8 +273,6 @@ bool dentro_intervalo(uint32_t val, uint32_t min, uint32_t max)
 uint8_t	obtener_socket_libre(uint8_t protocolo)
 {
 	int8_t indice_socket_disponible;
-	int8_t indice_objetos_udp_en_uso[CANT_MAX_CLIENTES];
-	uint8_t indice_aux = 0;
 	uint8_t indice_barrido;
 	for (uint8_t indice_socket = 0; indice_socket < CANT_MAX_CLIENTES;
 		++indice_socket)
