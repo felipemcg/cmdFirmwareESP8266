@@ -1324,6 +1324,7 @@ void cmd_RVU()
 {
 	int cant_bytes_paquete_udp_recibido;
 	uint8_t socket;
+	int8_t indice_objeto;
 	int8_t conexion_wifi;
 	socket = atoi(comando_recibido.parametros[0]);
 	if(!dentro_intervalo(socket,0,CANT_MAX_CLIENTES)){
@@ -1339,13 +1340,18 @@ void cmd_RVU()
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
-	cant_bytes_paquete_udp_recibido = udp_obj[sockets[socket].indice_objeto].parsePacket();
+	indice_objeto = sockets[socket].indice_objeto;
+	cant_bytes_paquete_udp_recibido = udp_obj[indice_objeto].parsePacket();
 	Serial.print(CMD_RESP_OK);
 	Serial.print(CMD_DELIMITER);
+/*	Serial.print(udp_obj[indice_objeto].remoteIP());
+	Serial.print(CMD_DELIMITER);
+	Serial.print(udp_obj[indice_objeto].remotePort());
+	Serial.print(CMD_DELIMITER);*/
 	Serial.print(cant_bytes_paquete_udp_recibido,DEC);
 	Serial.print(CMD_DELIMITER);
 	while(cant_bytes_paquete_udp_recibido--){
-		Serial.print((char)udp_obj[sockets[socket].indice_objeto].read());
+		Serial.print((char)udp_obj[indice_objeto].read());
 	}
 	Serial.print(CMD_TERMINATOR);
 	return;
