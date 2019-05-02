@@ -1310,10 +1310,19 @@ void cmd_SOR()
 	socket = atoi(comando_recibido.parametros[0]);
 	/*print received data from server*/
 	if(!dentro_intervalo(socket,0,CANT_MAX_CLIENTES)){
-		Serial.print("1");
+		Serial.print('1');
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
+
+	if(sockets[socket].protocolo == UDP)
+	{
+		//Socket del tipo incorrecto
+		Serial.print('4');
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+
 	conexion_wifi = verificar_conexion_wifi();
 	if(conexion_wifi != 0)
 	{
