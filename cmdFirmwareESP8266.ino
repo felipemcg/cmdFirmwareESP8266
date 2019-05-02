@@ -98,6 +98,7 @@ void cmd_WCF(void);
 void cmd_CCS(void);
 void cmd_SOW(void);
 void cmd_SOR(void);
+void cmd_SVU(void);
 void cmd_SDU(void);
 void cmd_RVU(void);
 void cmd_SOC(void);
@@ -125,6 +126,7 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
 		{"CCS",{2,3},&cmd_CCS},	//6
 		{"SOW",{2,0},&cmd_SOW},	//7
 		{"SOR",{1,0},&cmd_SOR},	//8
+		{"SVU",{1,0},&cmd_SVU},
 		{"SDU",{2,0},&cmd_SDU},	//7
 		{"RVU",{1,0},&cmd_RVU},	//7
 		{"SOC",{1,0},&cmd_SOC},	//9
@@ -1221,6 +1223,43 @@ void cmd_SOW()
 	}
 	return;
 }
+
+void cmd_SVU()
+{
+	int8_t socket;
+	uint16_t puerto_udp;
+	int8_t conexion_wifi;
+
+	puerto_udp = atoi(comando_recibido.parametros[0]);
+
+	/*Determinar primero si el puerto es valido*/
+	if(!dentro_intervalo(puerto_udp,0,NUM_MAX_PUERTO)){
+		/*El numero de puerto esta fuera de rango*/
+		Serial.print('1');
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+
+	/*Verificar conexion WiFi*/
+	conexion_wifi = verificar_conexion_wifi();
+	if(conexion_wifi != 0)
+	{
+		Serial.print('2');
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	socket = obtener_socket_libre(UDP);
+	if( udp_obj[sockets[socket].indice_objeto].begin(puerto_udp))
+	{
+		Serial.print(CMD_RESP_OK);
+		Serial.print(CMD_TERMINATOR);
+	}else{
+		Serial.print('3');
+		Serial.print(CMD_TERMINATOR);
+	}
+	return;
+}
+
 
 //SDU-Send UDP, para enviar datos con el protocolo UDP
 void cmd_SDU()
