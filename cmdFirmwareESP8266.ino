@@ -1011,8 +1011,8 @@ void cmd_CCS(){
 		Serial.print('7');
 		Serial.print(CMD_TERMINATOR);
 	}
-	//Serial.print("Objeto Numero: ");
-	//Serial.println(sockets[socket].indice_objeto,DEC);
+	Serial.print("Objeto Numero: ");
+	Serial.println(sockets[socket].indice_objeto,DEC);
 	return;
 }
 
@@ -1180,6 +1180,15 @@ void cmd_SOW()
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
+
+	if(sockets[socket].protocolo == UDP)
+	{
+		//Socket del tipo incorrecto
+		Serial.print('6');
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+
 	if(!dentro_intervalo(cant_bytes_enviar_tcp,0,TAM_MAX_PAQUETE_DATOS_TCP))
 	{
 		/*Numero de bytes para escribir fuera de rango*/
