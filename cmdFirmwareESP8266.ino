@@ -1249,14 +1249,26 @@ void cmd_SVU()
 		return;
 	}
 	socket = obtener_socket_libre(UDP);
-	if( udp_obj[sockets[socket].indice_objeto].begin(puerto_udp))
+	if(socket == -1)
 	{
-		Serial.print(CMD_RESP_OK);
-		Serial.print(CMD_TERMINATOR);
-	}else{
+		/*No hay socket disponible*/
 		Serial.print('3');
 		Serial.print(CMD_TERMINATOR);
+		return;
 	}
+
+	if( udp_obj[sockets[socket].indice_objeto].begin(puerto_udp))
+	{
+		sockets[socket].en_uso = true;
+		sockets[socket].tipo = TIPO_SERVIDOR;
+		sockets[socket].protocolo = UDP;
+		Serial.print(CMD_RESP_OK);
+		Serial.print(CMD_DELIMITER);
+		Serial.print(socket);
+	}else{
+		Serial.print('4');
+	}
+	Serial.print(CMD_TERMINATOR);
 	return;
 }
 
