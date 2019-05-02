@@ -1282,8 +1282,9 @@ void cmd_RVU()
 	return;
 }
 
-void cmd_SOR(){
-	/*SOR - Socket Read*/
+/*SOR - Socket Read*/
+void cmd_SOR()
+{
 	uint8_t socket;
 	int8_t conexion_wifi;
 	uint16_t bytes_disponible_para_recibir = 0;
@@ -1303,19 +1304,20 @@ void cmd_SOR(){
 	}
 
 	/*Agregar verificacion de conexion a servidor antes de imprimir respuesta*/
-	if(!cliente_tcp[socket].connected()){
+	if(!cliente_tcp[sockets[socket].indice_objeto].connected())
+	{
 		sockets[socket].en_uso = false;
 		Serial.print('3');
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
-	bytes_disponible_para_recibir = cliente_tcp[socket].available();
+	bytes_disponible_para_recibir = cliente_tcp[sockets[socket].indice_objeto].available();
 	Serial.print(CMD_RESP_OK);
 	Serial.print(CMD_DELIMITER);
 	Serial.print(bytes_disponible_para_recibir,DEC);
 	Serial.print(CMD_DELIMITER);
 	while(bytes_disponible_para_recibir--){
-		Serial.print((char)cliente_tcp[socket].read());
+		Serial.print((char)cliente_tcp[sockets[socket].indice_objeto].read());
 	}
 	Serial.print(CMD_TERMINATOR);
 	return;
