@@ -1235,6 +1235,15 @@ void cmd_SDU()
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
+
+	if(sockets[socket].protocolo == TCP)
+	{
+		//Socket del tipo incorrecto
+		Serial.print('5');
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+
 	if(!dentro_intervalo(cant_bytes_enviar,0,TAM_MAX_PAQUETE_DATOS_UDP))
 	{
 		Serial.print('2');
