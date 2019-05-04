@@ -1013,8 +1013,8 @@ void cmd_CCS(){
 		Serial.print('7');
 		Serial.print(CMD_TERMINATOR);
 	}
-	Serial.print("Objeto Numero: ");
-	Serial.println(sockets[socket].indice_objeto,DEC);
+	//Serial.print("Objeto Numero: ");
+	//Serial.println(sockets[socket].indice_objeto,DEC);
 	return;
 }
 
@@ -1294,6 +1294,8 @@ void cmd_SDU()
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
+
+	//TODO: Verificar que el socket sea uno del tipo cliente y no servidor.
 
 	if(!dentro_intervalo(cant_bytes_enviar,0,TAM_MAX_PAQUETE_DATOS_UDP))
 	{
