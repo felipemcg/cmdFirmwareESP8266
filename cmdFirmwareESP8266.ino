@@ -971,7 +971,7 @@ void cmd_CCS(){
 		if(socket == -1)
 		{
 			/*No hay socket disponible*/
-			Serial.print('4');
+			Serial.print('3');
 			Serial.print(CMD_TERMINATOR);
 			return;
 		}
@@ -987,7 +987,7 @@ void cmd_CCS(){
 			Serial.print(CMD_TERMINATOR);
 		}else{
 			/*No se pudo conectar*/
-			Serial.print('5');
+			Serial.print('4');
 			Serial.print(CMD_TERMINATOR);
 		}
 	}else if(strcmp(tipo_conexion,"UDP") == 0)
@@ -996,7 +996,7 @@ void cmd_CCS(){
 		if(socket == -1)
 		{
 			/*No hay socket disponible*/
-			Serial.print('4');
+			Serial.print('3');
 			Serial.print(CMD_TERMINATOR);
 			return;
 		}
@@ -1010,12 +1010,12 @@ void cmd_CCS(){
 			Serial.print(socket);
 			Serial.print(CMD_TERMINATOR);
 		}else{
-			Serial.print('6');
+			Serial.print('4');
 			Serial.print(CMD_TERMINATOR);
 		}
 	}else{
 		/*Dar mensaje de error en el tipo de conexion*/
-		Serial.print('7');
+		Serial.print('5');
 		Serial.print(CMD_TERMINATOR);
 	}
 	//Serial.print("Objeto Numero: ");
