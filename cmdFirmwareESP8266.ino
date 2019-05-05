@@ -513,8 +513,8 @@ void cmd_MRS(){
 void cmd_MUC(){
 	/*Module UART Configuration*/
 	uint32_t baud_rate = atoi(comando_recibido.parametros[0]);
-	Serial.print(baud_rate);
-	Serial.print('\n');
+	//Serial.print(baud_rate);
+	//Serial.print('\n');
 	if(!dentro_intervalo(baud_rate,9600,MAX_BAUD_RATE)){
 		/*Baud rate fuera de rango*/
 		Serial.print("1");
@@ -539,6 +539,8 @@ void cmd_MUC(){
  */
 void cmd_GFH(){
 	/*GFH - Get Free Heap*/
+	Serial.print(CMD_RESP_OK);
+	Serial.print(CMD_DELIMITER);
 	Serial.print(ESP.getFreeHeap(),DEC);
 	Serial.print(CMD_TERMINATOR);
 	return;
