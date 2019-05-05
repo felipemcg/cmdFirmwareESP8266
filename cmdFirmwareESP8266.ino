@@ -79,6 +79,9 @@ struct sock_info
 	int8_t indice_objeto;
 };
 
+/* TODO: Verificar que al cambiar el modo WiFi con el comando WFM, que pasan con
+ * las conexiones que estaban activas, si no es necesario actualizar la estructura.
+ */
 sock_info sockets[CANT_MAX_CLIENTES];
 
 //#define sDebug 1
