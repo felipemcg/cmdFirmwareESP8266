@@ -1,7 +1,9 @@
 #include "Arduino.h"
 #include <string.h>
 
-
+/* TODO: Cambiar el retorno de esta funcion, de manera tal a que proporcione mas
+ * detalles acerca de los errores. Por ejemplo, cambiar a int8_t y retornar los
+ * errores negativos.*/
 bool recibir_paquete(char *paquete_serial){
 	bool b_par_coma = false;
 	bool b_tam_paquete_recibido = 0;
