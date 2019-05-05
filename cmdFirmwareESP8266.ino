@@ -941,6 +941,8 @@ void cmd_WAI(){
  */
 /*Comandos para el manejo de las operaciones TCP*/
 void cmd_CCS(){
+	/*TODO: Se podria agregar verificacion para el parametro IP. Es decir
+	 * comprobar que sea una direccion IP y que se tenga alcance a esta direccion.*/
 	/*CCS - cliente_tcp Connect to Server*/
 	char tipo_conexion[4];
 	uint16_t puerto_conexion;
