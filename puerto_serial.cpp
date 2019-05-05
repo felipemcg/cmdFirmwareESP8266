@@ -1,7 +1,6 @@
 #include "Arduino.h"
 #include <string.h>
 
-#define DEBUG
 
 bool recibir_paquete(char *paquete_serial){
 	bool b_par_coma = false;
