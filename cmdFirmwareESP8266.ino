@@ -1320,6 +1320,8 @@ void cmd_SDU()
 
 	//TODO: Verificar que el socket sea uno del tipo cliente y no servidor.
 
+	//TODO: Agregar verificacion de conexion WiFi.
+
 	if(!dentro_intervalo(cant_bytes_enviar,0,TAM_MAX_PAQUETE_DATOS_UDP))
 	{
 		Serial.print('2');
