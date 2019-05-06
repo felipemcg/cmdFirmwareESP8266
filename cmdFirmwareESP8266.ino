@@ -1163,6 +1163,8 @@ void cmd_SCC(){
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
+
+	//TODO: Cambiar verificacion de WiFi por verificar_conexion_wifi()
 	estado_conexion_wifi = WiFi.status();
 	if( (estado_conexion_wifi == WL_DISCONNECTED) || (estado_conexion_wifi == WL_CONNECTION_LOST) ){
 		/*WiFi desconectado*/
