@@ -12,8 +12,8 @@
 #define CMD_TERMINATOR '\n'
 #define CMD_DELIMITER ','
 #define CMD_RESP_OK '0'
-#define CMD_NOT_FOUND ''
-#define CMD_NO_PARAM ''
+#define CMD_NOT_FOUND 'C'
+#define CMD_NO_PARAM 'P'
 
 /*Cantidad maxima de parametros por comando*/
 #define CANT_MAX_PARAMETROS_CMD 5

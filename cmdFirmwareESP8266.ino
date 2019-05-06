@@ -192,7 +192,8 @@ void setup() {
     Serial.print(CMD_TERMINATOR);
 }
 
-void loop() {
+void loop()
+{
 	uint8_t cant_maxima_caracteres_paquete_serial = CANT_MAX_CARACT_NOMBRE_CMD + CANT_MAX_CARACT_PARAMETRO*CANT_MAX_PARAMETROS_CMD + CANT_MAX_PARAMETROS_CMD;
 	int indice_comando;
 	comando_recibido.nombre[0] = '\0';
@@ -205,7 +206,8 @@ void loop() {
 	yield();
 
 	/*Se verifica que se haya recibido un nuevo paquete por el puerto serial.*/
-	if (recibir_paquetes(paquete_serial, paquete_datos_tcp) == 1){
+	if (recibir_paquetes(paquete_serial, paquete_datos_tcp) == 1)
+	{
 		/*Serial.print("Dir serial: ");
 		Serial.printf("%p",paquete_serial);
 		Serial.println();
@@ -226,22 +228,34 @@ void loop() {
 		/*Se busca el comando recibido dentro del conjunto de comandos.*/
 		indice_comando = buscar_comando(comando_recibido.nombre);
 
-		if(indice_comando != -1){
+		if(indice_comando != -1)
+		{
 			/*Se verifica que se recibio la cantidad necesaria de parametros para ejectuar el comando.*/
-			if( validar_cantidad_parametros(indice_comando, comando_recibido.cantidad_parametros_recibidos)){
+			if( validar_cantidad_parametros(indice_comando, comando_recibido.cantidad_parametros_recibidos))
+			{
 
 				/*Se llama a la funcion que ejecutara las acciones correspondientes al comando.*/
 				conjunto_comandos[indice_comando].ejecutar();
 
-			}else{
-				/*No se cuenta con la cantidad de parametros necesarios*/
 			}
-		}else{
+			else
+			{
+				/*No se cuenta con la cantidad de parametros necesarios*/
+				Serial.print(CMD_NO_PARAM);
+				Serial.print(CMD_TERMINATOR);
+			}
+		}
+		else
+		{
 			/*No se encontro el comando*/
+			Serial.print(CMD_NOT_FOUND);
+			Serial.print(CMD_TERMINATOR);
 		}
 		memset(paquete_serial,0,sizeof(paquete_serial));
 		memset(paquete_datos_tcp,0,sizeof(paquete_datos_tcp));
-	}else{
+	}
+	else
+	{
 		/*Problemas en la recepcion de paquete serial*/
 	}
 
