@@ -11,7 +11,7 @@
 #define DEBUG_COMANDO_DATOS 0
 #define DEBUG_TCP_BYTES 0
 #define DEBUG_COMANDO 0
-#define TIEMPO_MS_ESPERA_CARACTER 1
+#define TIEMPO_MS_ESPERA_CARACTER 4000
 
 char delimiter[2] = ",";
 
