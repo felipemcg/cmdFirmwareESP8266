@@ -108,7 +108,6 @@ void cmd_SOC(void);
 void cmd_SLC(void);
 void cmd_SCC(void);
 void cmd_SAC(void);
-void cmd_SRC(void);
 void cmd_GFH(void);
 void cmd_MIS(void);
 void cmd_WFA(void);
@@ -136,7 +135,6 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
 		{"SLC",{2,0},&cmd_SLC},	//10
 		{"SCC",{1,0},&cmd_SCC},	//11
 		{"SAC",{1,0},&cmd_SAC},	//12
-		{"SRC",{1,0},&cmd_SRC},	//13
 		{"GFH",{0,0},&cmd_GFH},	//14
 		{"MIS",{0,0},&cmd_MIS},	//15
 		{"MRS",{0,0},&cmd_MRS},
@@ -1484,16 +1482,6 @@ void cmd_SOC()
 	return;
 }
 
-void cmd_SRC(){
-	uint8_t socket;
-	socket = atoi(comando_recibido.parametros[0]);
-	if (cliente_tcp[socket]) {
-		sockets[socket].en_uso = false;
-		cliente_tcp[socket].stop();
-	}
-	Serial.println("Closed.");
-	return;
-}
 
 
 void cmd_WFM(){
