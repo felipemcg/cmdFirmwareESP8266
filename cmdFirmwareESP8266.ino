@@ -1,3 +1,10 @@
+/**
+ * TODO: - [ ] Unificar los mensajes de errores que se repiten en los comandos. Por ej
+ * que no este conectado a WiFi sea '1' para todos los comandos.
+ *
+ * */
+
+
 #include "Arduino.h"
 #include <string.h>
 #include <stdio.h>
