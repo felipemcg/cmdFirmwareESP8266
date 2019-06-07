@@ -11,7 +11,7 @@
 #define DEBUG_COMANDO_DATOS 0
 #define DEBUG_TCP_BYTES 0
 #define DEBUG_COMANDO 0
-#define TIEMPO_MS_ESPERA_CARACTER 1
+#define TIEMPO_MS_ESPERA_CARACTER 4000
 
 char delimiter[2] = ",";
 
@@ -93,7 +93,7 @@ bool recibir_paquetes(char *paquete_serial, char *paquete_datos_recibidos_tcp){
 				Serial.println(buffer_comando);
 	#endif
 				buffer_comando[3] = '\0';
-				if(!strcmp(buffer_comando,"SOW")){
+				if( (!strcmp(buffer_comando,"SOW")) || (!strcmp(buffer_comando,"SDU"))  ){
 	#if DEBUG_COMANDO_DATOS
 					Serial.println("SOW encontrado");
 	#endif

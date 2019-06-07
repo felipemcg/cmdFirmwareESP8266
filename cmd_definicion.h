@@ -12,8 +12,8 @@
 #define CMD_TERMINATOR '\n'
 #define CMD_DELIMITER ','
 #define CMD_RESP_OK '0'
-#define CMD_NOT_FOUND ''
-#define CMD_NO_PARAM ''
+#define CMD_NOT_FOUND 'C'
+#define CMD_NO_PARAM 'P'
 
 /*Cantidad maxima de parametros por comando*/
 #define CANT_MAX_PARAMETROS_CMD 5
@@ -25,7 +25,10 @@
 #define CANT_MAX_CARACT_NOMBRE_CMD 3
 
 /*Numero maximo de comandos admitidos*/
-#define CANT_MAX_CMD 25
+#define CANT_MAX_CMD 28
+
+/*Cantidad maxima de parametros variables que puede permitir un comando*/
+#define CANT_MAX_PARAM_VARIABLES 2
 
 
 //extern void cmd_WFC(void);
@@ -39,7 +42,7 @@
 typedef void(*functionPointerType)(void);
 struct cmd{
 	char const nombre[4];
-	uint8_t const cantidad_parametros;
+	uint8_t const cantidad_parametros[CANT_MAX_PARAM_VARIABLES];
 	functionPointerType ejecutar;
 };
 
