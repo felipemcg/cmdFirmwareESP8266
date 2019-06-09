@@ -1321,7 +1321,7 @@ void cmd_SDU()
 	conexion_wifi = verificar_conexion_wifi();
 	if(conexion_wifi != 0)
 	{
-		Serial.print('2');
+		Serial.print('6');
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -1346,7 +1346,7 @@ void cmd_SDU()
 	{
 		if(udp_obj[sockets[socket].indice_objeto].endPacket())
 		{
-			Serial.print('0');
+			Serial.print(CMD_RESP_OK);
 			Serial.print(CMD_TERMINATOR);
 		}else{
 			Serial.print('4');
