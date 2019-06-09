@@ -1307,11 +1307,21 @@ void cmd_SDU()
 {
 	uint8_t socket;
 	uint16_t cant_bytes_enviar;
+	int8_t conexion_wifi;
 	socket = atoi(comando_recibido.parametros[0]);
 	cant_bytes_enviar = atoi(comando_recibido.parametros[1]);
 	if(!dentro_intervalo(socket,0,CANT_MAX_CLIENTES))
 	{
 		Serial.print('1');
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+
+	/*Verificar conexion WiFi*/
+	conexion_wifi = verificar_conexion_wifi();
+	if(conexion_wifi != 0)
+	{
+		Serial.print('2');
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -1325,8 +1335,6 @@ void cmd_SDU()
 	}
 
 	//TODO: Verificar que el socket sea uno del tipo cliente y no servidor.
-
-	//TODO: Agregar verificacion de conexion WiFi.
 
 	if(!dentro_intervalo(cant_bytes_enviar,0,TAM_MAX_PAQUETE_DATOS_UDP))
 	{
