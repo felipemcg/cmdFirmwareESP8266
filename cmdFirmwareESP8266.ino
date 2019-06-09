@@ -1129,6 +1129,7 @@ void cmd_SAC(){
 	{
 		Serial.print('6');
 		Serial.print(CMD_TERMINATOR);
+		return;
 	}
 	if(servidor[socket].b_activo){
 		if(servidor_obj[socket].hasClient()){
