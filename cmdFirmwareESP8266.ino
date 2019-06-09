@@ -1159,24 +1159,24 @@ void cmd_SAC(){
 void cmd_SCC(){
 	/*SCC - Server Close Connection*/
 	uint8_t socket;
-	wl_status_t estado_conexion_wifi;
+	int8_t conexion_wifi;
 
 	socket = atoi(comando_recibido.parametros[0]);
 	if(!dentro_intervalo(socket,0,CANT_MAX_SERVIDORES)){
 		/*El numero de socket esta fuera de rango*/
-		Serial.print("1");
+		Serial.print('1');
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
 
-	//TODO: Cambiar verificacion de WiFi por verificar_conexion_wifi()
-	estado_conexion_wifi = WiFi.status();
-	if( (estado_conexion_wifi == WL_DISCONNECTED) || (estado_conexion_wifi == WL_CONNECTION_LOST) ){
-		/*WiFi desconectado*/
+	conexion_wifi = verificar_conexion_wifi();
+	if(conexion_wifi != 0)
+	{
 		Serial.print('2');
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
+
 	servidor_obj[socket].stop();
 	servidor[socket].b_activo = false;
 	Serial.print(CMD_RESP_OK);
