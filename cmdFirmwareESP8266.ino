@@ -126,6 +126,7 @@ void cmd_WFM(void);
 void cmd_WAI(void);
 void cmd_WSC(void);
 void cmd_WSD(void);
+void cmd_WSS(void);
 
 const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
   		{"WFC",{2,0},&cmd_WFC}, //0/
@@ -138,6 +139,7 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
 		{"WSN",{1,0},&cmd_WSN},	//5
 		{"WSC",{0,0},&cmd_WSC},
 		{"WSD",{0,0},&cmd_WSD},
+		{"WSS",{0,0},&cmd_WSS},
 		{"CCS",{2,3},&cmd_CCS},	//6
 		{"SOW",{2,0},&cmd_SOW},	//7
 		{"SOR",{1,0},&cmd_SOR},	//8
@@ -983,6 +985,20 @@ void cmd_WSC()
 void cmd_WSD()
 {
 	if(WiFi.smartConfigDone())
+	{
+		Serial.print(CMD_RESP_OK);
+	}else
+	{
+		Serial.print('1');
+	}
+	Serial.print(CMD_TERMINATOR);
+	return;
+}
+
+/*Comando para detener la configuracion a traves de SmartConfig*/
+void cmd_WSS()
+{
+	if(WiFi.stopSmartConfig())
 	{
 		Serial.print(CMD_RESP_OK);
 	}else
