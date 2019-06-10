@@ -105,6 +105,7 @@ void cmd_WID(void);
 void cmd_WFI(void);
 void cmd_WFD(void);
 void cmd_WCF(void);
+void cmd_WSN(void);
 void cmd_CCS(void);
 void cmd_SOW(void);
 void cmd_SOR(void);
@@ -132,6 +133,7 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
 		{"WFI",{0,0},&cmd_WFI},
 		{"WFD",{1,0},&cmd_WFD},	//4
 		{"WCF",{4,0},&cmd_WCF},	//5
+		{"WSN",{1,0},&cmd_WCF},	//5
 		{"CCS",{2,3},&cmd_CCS},	//6
 		{"SOW",{2,0},&cmd_SOW},	//7
 		{"SOR",{1,0},&cmd_SOR},	//8
@@ -715,6 +717,21 @@ void cmd_WFC(){
 			break;
 		default:
 			break;
+	}
+	Serial.print(CMD_TERMINATOR);
+	return;
+}
+
+/* Comando para cambiar el hostname del servidor DHCP de la interfaz de estacion*/
+void cmd_WSN()
+{
+	if (WiFi.hostname(comando_recibido.parametros[0]))
+	{
+		Serial.print(CMD_RESP_OK);
+
+	}else
+	{
+		Serial.print('1');
 	}
 	Serial.print(CMD_TERMINATOR);
 	return;
