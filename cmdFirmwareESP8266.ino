@@ -124,6 +124,7 @@ void cmd_WAS(void);
 void cmd_WAD(void);
 void cmd_WFM(void);
 void cmd_WAI(void);
+void cmd_WSC(void);
 
 const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
   		{"WFC",{2,0},&cmd_WFC}, //0/
@@ -134,6 +135,7 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
 		{"WFD",{1,0},&cmd_WFD},	//4
 		{"WCF",{4,0},&cmd_WCF},	//5
 		{"WSN",{1,0},&cmd_WCF},	//5
+		{"WSC",{0,0},&cmd_WSC},
 		{"CCS",{2,3},&cmd_CCS},	//6
 		{"SOW",{2,0},&cmd_SOW},	//7
 		{"SOR",{1,0},&cmd_SOR},	//8
@@ -959,6 +961,19 @@ void cmd_WAI(){
 	Serial.print(WiFi.softAPmacAddress());
 	Serial.print(CMD_TERMINATOR);
 	return;
+}
+
+/*Comando para iniciar la configuracion utilizando SmartConfig*/
+void cmd_WSC()
+{
+	if(WiFi.beginSmartConfig())
+	{
+		Serial.print(CMD_RESP_OK);
+	}else
+	{
+		Serial.print('1');
+	}
+	Serial.print(CMD_TERMINATOR);
 }
 
 /**
