@@ -134,7 +134,7 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
 		{"WFI",{0,0},&cmd_WFI},
 		{"WFD",{1,0},&cmd_WFD},	//4
 		{"WCF",{4,0},&cmd_WCF},	//5
-		{"WSN",{1,0},&cmd_WCF},	//5
+		{"WSN",{1,0},&cmd_WSN},	//5
 		{"WSC",{0,0},&cmd_WSC},
 		{"CCS",{2,3},&cmd_CCS},	//6
 		{"SOW",{2,0},&cmd_SOW},	//7
