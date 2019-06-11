@@ -30,12 +30,16 @@
 /*Cantidad maxima de parametros variables que puede permitir un comando*/
 #define CANT_MAX_PARAM_VARIABLES 2
 
-
-//extern void cmd_WFC(void);
-//void cmd_WFS(void);
-
-
-
+#define CMD_ERROR_1 '1'
+#define CMD_ERROR_2 '2'
+#define CMD_ERROR_3 '3'
+#define CMD_ERROR_4 '4'
+#define CMD_ERROR_5 '5'
+#define CMD_ERROR_6 '6'
+#define CMD_ERROR_7 '7'
+#define CMD_ERROR_8 '8'
+#define CMD_ERROR_9 '9'
+#define CMD_ERROR_10 '10'
 
 //char delimiter[] = ",";
 

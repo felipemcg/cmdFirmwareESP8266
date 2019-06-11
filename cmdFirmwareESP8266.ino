@@ -547,7 +547,7 @@ void cmd_MUC(){
 	//Serial.print('\n');
 	if(!dentro_intervalo(baud_rate,9600,MAX_BAUD_RATE)){
 		/*Baud rate fuera de rango*/
-		Serial.print("1");
+		Serial.print(CMD_ERROR_1);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -590,7 +590,7 @@ void cmd_WFS(){
 	int cant_punto_acceso_encontrados;
 	cant_punto_acceso_encontrados = WiFiScan.scanNetworks();
 	if (cant_punto_acceso_encontrados == -1) {
-		Serial.print("1");
+		Serial.print(CMD_ERROR_1);
 	}else{
 		Serial.print(CMD_RESP_OK);
 		Serial.print(CMD_DELIMITER);
@@ -622,32 +622,32 @@ void cmd_WCF(){
 	IPAddress ip,dns,gateway,subnet;
 	if(!ip.fromString(comando_recibido.parametros[0])){
 		/*IP Invalida*/
-		Serial.print("1");
+		Serial.print(CMD_ERROR_1);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
 	if(!dns.fromString(comando_recibido.parametros[1])){
 		/*DNS Invalido*/
-		Serial.print("2");
+		Serial.print(CMD_ERROR_2);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
 	if(!gateway.fromString(comando_recibido.parametros[2])){
 		/*Gateway Invalido*/
-		Serial.print("3");
+		Serial.print(CMD_ERROR_3);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
 	if(!subnet.fromString(comando_recibido.parametros[3])){
 		/*Subnet Invalido*/
-		Serial.print("4");
+		Serial.print(CMD_ERROR_4);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
 	if(WiFi.config(ip,gateway,subnet,dns)){
 		Serial.print(CMD_RESP_OK);
 	}else{
-		Serial.print("5");
+		Serial.print(CMD_ERROR_5);
 	}
 	Serial.print(CMD_TERMINATOR);
 	return;
@@ -694,29 +694,29 @@ void cmd_WFC(){
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}else{
-		Serial.print("2");
+		Serial.print(CMD_ERROR_2);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
 	switch(estado_conexion_wifi){
 		case WL_IDLE_STATUS:
-			Serial.print("7");
+			Serial.print(CMD_ERROR_7);
 			break;
 		case WL_NO_SSID_AVAIL:
-			Serial.print("4");
+			Serial.print(CMD_ERROR_4);
 			break;
 		case WL_SCAN_COMPLETED:
-			Serial.print("5");
+			Serial.print(CMD_ERROR_5);
 			break;
 		case WL_CONNECT_FAILED:
 			/*Significa que la contraseña es incorrecta*/
-			Serial.print("3");
+			Serial.print(CMD_ERROR_3);
 			break;
 		case WL_CONNECTION_LOST:
-			Serial.print("6");
+			Serial.print(CMD_ERROR_6);
 			break;
 		case WL_DISCONNECTED:
-			Serial.print("1");
+			Serial.print(CMD_ERROR_1);
 			break;
 		case WL_CONNECTED:
 			Serial.print(CMD_RESP_OK);
@@ -737,7 +737,7 @@ void cmd_WSN()
 
 	}else
 	{
-		Serial.print('1');
+		Serial.print(CMD_ERROR_1);
 	}
 	Serial.print(CMD_TERMINATOR);
 	return;
@@ -756,7 +756,7 @@ void cmd_WRI(){
 	int32_t rssi = WiFi.RSSI();
 	if(rssi == 31){
 		/*Valor invalido, ver documentacion del SDK: wifi_station_get_rssi*/
-		Serial.print('1');
+		Serial.print(CMD_ERROR_1);
 	}else{
 		Serial.print(CMD_RESP_OK);
 		Serial.print(CMD_DELIMITER);
@@ -779,7 +779,7 @@ void cmd_WID(){
 	int ssid_longitud;
 	ssid_longitud = strlen(WiFi.SSID().c_str());
 	if(ssid_longitud == 0){
-		Serial.print('1');
+		Serial.print(CMD_ERROR_1);
 	}else{
 		Serial.print(CMD_RESP_OK);
 		Serial.print(CMD_DELIMITER);
@@ -813,14 +813,14 @@ void cmd_WFD(){
 	/*WFD - WiFi Disconnect*/
 	bool b_estacion_off = comando_recibido.parametros[0];
 	if(!dentro_intervalo(b_estacion_off,0,1)){
-		Serial.print('1');
+		Serial.print(CMD_ERROR_1);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
 	if( WiFi.disconnect(b_estacion_off) ){
 		Serial.print(CMD_RESP_OK);
 	}else{
-		Serial.print('2');
+		Serial.print(CMD_ERROR_2);
 	}
 	delay(100);
 	Serial.print(CMD_TERMINATOR);
@@ -835,25 +835,25 @@ void cmd_WAC(){
 	IPAddress subnet;
 	if(!ip_local.fromString(comando_recibido.parametros[0])){
 		/*IP local Invalido*/
-		Serial.print("1");
+		Serial.print(CMD_ERROR_1);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
 	if(!gateway.fromString(comando_recibido.parametros[1])){
 		/*Gateway Invalido*/
-		Serial.print("2");
+		Serial.print(CMD_ERROR_2);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
 	if(!subnet.fromString(comando_recibido.parametros[2])){
 		/*Subnet Invalido*/
-		Serial.print("3");
+		Serial.print(CMD_ERROR_3);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
 	b_configuracion_punto_acceso = WiFi.softAPConfig(ip_local, gateway, subnet);
 	if(b_configuracion_punto_acceso == 0){
-		Serial.print('4');
+		Serial.print(CMD_ERROR_4);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -889,19 +889,19 @@ void cmd_WFA(){
 
 	if(!dentro_intervalo(canal_wifi,1,13)){
 		/*El numero de canal_wifi esta fuera de rango*/
-		Serial.print('1');
+		Serial.print(CMD_ERROR_1);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
 	if(!dentro_intervalo(hidden_opt,0,1)){
 		/*El numero de hidden_opt esta fuera de rango*/
-		Serial.print('2');
+		Serial.print(CMD_ERROR_2);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
 	if(!dentro_intervalo(cant_max_clientes_wifi,1,4)){
 		/*El numero de cant_max_clientes_wifi esta fuera de rango*/
-		Serial.print('3');
+		Serial.print(CMD_ERROR_3);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -917,7 +917,7 @@ void cmd_WFA(){
 		//liberar_recursos();
 	}*/
 	if(b_punto_acceso_creado == 0){
-		Serial.print('4');
+		Serial.print(CMD_ERROR_4);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -943,14 +943,14 @@ void cmd_WAD(){
 	/*WAD - WiFi Acces Point Disconnect*/
 	bool b_softAP_off = comando_recibido.parametros[0];
 	if(!dentro_intervalo(b_softAP_off,0,1)){
-		Serial.print('1');
+		Serial.print(CMD_ERROR_1);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
 	if( WiFi.softAPdisconnect(b_softAP_off) ){
 		Serial.print(CMD_RESP_OK);
 	}else{
-		Serial.print('2');
+		Serial.print(CMD_ERROR_2);
 	}
 	Serial.print(CMD_TERMINATOR);
 	return;
@@ -975,7 +975,7 @@ void cmd_WSC()
 		Serial.print(CMD_RESP_OK);
 	}else
 	{
-		Serial.print('1');
+		Serial.print(CMD_ERROR_1);
 	}
 	Serial.print(CMD_TERMINATOR);
 	return;
@@ -989,7 +989,7 @@ void cmd_WSD()
 		Serial.print(CMD_RESP_OK);
 	}else
 	{
-		Serial.print('1');
+		Serial.print(CMD_ERROR_1);
 	}
 	Serial.print(CMD_TERMINATOR);
 	return;
@@ -1003,7 +1003,7 @@ void cmd_WSS()
 		Serial.print(CMD_RESP_OK);
 	}else
 	{
-		Serial.print('1');
+		Serial.print(CMD_ERROR_1);
 	}
 	Serial.print(CMD_TERMINATOR);
 	return;
@@ -1041,7 +1041,7 @@ void cmd_CCS(){
 
 	if(!dentro_intervalo(puerto_conexion,0,NUM_MAX_PUERTO)){
 		/*Puerto TCP fuera de rango*/
-		Serial.print("1");
+		Serial.print(CMD_ERROR_2);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -1050,7 +1050,7 @@ void cmd_CCS(){
 	conexion_wifi = verificar_conexion_wifi();
 	if(conexion_wifi != 0)
 	{
-		Serial.print('2');
+		Serial.print(CMD_ERROR_1);
 		Serial.print(CMD_TERMINATOR);
 	}
 	if(strcmp(tipo_conexion,"TCP") == 0)
@@ -1059,7 +1059,7 @@ void cmd_CCS(){
 		if(socket == -1)
 		{
 			/*No hay socket disponible*/
-			Serial.print('3');
+			Serial.print(CMD_ERROR_3);
 			Serial.print(CMD_TERMINATOR);
 			return;
 		}
@@ -1075,7 +1075,7 @@ void cmd_CCS(){
 			Serial.print(CMD_TERMINATOR);
 		}else{
 			/*No se pudo conectar*/
-			Serial.print('4');
+			Serial.print(CMD_ERROR_4);
 			Serial.print(CMD_TERMINATOR);
 		}
 	}else if(strcmp(tipo_conexion,"UDP") == 0)
@@ -1084,7 +1084,7 @@ void cmd_CCS(){
 		if(socket == -1)
 		{
 			/*No hay socket disponible*/
-			Serial.print('3');
+			Serial.print(CMD_ERROR_3);
 			Serial.print(CMD_TERMINATOR);
 			return;
 		}
@@ -1098,12 +1098,12 @@ void cmd_CCS(){
 			Serial.print(socket);
 			Serial.print(CMD_TERMINATOR);
 		}else{
-			Serial.print('4');
+			Serial.print(CMD_ERROR_4);
 			Serial.print(CMD_TERMINATOR);
 		}
 	}else{
 		/*Dar mensaje de error en el tipo de conexion*/
-		Serial.print('5');
+		Serial.print(CMD_ERROR_5);
 		Serial.print(CMD_TERMINATOR);
 	}
 	//Serial.print("Objeto Numero: ");
@@ -1125,13 +1125,13 @@ void cmd_SLC(){
 	/*Determinar primero si el puerto es valido*/
 	if(!dentro_intervalo(puerto_tcp,0,NUM_MAX_PUERTO)){
 		/*El numero de puerto esta fuera de rango*/
-		Serial.print("1");
+		Serial.print(CMD_ERROR_2);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
 	if(!dentro_intervalo(backlog,0,CANT_MAX_CLIENTES)){
 		/*El numero de clientes esta fuera de rango*/
-		Serial.print("2");
+		Serial.print(CMD_ERROR_3);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}else{
@@ -1141,7 +1141,7 @@ void cmd_SLC(){
 	conexion_wifi = verificar_conexion_wifi();
 	if(conexion_wifi != 0)
 	{
-		Serial.print('3');
+		Serial.print(CMD_ERROR_1);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -1187,14 +1187,14 @@ void cmd_SAC(){
 	socket = atoi(comando_recibido.parametros[0]);
 	if(!dentro_intervalo(socket,0,CANT_MAX_SERVIDORES)){
 		/*El numero de socket esta fuera de rango*/
-		Serial.print("1");
+		Serial.print(CMD_ERROR_2);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
 	conexion_wifi = verificar_conexion_wifi();
 	if(conexion_wifi != 0)
 	{
-		Serial.print('6');
+		Serial.print(CMD_ERROR_1);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -1206,19 +1206,19 @@ void cmd_SAC(){
 			}
 			if(serverAcceptStatus == 2){
 				/*No hay socket disponible*/
-				Serial.print("2");
+				Serial.print(CMD_ERROR_3);
 			}
 			if(serverAcceptStatus == 3){
 				/*No se aceptan mas clientes en este servidor*/
-				Serial.print("3");
+				Serial.print(CMD_ERROR_6);
 			}
 		}else{
 			/*El servidor no tiene clientes*/
-			Serial.print("4");
+			Serial.print(CMD_ERROR_4);
 		}
 	}else{
 		/*El servidor se encuentra desactivado*/
-		Serial.print("5");
+		Serial.print(CMD_ERROR_5);
 	}
 	Serial.print(CMD_TERMINATOR);
 	return;
@@ -1232,7 +1232,7 @@ void cmd_SCC(){
 	socket = atoi(comando_recibido.parametros[0]);
 	if(!dentro_intervalo(socket,0,CANT_MAX_SERVIDORES)){
 		/*El numero de socket esta fuera de rango*/
-		Serial.print('1');
+		Serial.print(CMD_ERROR_2);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -1240,7 +1240,7 @@ void cmd_SCC(){
 	conexion_wifi = verificar_conexion_wifi();
 	if(conexion_wifi != 0)
 	{
-		Serial.print('2');
+		Serial.print(CMD_ERROR_1);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -1266,7 +1266,7 @@ void cmd_SOW()
 
 	if(conexion_wifi != 0)
 	{
-		Serial.print('5');
+		Serial.print(CMD_ERROR_1);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -1274,7 +1274,7 @@ void cmd_SOW()
 	if(!dentro_intervalo(socket,0,CANT_MAX_CLIENTES))
 	{
 		/*Numero de socket fuera de rango*/
-		Serial.print('4');
+		Serial.print(CMD_ERROR_2);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -1282,7 +1282,7 @@ void cmd_SOW()
 	if(sockets[socket].protocolo == UDP)
 	{
 		//Socket del tipo incorrecto
-		Serial.print('6');
+		Serial.print(CMD_ERROR_4);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -1290,7 +1290,7 @@ void cmd_SOW()
 	if(!dentro_intervalo(cant_bytes_enviar_tcp,0,TAM_MAX_PAQUETE_DATOS_TCP))
 	{
 		/*Numero de bytes para escribir fuera de rango*/
-		Serial.print('3');
+		Serial.print(CMD_ERROR_3);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -1299,7 +1299,7 @@ void cmd_SOW()
 	{
 		/*El socket no esta conectado*/
 		sockets[socket].en_uso = false;
-		Serial.print('2');
+		Serial.print(CMD_ERROR_5);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -1308,7 +1308,7 @@ void cmd_SOW()
 	if(cant_bytes_enviar_tcp != cant_bytes_enviados_tcp)
 	{
 		/*No se pudo escribir los datos al socket*/
-		Serial.print('1');
+		Serial.print(CMD_ERROR_6);
 		Serial.print(CMD_TERMINATOR);
 	}
 	else
@@ -1331,7 +1331,7 @@ void cmd_SVU()
 	/*Determinar primero si el puerto es valido*/
 	if(!dentro_intervalo(puerto_udp,0,NUM_MAX_PUERTO)){
 		/*El numero de puerto esta fuera de rango*/
-		Serial.print('1');
+		Serial.print(CMD_ERROR_2);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -1340,7 +1340,7 @@ void cmd_SVU()
 	conexion_wifi = verificar_conexion_wifi();
 	if(conexion_wifi != 0)
 	{
-		Serial.print('2');
+		Serial.print(CMD_ERROR_1);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -1348,7 +1348,7 @@ void cmd_SVU()
 	if(socket == -1)
 	{
 		/*No hay socket disponible*/
-		Serial.print('3');
+		Serial.print(CMD_ERROR_3);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -1362,7 +1362,7 @@ void cmd_SVU()
 		Serial.print(CMD_DELIMITER);
 		Serial.print(socket);
 	}else{
-		Serial.print('4');
+		Serial.print(CMD_ERROR_4);
 	}
 	Serial.print(CMD_TERMINATOR);
 	return;
@@ -1379,7 +1379,7 @@ void cmd_SDU()
 	cant_bytes_enviar = atoi(comando_recibido.parametros[1]);
 	if(!dentro_intervalo(socket,0,CANT_MAX_CLIENTES))
 	{
-		Serial.print('1');
+		Serial.print(CMD_ERROR_2);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -1388,7 +1388,7 @@ void cmd_SDU()
 	conexion_wifi = verificar_conexion_wifi();
 	if(conexion_wifi != 0)
 	{
-		Serial.print('6');
+		Serial.print(CMD_ERROR_1);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -1396,7 +1396,7 @@ void cmd_SDU()
 	if(sockets[socket].protocolo == TCP)
 	{
 		//Socket del tipo incorrecto
-		Serial.print('5');
+		Serial.print(CMD_ERROR_5);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -1405,7 +1405,7 @@ void cmd_SDU()
 
 	if(!dentro_intervalo(cant_bytes_enviar,0,TAM_MAX_PAQUETE_DATOS_UDP))
 	{
-		Serial.print('2');
+		Serial.print(CMD_ERROR_3);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -1416,11 +1416,11 @@ void cmd_SDU()
 			Serial.print(CMD_RESP_OK);
 			Serial.print(CMD_TERMINATOR);
 		}else{
-			Serial.print('4');
+			Serial.print(CMD_ERROR_4);
 			Serial.print(CMD_TERMINATOR);
 		}
 	}else{
-		Serial.print('3');
+		Serial.print(CMD_ERROR_4);
 		Serial.print(CMD_TERMINATOR);
 	}
 	return;
@@ -1436,7 +1436,7 @@ void cmd_RVU()
 	int8_t conexion_wifi;
 	socket = atoi(comando_recibido.parametros[0]);
 	if(!dentro_intervalo(socket,0,CANT_MAX_CLIENTES)){
-		Serial.print('1');
+		Serial.print(CMD_ERROR_2);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -1444,7 +1444,7 @@ void cmd_RVU()
 	conexion_wifi = verificar_conexion_wifi();
 	if(conexion_wifi != 0)
 	{
-		Serial.print('2');
+		Serial.print(CMD_ERROR_1);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -1475,7 +1475,7 @@ void cmd_SOR()
 	socket = atoi(comando_recibido.parametros[0]);
 	/*print received data from server*/
 	if(!dentro_intervalo(socket,0,CANT_MAX_CLIENTES)){
-		Serial.print('1');
+		Serial.print(CMD_ERROR_2);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -1483,7 +1483,7 @@ void cmd_SOR()
 	if(sockets[socket].protocolo == UDP)
 	{
 		//Socket del tipo incorrecto
-		Serial.print('4');
+		Serial.print(CMD_ERROR_4);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -1491,7 +1491,7 @@ void cmd_SOR()
 	conexion_wifi = verificar_conexion_wifi();
 	if(conexion_wifi != 0)
 	{
-		Serial.print('2');
+		Serial.print(CMD_ERROR_1);
 		Serial.print(CMD_TERMINATOR);
 	}
 
@@ -1499,7 +1499,7 @@ void cmd_SOR()
 	if(!cliente_tcp[sockets[socket].indice_objeto].connected())
 	{
 		sockets[socket].en_uso = false;
-		Serial.print('3');
+		Serial.print(CMD_ERROR_3);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -1524,7 +1524,7 @@ void cmd_SOC()
 
 	socket = atoi(comando_recibido.parametros[0]);
 	if(!dentro_intervalo(socket,0,CANT_MAX_CLIENTES) == true){
-		Serial.print("1");
+		Serial.print(CMD_ERROR_2);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -1532,14 +1532,14 @@ void cmd_SOC()
 
 	if(conexion_wifi != 0)
 	{
-		Serial.print('2');
+		Serial.print(CMD_ERROR_1);
 		Serial.print(CMD_TERMINATOR);
 	}
 
 	if(sockets[socket].en_uso == false)
 	{
 		//El socket no esta siendo utilizado.
-		Serial.print('3');
+		Serial.print(CMD_ERROR_3);
 		Serial.print(CMD_TERMINATOR);
 	}
 
@@ -1573,7 +1573,7 @@ void cmd_WFM(){
 	bool ret_val;
 	parametro_modo_wifi = atoi(comando_recibido.parametros[0]);
 	if(!dentro_intervalo(parametro_modo_wifi,0,3) == true){
-		Serial.print('1');
+		Serial.print(CMD_ERROR_1);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
@@ -1598,7 +1598,7 @@ void cmd_WFM(){
 		Serial.print(CMD_RESP_OK);
 		Serial.print(CMD_TERMINATOR);
 	}else{
-		Serial.print('2');
+		Serial.print(CMD_ERROR_2);
 		Serial.print(CMD_TERMINATOR);
 	}
 	return;
