@@ -806,6 +806,8 @@ void cmd_WID(){
 		Serial.print(CMD_RESP_OK);
 		Serial.print(CMD_DELIMITER);
 		Serial.print(WiFi.SSID().c_str());
+		Serial.print(CMD_DELIMITER);
+		Serial.print(WiFi.psk().c_str());
 	}
 	Serial.print(CMD_TERMINATOR);
 	return;
