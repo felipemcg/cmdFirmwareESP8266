@@ -180,7 +180,8 @@ bool b_smartconfig_en_proceso = false;
 bool b_smartconfig_credenciales_recibidas = false;
 
 
-void setup() {
+void setup()
+{
 	Serial.begin(115200);
 	Serial.setRxBufferSize(1024);
 	delay(10);
@@ -209,6 +210,10 @@ void setup() {
     cliente_tcp[3].setNoDelay(1);*/
     modo_wifi_actual = WiFi.getMode();
     estado_conexion_wifi_interfaz_sta_actual = WiFi.status();
+
+    /*Inciar el sistema con la radio WiFi apagada*/
+    WiFi.mode(WIFI_OFF);
+
     Serial.print("R");
     Serial.print(CMD_TERMINATOR);
 }
