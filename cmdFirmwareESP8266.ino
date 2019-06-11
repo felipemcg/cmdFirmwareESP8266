@@ -171,6 +171,14 @@ size_t tam_buffer_serial = 0;
 WiFiMode_t modo_wifi_actual;
 wl_status_t estado_conexion_wifi_interfaz_sta_actual;
 
+/**< Variable utilizada para indicar cuando se inicio la configuracion utilizando
+ * el SmartConfig*/
+bool b_smartconfig_en_proceso = false;
+
+/**<Variable utilizada para indicar cuando se recibio el paquete de configuracion
+ * de credeneciales para SmartConfig */
+bool b_smartconfig_credenciales_recibidas = false;
+
 
 void setup() {
 	Serial.begin(115200);
@@ -275,6 +283,15 @@ void loop()
 	yield();
 
 	servidor_verificar_backlog();
+
+	if(b_smartconfig_en_proceso == true)
+	{
+		if(WiFi.smartConfigDone())
+		{
+			b_smartconfig_credenciales_recibidas = true;
+			b_smartconfig_en_proceso = false;
+		}
+	}
 }
 
 
@@ -972,6 +989,7 @@ void cmd_WSC()
 {
 	if(WiFi.beginSmartConfig())
 	{
+		b_smartconfig_en_proceso = true;
 		Serial.print(CMD_RESP_OK);
 	}else
 	{
@@ -984,8 +1002,9 @@ void cmd_WSC()
 /*Comando para verificar el estado de la configuracion SmartConfig*/
 void cmd_WSD()
 {
-	if(WiFi.smartConfigDone())
+	if(b_smartconfig_credenciales_recibidas == true)
 	{
+		b_smartconfig_credenciales_recibidas = false;
 		Serial.print(CMD_RESP_OK);
 	}else
 	{
@@ -1000,16 +1019,17 @@ void cmd_WSS()
 {
 	if(WiFi.stopSmartConfig())
 	{
+		b_smartconfig_en_proceso = false;
+		b_smartconfig_credenciales_recibidas = false;
 		Serial.print(CMD_RESP_OK);
 	}else
 	{
+		b_smartconfig_credenciales_recibidas = false;
 		Serial.print(CMD_ERROR_1);
 	}
 	Serial.print(CMD_TERMINATOR);
 	return;
 }
-
-
 
 /**
  * CCS - Client Connect Server
