@@ -212,6 +212,8 @@ void setup()
     estado_conexion_wifi_interfaz_sta_actual = WiFi.status();
 
     /*Inciar el sistema con la radio WiFi apagada*/
+    WiFi.disconnect(1);
+    delay(100);
     WiFi.mode(WIFI_OFF);
 
     Serial.print("R");
