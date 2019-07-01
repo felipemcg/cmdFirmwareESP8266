@@ -185,7 +185,6 @@ void setup()
 	Serial.begin(115200);
 	Serial.setRxBufferSize(1024);
 	delay(10);
-	Serial.println();
 
 #ifdef sDebug
 	Serial.println();
