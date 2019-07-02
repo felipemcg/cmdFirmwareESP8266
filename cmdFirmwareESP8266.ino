@@ -116,7 +116,7 @@ void cmd_SOC(void);
 void cmd_SLC(void);
 void cmd_SCC(void);
 void cmd_SAC(void);
-void cmd_GFH(void);
+void cmd_MFH(void);
 void cmd_MIS(void);
 void cmd_WFA(void);
 void cmd_WAC(void);
@@ -150,7 +150,7 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
 		{"SLC",{2,0},&cmd_SLC},	//10
 		{"SCC",{1,0},&cmd_SCC},	//11
 		{"SAC",{1,0},&cmd_SAC},	//12
-		{"GFH",{0,0},&cmd_GFH},	//14
+		{"MFH",{0,0},&cmd_MFH},	//14
 		{"MIS",{0,0},&cmd_MIS},	//15
 		{"MRS",{0,0},&cmd_MRS},
 		{"MUC",{1,0},&cmd_MUC},
@@ -474,7 +474,7 @@ void cmd_MUC(){
  *  @param 	Ninguno.
  *  @return Bytes disponibles de RAM en el modulo.
  */
-void cmd_GFH(){
+void cmd_MFH(){
 	/*GFH - Get Free Heap*/
 	Serial.print(CMD_RESP_OK);
 	Serial.print(CMD_DELIMITER);
