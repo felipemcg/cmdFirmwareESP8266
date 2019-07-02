@@ -1,5 +1,5 @@
 /**
- * TODO: - [ ] Unificar los mensajes de errores que se repiten en los comandos. Por ej
+ * TODO: - [X] Unificar los mensajes de errores que se repiten en los comandos. Por ej
  * que no este conectado a WiFi sea '1' para todos los comandos.
  *
  * */
@@ -180,125 +180,9 @@ bool b_smartconfig_en_proceso = false;
 bool b_smartconfig_credenciales_recibidas = false;
 
 
-void setup()
-{
-	Serial.begin(115200);
-	Serial.setRxBufferSize(1024);
-	delay(10);
 
-#ifdef sDebug
-	Serial.println();
-    Serial.println();
-    Serial.println("Listo.");
-    Serial.println("Las instrucciones que tengo son: ");
-    for(int i=0; i < CANT_MAX_CMD; i++){
-  	  Serial.println((instructionSet[i]));
-    }
-#endif
 
-    for (uint8_t indice_socket = 0; indice_socket < CANT_MAX_CLIENTES; ++indice_socket) {
-    	sockets[indice_socket].en_uso = false;
-		sockets[indice_socket].tipo = NINGUNO;
-		sockets[indice_socket].protocolo = NONE;
-		sockets[indice_socket].indice_servidor = -1;
-	}
 
-    /*cliente_tcp[0].setNoDelay(1);
-    cliente_tcp[1].setNoDelay(1);
-    cliente_tcp[2].setNoDelay(1);
-    cliente_tcp[3].setNoDelay(1);*/
-    modo_wifi_actual = WiFi.getMode();
-    estado_conexion_wifi_interfaz_sta_actual = WiFi.status();
-
-    /*Inciar el sistema con la radio WiFi apagada*/
-    WiFi.disconnect(1);
-    delay(100);
-    WiFi.mode(WIFI_OFF);
-
-    Serial.print("R");
-    Serial.print(CMD_TERMINATOR);
-}
-
-void loop()
-{
-	uint8_t cant_maxima_caracteres_paquete_serial = CANT_MAX_CARACT_NOMBRE_CMD + CANT_MAX_CARACT_PARAMETRO*CANT_MAX_PARAMETROS_CMD + CANT_MAX_PARAMETROS_CMD;
-	int indice_comando;
-	comando_recibido.nombre[0] = '\0';
-	comando_recibido.parametros[0][0] = '\0';
-	comando_recibido.parametros[1][0] = '\0';
-	comando_recibido.parametros[2][0] = '\0';
-	comando_recibido.parametros[3][0] = '\0';
-	comando_recibido.parametros[4][0] = '\0';
-
-	yield();
-
-	/*Se verifica que se haya recibido un nuevo paquete por el puerto serial.*/
-	if (recibir_paquetes(paquete_serial, paquete_datos_tcp) == 1)
-	{
-		/*Serial.print("Dir serial: ");
-		Serial.printf("%p",paquete_serial);
-		Serial.println();
-		Serial.print("Dir datos: ");
-		Serial.printf("%p",paquete_datos_tcp);*/
-
-		//Serial.println(paquete_serial);
-		yield();
-		//Serial.print("Antes de separar:");
-		//Serial.println(paquete_serial);
-
-		/*Separar el paquete en los campos correspondientes.*/
-		comando_recibido = separar_comando_parametros(paquete_serial);
-
-		/*Se muestran los datos separados en campos.*/
-		//imprimir_datos_separados(comando_recibido);
-
-		/*Se busca el comando recibido dentro del conjunto de comandos.*/
-		indice_comando = buscar_comando(comando_recibido.nombre);
-
-		if(indice_comando != -1)
-		{
-			/*Se verifica que se recibio la cantidad necesaria de parametros para ejectuar el comando.*/
-			if( validar_cantidad_parametros(indice_comando, comando_recibido.cantidad_parametros_recibidos))
-			{
-
-				/*Se llama a la funcion que ejecutara las acciones correspondientes al comando.*/
-				conjunto_comandos[indice_comando].ejecutar();
-
-			}
-			else
-			{
-				/*No se cuenta con la cantidad de parametros necesarios*/
-				Serial.print(CMD_NO_PARAM);
-				Serial.print(CMD_TERMINATOR);
-			}
-		}
-		else
-		{
-			/*No se encontro el comando*/
-			Serial.print(CMD_NOT_FOUND);
-			Serial.print(CMD_TERMINATOR);
-		}
-		memset(paquete_serial,0,sizeof(paquete_serial));
-		memset(paquete_datos_tcp,0,sizeof(paquete_datos_tcp));
-	}
-	else
-	{
-		/*Problemas en la recepcion de paquete serial*/
-	}
-
-	yield();
-
-	servidor_verificar_backlog();
-
-	if(b_smartconfig_en_proceso == true)
-	{
-		if(WiFi.smartConfigDone())
-		{
-			b_smartconfig_credenciales_recibidas = true;
-			b_smartconfig_en_proceso = false;
-		}
-	}
-}
 
 
 /* Descripcion: Ejectua el comando solicitado.*/
@@ -1630,4 +1514,124 @@ void cmd_WFM(){
 		Serial.print(CMD_TERMINATOR);
 	}
 	return;
+}
+
+void setup()
+{
+	Serial.begin(115200);
+	Serial.setRxBufferSize(1024);
+	delay(10);
+
+#ifdef sDebug
+	Serial.println();
+    Serial.println();
+    Serial.println("Listo.");
+    Serial.println("Las instrucciones que tengo son: ");
+    for(int i=0; i < CANT_MAX_CMD; i++){
+  	  Serial.println((instructionSet[i]));
+    }
+#endif
+
+    for (uint8_t indice_socket = 0; indice_socket < CANT_MAX_CLIENTES; ++indice_socket) {
+    	sockets[indice_socket].en_uso = false;
+		sockets[indice_socket].tipo = NINGUNO;
+		sockets[indice_socket].protocolo = NONE;
+		sockets[indice_socket].indice_servidor = -1;
+	}
+
+    /*cliente_tcp[0].setNoDelay(1);
+    cliente_tcp[1].setNoDelay(1);
+    cliente_tcp[2].setNoDelay(1);
+    cliente_tcp[3].setNoDelay(1);*/
+    modo_wifi_actual = WiFi.getMode();
+    estado_conexion_wifi_interfaz_sta_actual = WiFi.status();
+
+    /*Inciar el sistema con la radio WiFi apagada*/
+    WiFi.disconnect(1);
+    delay(100);
+    WiFi.mode(WIFI_OFF);
+
+    Serial.print("R");
+    Serial.print(CMD_TERMINATOR);
+}
+
+void loop()
+{
+	uint8_t cant_maxima_caracteres_paquete_serial = CANT_MAX_CARACT_NOMBRE_CMD + CANT_MAX_CARACT_PARAMETRO*CANT_MAX_PARAMETROS_CMD + CANT_MAX_PARAMETROS_CMD;
+	int indice_comando;
+	comando_recibido.nombre[0] = '\0';
+	comando_recibido.parametros[0][0] = '\0';
+	comando_recibido.parametros[1][0] = '\0';
+	comando_recibido.parametros[2][0] = '\0';
+	comando_recibido.parametros[3][0] = '\0';
+	comando_recibido.parametros[4][0] = '\0';
+
+	yield();
+
+	/*Se verifica que se haya recibido un nuevo paquete por el puerto serial.*/
+	if (recibir_paquetes(paquete_serial, paquete_datos_tcp) == 1)
+	{
+		/*Serial.print("Dir serial: ");
+		Serial.printf("%p",paquete_serial);
+		Serial.println();
+		Serial.print("Dir datos: ");
+		Serial.printf("%p",paquete_datos_tcp);*/
+
+		//Serial.println(paquete_serial);
+		yield();
+		//Serial.print("Antes de separar:");
+		//Serial.println(paquete_serial);
+
+		/*Separar el paquete en los campos correspondientes.*/
+		comando_recibido = separar_comando_parametros(paquete_serial);
+
+		/*Se muestran los datos separados en campos.*/
+		//imprimir_datos_separados(comando_recibido);
+
+		/*Se busca el comando recibido dentro del conjunto de comandos.*/
+		indice_comando = buscar_comando(comando_recibido.nombre);
+
+		if(indice_comando != -1)
+		{
+			/*Se verifica que se recibio la cantidad necesaria de parametros para ejectuar el comando.*/
+			if( validar_cantidad_parametros(indice_comando, comando_recibido.cantidad_parametros_recibidos))
+			{
+
+				/*Se llama a la funcion que ejecutara las acciones correspondientes al comando.*/
+				conjunto_comandos[indice_comando].ejecutar();
+
+			}
+			else
+			{
+				/*No se cuenta con la cantidad de parametros necesarios*/
+				Serial.print(CMD_NO_PARAM);
+				Serial.print(CMD_TERMINATOR);
+			}
+		}
+		else
+		{
+			/*No se encontro el comando*/
+			Serial.print(CMD_NOT_FOUND);
+			Serial.print(CMD_TERMINATOR);
+		}
+		memset(paquete_serial,0,sizeof(paquete_serial));
+		memset(paquete_datos_tcp,0,sizeof(paquete_datos_tcp));
+	}
+	else
+	{
+		/*Problemas en la recepcion de paquete serial*/
+	}
+
+	yield();
+
+	servidor_verificar_backlog();
+
+	if(b_smartconfig_en_proceso == true)
+	{
+		if(WiFi.smartConfigDone())
+		{
+			b_smartconfig_credenciales_recibidas = true;
+			b_smartconfig_en_proceso = false;
+		}
+	}
 }
