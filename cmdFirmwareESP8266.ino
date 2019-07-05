@@ -21,6 +21,10 @@
 #include "operaciones_paquetes.h"
 #include "cmd_definicion.h"
 
+extern "C" {
+  #include <user_interface.h>
+}
+
 /*Considerar usar cliente_tcp.setNoDelay para desactivar el algoritmo de naggle*/
 
 /*-------------------------DEFINE's--------------------------------*/
@@ -116,7 +120,7 @@ void cmd_WFC(void);
 void cmd_WFS(void);
 void cmd_WFD(void);
 void cmd_WFA(void);
-
+void cmd_WSI(void);
 void cmd_WCF(void);
 void cmd_WAC(void);
 void cmd_WSC(void);
@@ -170,6 +174,7 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] =
   		{"WFS",{0,0},&cmd_WFS},
 		{"WFD",{1,0},&cmd_WFD},
 		{"WFA",{5,0},&cmd_WFA},
+		{"WSI",{0,0},&cmd_WSI},
 		{"WCF",{4,0},&cmd_WCF},
 		{"WAC",{3,0},&cmd_WAC},
 		{"WSC",{0,0},&cmd_WSC},
@@ -828,6 +833,42 @@ void cmd_WFA()
 	Serial.print(CMD_TERMINATOR);
 	return;
 }
+
+void cmd_WSI()
+{
+	//WSI - WiFi SoftAP Information
+	uint8_t cantidad_clientes_conectados;
+	struct station_info *info_cliente;
+	struct ip_addr *direccion_ip;
+	IPAddress direccion;
+
+	cantidad_clientes_conectados = WiFi.softAPgetStationNum();
+	Serial.print(CMD_RESP_OK);
+	Serial.print(CMD_DELIMITER);
+	Serial.print(cantidad_clientes_conectados);
+
+	for (int cliente = 0; cliente < cantidad_clientes_conectados; cliente++)
+	{
+		Serial.print(CMD_DELIMITER);
+		info_cliente = wifi_softap_get_station_info();
+		direccion_ip = &info_cliente->ip;
+		direccion = direccion_ip->addr;
+
+		Serial.print(direccion);
+
+		Serial.print(";");
+
+		Serial.print(info_cliente->bssid[0],HEX);Serial.print(":");
+		Serial.print(info_cliente->bssid[1],HEX);Serial.print(":");
+		Serial.print(info_cliente->bssid[2],HEX);Serial.print(":");
+		Serial.print(info_cliente->bssid[3],HEX);Serial.print(":");
+		Serial.print(info_cliente->bssid[4],HEX);Serial.print(":");
+		Serial.print(info_cliente->bssid[5],HEX);
+	}
+	Serial.print(CMD_TERMINATOR);
+	return;
+}
+
 
 /**
  * Comando para configurar de forma manual los parametros de la interfaz de red.
