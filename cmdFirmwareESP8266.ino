@@ -101,7 +101,7 @@ bool dentro_intervalo(uint32_t val, uint32_t min, uint32_t max);
 //Comandos basicos
 void cmd_MIS(void);
 void cmd_MRS(void);
-
+void cmd_MVI(void);
 
 void cmd_MUC(void);
 
@@ -157,10 +157,11 @@ void cmd_WSD(void);
 
 const struct cmd conjunto_comandos[CANT_MAX_CMD] =
 {
-		{"MFH",{0,0},&cmd_MFH},
 		{"MIS",{0,0},&cmd_MIS},
 		{"MRS",{0,0},&cmd_MRS},
+		{"MVI",{0,0},&cmd_MVI},
 		{"MUC",{1,0},&cmd_MUC},
+		{"MFH",{0,0},&cmd_MFH},
 		{"WFM",{1,0},&cmd_WFM},
   		{"WFC",{2,0},&cmd_WFC},
   		{"WFS",{0,0},&cmd_WFS},
@@ -459,6 +460,21 @@ void cmd_MRS()
 {
 	/*MRS - Module Reset*/
 	ESP.restart();
+	return;
+}
+
+void cmd_MVI()
+{
+	//MVI - Module Version ID
+	String arduino_core_version;
+	arduino_core_version = ESP.getCoreVersion();
+	Serial.print(CMD_RESP_OK);
+	Serial.print(CMD_DELIMITER);
+	Serial.print("Firmware:V1.0.6");
+	Serial.print(CMD_DELIMITER);
+	Serial.print("ArduinoCore:");
+	Serial.print(arduino_core_version);
+	Serial.print(CMD_TERMINATOR);
 	return;
 }
 
