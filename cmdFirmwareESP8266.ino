@@ -95,71 +95,99 @@ sock_info sockets[CANT_MAX_CLIENTES];
 /*-------------------------------------------------------------------*/
 
 bool dentro_intervalo(uint32_t val, uint32_t min, uint32_t max);
-void cmd_WFC(void);
+
+
+//----------------------------Prototipo de comandos-----------------------------
+//Comandos basicos
+void cmd_MIS(void);
 void cmd_MRS(void);
+
+
 void cmd_MUC(void);
-void cmd_RVU(void);
+
+
+
+void cmd_MFH(void);
+
+//Comandos WiFI
+void cmd_WFM(void);
+void cmd_WFC(void);
 void cmd_WFS(void);
-void cmd_WRI(void);
-void cmd_WID(void);
-void cmd_WFI(void);
 void cmd_WFD(void);
+void cmd_WFA(void);
+
 void cmd_WCF(void);
+void cmd_WAC(void);
+void cmd_WSC(void);
+void cmd_WSS(void);
+
+
 void cmd_WSN(void);
+
+//Comandos TCP/IP
+
+
 void cmd_CCS(void);
 void cmd_SOW(void);
 void cmd_SOR(void);
+void cmd_SOC(void);
+void cmd_WFI(void);
+
+void cmd_SLC(void);
+
+//Comandos propios
+void cmd_RVU(void);
 void cmd_SVU(void);
 void cmd_SDU(void);
 void cmd_RVU(void);
-void cmd_SOC(void);
-void cmd_SLC(void);
+
+
 void cmd_SCC(void);
 void cmd_SAC(void);
-void cmd_MFH(void);
-void cmd_MIS(void);
-void cmd_WFA(void);
-void cmd_WAC(void);
+
+void cmd_WRI(void);
+void cmd_WID(void);
+
 void cmd_WAS(void);
 void cmd_WAD(void);
-void cmd_WFM(void);
-void cmd_WAI(void);
-void cmd_WSC(void);
-void cmd_WSD(void);
-void cmd_WSS(void);
 
-const struct cmd conjunto_comandos[CANT_MAX_CMD] = {
-  		{"WFC",{2,0},&cmd_WFC}, //0/
-  		{"WFS",{0,0},&cmd_WFS}, //1
-		{"WRI",{0,0},&cmd_WRI},	//2
-		{"WID",{0,0},&cmd_WID},	//3
-		{"WFI",{0,0},&cmd_WFI},
-		{"WFD",{1,0},&cmd_WFD},	//4
-		{"WCF",{4,0},&cmd_WCF},	//5
-		{"WSN",{1,0},&cmd_WSN},	//5
-		{"WSC",{0,0},&cmd_WSC},
-		{"WSD",{0,0},&cmd_WSD},
-		{"WSS",{0,0},&cmd_WSS},
-		{"CCS",{2,3},&cmd_CCS},	//6
-		{"SOW",{2,0},&cmd_SOW},	//7
-		{"SOR",{1,0},&cmd_SOR},	//8
-		{"SVU",{1,0},&cmd_SVU},
-		{"SDU",{2,0},&cmd_SDU},	//7
-		{"RVU",{1,0},&cmd_RVU},	//7
-		{"SOC",{1,0},&cmd_SOC},	//9
-		{"SLC",{2,0},&cmd_SLC},	//10
-		{"SCC",{1,0},&cmd_SCC},	//11
-		{"SAC",{1,0},&cmd_SAC},	//12
-		{"MFH",{0,0},&cmd_MFH},	//14
-		{"MIS",{0,0},&cmd_MIS},	//15
+void cmd_WAI(void);
+
+void cmd_WSD(void);
+
+const struct cmd conjunto_comandos[CANT_MAX_CMD] =
+{
+		{"MFH",{0,0},&cmd_MFH},
+		{"MIS",{0,0},&cmd_MIS},
 		{"MRS",{0,0},&cmd_MRS},
 		{"MUC",{1,0},&cmd_MUC},
-		{"WFA",{5,0},&cmd_WFA},	//16
-  		{"WAC",{3,0},&cmd_WAC},	//17
-  		{"WAS",{0,0},&cmd_WAS},	//18
-  		{"WAD",{1,0},&cmd_WAD},
 		{"WFM",{1,0},&cmd_WFM},
-  		{"WAI",{0,0},&cmd_WAI}	//20
+  		{"WFC",{2,0},&cmd_WFC},
+  		{"WFS",{0,0},&cmd_WFS},
+		{"WFD",{1,0},&cmd_WFD},
+		{"WFA",{5,0},&cmd_WFA},
+		{"WCF",{4,0},&cmd_WCF},
+		{"WAC",{3,0},&cmd_WAC},
+		{"WSC",{0,0},&cmd_WSC},
+		{"WSS",{0,0},&cmd_WSS},
+		{"CCS",{2,3},&cmd_CCS},
+		{"SOW",{2,0},&cmd_SOW},
+		{"SOR",{1,0},&cmd_SOR},
+		{"SOC",{1,0},&cmd_SOC},
+		{"WFI",{0,0},&cmd_WFI},
+		{"SLC",{2,0},&cmd_SLC},
+		{"SVU",{1,0},&cmd_SVU},
+		{"SDU",{2,0},&cmd_SDU},
+		{"RVU",{1,0},&cmd_RVU},
+		{"SCC",{1,0},&cmd_SCC},
+		{"SAC",{1,0},&cmd_SAC},
+		{"WRI",{0,0},&cmd_WRI},
+		{"WID",{0,0},&cmd_WID},
+		{"WSN",{1,0},&cmd_WSN},
+  		{"WAS",{0,0},&cmd_WAS},
+  		{"WAD",{1,0},&cmd_WAD},
+		{"WSD",{0,0},&cmd_WSD},
+  		{"WAI",{0,0},&cmd_WAI}
 };
 
 struct cmd_recibido comando_recibido;
@@ -178,12 +206,6 @@ bool b_smartconfig_en_proceso = false;
 /**<Variable utilizada para indicar cuando se recibio el paquete de configuracion
  * de credeneciales para SmartConfig */
 bool b_smartconfig_credenciales_recibidas = false;
-
-
-
-
-
-
 
 /* Descripcion: Ejectua el comando solicitado.*/
 
@@ -409,7 +431,7 @@ int8_t verificar_conexion_wifi()
 	return ret_val;
 }
 
-/*Comandos basicos para el manejo del modulo*/
+//----------------------------Comandos basicos----------------------------------
 
 /**
  *  Comando que verifica que el modulo se encuentra encendido.
@@ -419,7 +441,8 @@ int8_t verificar_conexion_wifi()
  *  @param Ninguno.
  *  @return 0\n
  */
-void cmd_MIS(){
+void cmd_MIS()
+{
 	/*MIS - Module Is Alive*/
 	Serial.print(CMD_RESP_OK);
 	Serial.print(CMD_TERMINATOR);
@@ -432,7 +455,8 @@ void cmd_MIS(){
  *  @param Ninguno.
  *  @return Nada.
  */
-void cmd_MRS(){
+void cmd_MRS()
+{
 	/*MRS - Module Reset*/
 	ESP.restart();
 	return;
@@ -447,7 +471,8 @@ void cmd_MRS(){
  *  @retval 0 Si no hay errores.
  *  @retval 1 Si el valor de velocidad se encuentra fuera de rango.
  */
-void cmd_MUC(){
+void cmd_MUC()
+{
 	/*Module UART Configuration*/
 	uint32_t baud_rate = atoi(comando_recibido.parametros[0]);
 	//Serial.print(baud_rate);
@@ -474,7 +499,8 @@ void cmd_MUC(){
  *  @param 	Ninguno.
  *  @return Bytes disponibles de RAM en el modulo.
  */
-void cmd_MFH(){
+void cmd_MFH()
+{
 	/*GFH - Get Free Heap*/
 	Serial.print(CMD_RESP_OK);
 	Serial.print(CMD_DELIMITER);
@@ -483,80 +509,44 @@ void cmd_MFH(){
 	return;
 }
 
-/*Comandos para configuracion del WiFi*/
+//----------------------------Comandos WiFi-------------------------------------
 
-/**
- *  Comando que explora los puntos de acceso dentro del alcance del modulo.
- *
- *  @param 	Ninguno.
- *  @return 0,NRO_APS_DISPONIBLES,SSID1;RSSI1,SSID2;RSSI2,SSIDn;RSSIn\n
- */
-void cmd_WFS(){
-	/*WFS - WiFi Scan*/
-	ESP8266WiFiScanClass WiFiScan;
-	int cant_punto_acceso_encontrados;
-	cant_punto_acceso_encontrados = WiFiScan.scanNetworks();
-	if (cant_punto_acceso_encontrados == -1) {
-		Serial.print(CMD_ERROR_1);
-	}else{
-		Serial.print(CMD_RESP_OK);
-		Serial.print(CMD_DELIMITER);
-		Serial.print(cant_punto_acceso_encontrados);
-		for (int esta_red = 0; esta_red < cant_punto_acceso_encontrados; esta_red++) {
-			Serial.print(CMD_DELIMITER);
-			Serial.print((WiFiScan.SSID(esta_red)));
-			Serial.print(';');
-			Serial.print(WiFiScan.RSSI(esta_red));
-		}
-	}
-	Serial.print(CMD_TERMINATOR);
-	return;
-}
-
-/**
- * Comando para configurar de forma manual los parametros de la interfaz de red.
- *
- *  @param 	IP
- *  @param  DNS
- *  @param  Gateway
- *  @param  Subnet
- *  @retval	1\n Direccion IP invalida.
- *  @retval 2\n Direccion DNS invalida.
- *  @retval 3\n Direccion de gateway invalida.
- *  @retval 4\n Direccion de subnet invalida.
- */
-void cmd_WCF(){
-	IPAddress ip,dns,gateway,subnet;
-	if(!ip.fromString(comando_recibido.parametros[0])){
-		/*IP Invalida*/
+void cmd_WFM()
+{
+	uint8_t parametro_modo_wifi;
+	WiFiMode_t modo_wifi;
+	bool ret_val;
+	parametro_modo_wifi = atoi(comando_recibido.parametros[0]);
+	if(!dentro_intervalo(parametro_modo_wifi,0,3) == true){
 		Serial.print(CMD_ERROR_1);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
-	if(!dns.fromString(comando_recibido.parametros[1])){
-		/*DNS Invalido*/
+	switch (parametro_modo_wifi) {
+		case 0:
+			modo_wifi = WIFI_OFF;
+			break;
+		case 1:
+			modo_wifi = WIFI_STA;
+			break;
+		case 2:
+			modo_wifi = WIFI_AP;
+			break;
+		case 3:
+			modo_wifi = WIFI_AP_STA;
+			break;
+		default:
+			break;
+	}
+	ret_val = WiFi.mode(modo_wifi);
+	if(ret_val == true)
+	{
+		Serial.print(CMD_RESP_OK);
+		Serial.print(CMD_TERMINATOR);
+	}else{
 		Serial.print(CMD_ERROR_2);
 		Serial.print(CMD_TERMINATOR);
-		return;
 	}
-	if(!gateway.fromString(comando_recibido.parametros[2])){
-		/*Gateway Invalido*/
-		Serial.print(CMD_ERROR_3);
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-	if(!subnet.fromString(comando_recibido.parametros[3])){
-		/*Subnet Invalido*/
-		Serial.print(CMD_ERROR_4);
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-	if(WiFi.config(ip,gateway,subnet,dns)){
-		Serial.print(CMD_RESP_OK);
-	}else{
-		Serial.print(CMD_ERROR_5);
-	}
-	Serial.print(CMD_TERMINATOR);
 	return;
 }
 
@@ -570,7 +560,8 @@ void cmd_WCF(){
  *  @retval 3\n La contraseña es incorrecta.
  *  @retval 4\n El SSID no esta disponible.
  */
-void cmd_WFC(){
+void cmd_WFC()
+{
 	/*WFC - WiFi Connect*/
 	unsigned long millis_anterior;
 	unsigned long millis_actual;
@@ -635,90 +626,37 @@ void cmd_WFC(){
 	return;
 }
 
-/* Comando para cambiar el hostname del servidor DHCP de la interfaz de estacion*/
-void cmd_WSN()
+/**
+ *  Comando que explora los puntos de acceso dentro del alcance del modulo.
+ *
+ *  @param 	Ninguno.
+ *  @return 0,NRO_APS_DISPONIBLES,SSID1;RSSI1,SSID2;RSSI2,SSIDn;RSSIn\n
+ */
+void cmd_WFS()
 {
-	if (WiFi.hostname(comando_recibido.parametros[0]))
-	{
-		Serial.print(CMD_RESP_OK);
-
-	}else
-	{
-		Serial.print(CMD_ERROR_1);
-	}
-	Serial.print(CMD_TERMINATOR);
-	return;
-}
-
-/**
- * Comando para obtener el RSSI del punto de acceso al cual se encuentra
- * conectado.
- *
- *  @param 	Ninguno.
- *  @retval 0,RSSI(dB) Sin error, se retorna el RSSI en decibeles.
- *  @retval 1 Error al obtener el RSSI.
- */
-void cmd_WRI(){
-	/*WRI - WiFi RSSI*/
-	int32_t rssi = WiFi.RSSI();
-	if(rssi == 31){
-		/*Valor invalido, ver documentacion del SDK: wifi_station_get_rssi*/
+	/*WFS - WiFi Scan*/
+	ESP8266WiFiScanClass WiFiScan;
+	int cant_punto_acceso_encontrados;
+	cant_punto_acceso_encontrados = WiFiScan.scanNetworks();
+	if (cant_punto_acceso_encontrados == -1) {
 		Serial.print(CMD_ERROR_1);
 	}else{
 		Serial.print(CMD_RESP_OK);
 		Serial.print(CMD_DELIMITER);
-		Serial.print(rssi);
+		Serial.print(cant_punto_acceso_encontrados);
+		for (int esta_red = 0; esta_red < cant_punto_acceso_encontrados; esta_red++) {
+			Serial.print(CMD_DELIMITER);
+			Serial.print((WiFiScan.SSID(esta_red)));
+			Serial.print(';');
+			Serial.print(WiFiScan.RSSI(esta_red));
+		}
 	}
 	Serial.print(CMD_TERMINATOR);
 	return;
 }
 
-/**
- * Comando para obtener el SSID de la estacion a la que se encuentra conectado
- * actualmente el modulo.
- *
- *  @param 	Ninguno.
- *  @retval 0,SSID\n	Sin error, se retorna el SSID.
- *  @retval 1 Error al obtener el SSID, no se encuentra conectada a ningun red.
- */
-
-void cmd_WID(){
-	int ssid_longitud;
-	ssid_longitud = strlen(WiFi.SSID().c_str());
-	if(ssid_longitud == 0){
-		Serial.print(CMD_ERROR_1);
-	}else{
-		Serial.print(CMD_RESP_OK);
-		Serial.print(CMD_DELIMITER);
-		Serial.print(WiFi.SSID().c_str());
-		Serial.print(CMD_DELIMITER);
-		Serial.print(WiFi.psk().c_str());
-	}
-	Serial.print(CMD_TERMINATOR);
-	return;
-}
-
-
-void cmd_WFI(){
-	/*WFI - WiFi Station Information
-	 * Descripcion: Imprime la direccion MAC e IP local de la  interfaz de estacion, ademas
-	 * de la mascara de subred, IP de la puerta de enlance y la direccion IP del servidor DNS #1*/
-	Serial.print(CMD_RESP_OK);
-	Serial.print(CMD_DELIMITER);
-	Serial.print(WiFi.macAddress());
-	Serial.print(CMD_DELIMITER);
-	Serial.print(WiFi.localIP());
-	Serial.print(CMD_DELIMITER);
-	Serial.print(WiFi.subnetMask());
-	Serial.print(CMD_DELIMITER);
-	Serial.print(WiFi.gatewayIP().toString().c_str());
-	Serial.print(CMD_DELIMITER);
-	Serial.print(WiFi.dnsIP());
-	Serial.print(CMD_TERMINATOR);
-	return;
-}
-
-void cmd_WFD(){
+void cmd_WFD()
+{
 	/*WFD - WiFi Disconnect*/
 	bool b_estacion_off = comando_recibido.parametros[0];
 	if(!dentro_intervalo(b_estacion_off,0,1)){
@@ -736,42 +674,6 @@ void cmd_WFD(){
 	return;
 }
 
-void cmd_WAC(){
-	/*WAC - WiFi Soft-AP Configuration*/
-	bool b_configuracion_punto_acceso = 0;
-	IPAddress ip_local;
-	IPAddress gateway;
-	IPAddress subnet;
-	if(!ip_local.fromString(comando_recibido.parametros[0])){
-		/*IP local Invalido*/
-		Serial.print(CMD_ERROR_1);
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-	if(!gateway.fromString(comando_recibido.parametros[1])){
-		/*Gateway Invalido*/
-		Serial.print(CMD_ERROR_2);
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-	if(!subnet.fromString(comando_recibido.parametros[2])){
-		/*Subnet Invalido*/
-		Serial.print(CMD_ERROR_3);
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-	b_configuracion_punto_acceso = WiFi.softAPConfig(ip_local, gateway, subnet);
-	if(b_configuracion_punto_acceso == 0){
-		Serial.print(CMD_ERROR_4);
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-	Serial.print(CMD_RESP_OK);
-	Serial.print(CMD_TERMINATOR);
-	return;
-
-}
-
 /**
  * Comando para configurar el modulo ESP8266 en modo punto de acceso(softAP).
  * @param SSID			Nombre del AP, 63 caracteres maximo.
@@ -785,8 +687,8 @@ void cmd_WAC(){
  * @retval 3 			Error, la cantidad de conexiones esta fuera de rango.
  * @retval 4 			Error, no se pudo crear el punto de acceso.
  */
-
-void cmd_WFA(){
+void cmd_WFA()
+{
 	bool b_punto_acceso_creado = 0;
 	uint8_t canal_wifi = 1;
 	uint8_t hidden_opt = 0;
@@ -835,7 +737,122 @@ void cmd_WFA(){
 	return;
 }
 
+/**
+ * Comando para configurar de forma manual los parametros de la interfaz de red.
+ *
+ *  @param 	IP
+ *  @param  DNS
+ *  @param  Gateway
+ *  @param  Subnet
+ *  @retval	1\n Direccion IP invalida.
+ *  @retval 2\n Direccion DNS invalida.
+ *  @retval 3\n Direccion de gateway invalida.
+ *  @retval 4\n Direccion de subnet invalida.
+ */
+void cmd_WCF()
+{
+	IPAddress ip,dns,gateway,subnet;
+	if(!ip.fromString(comando_recibido.parametros[0])){
+		/*IP Invalida*/
+		Serial.print(CMD_ERROR_1);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	if(!dns.fromString(comando_recibido.parametros[1])){
+		/*DNS Invalido*/
+		Serial.print(CMD_ERROR_2);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	if(!gateway.fromString(comando_recibido.parametros[2])){
+		/*Gateway Invalido*/
+		Serial.print(CMD_ERROR_3);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	if(!subnet.fromString(comando_recibido.parametros[3])){
+		/*Subnet Invalido*/
+		Serial.print(CMD_ERROR_4);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	if(WiFi.config(ip,gateway,subnet,dns)){
+		Serial.print(CMD_RESP_OK);
+	}else{
+		Serial.print(CMD_ERROR_5);
+	}
+	Serial.print(CMD_TERMINATOR);
+	return;
+}
 
+void cmd_WAC()
+{
+	/*WAC - WiFi Soft-AP Configuration*/
+	bool b_configuracion_punto_acceso = 0;
+	IPAddress ip_local;
+	IPAddress gateway;
+	IPAddress subnet;
+	if(!ip_local.fromString(comando_recibido.parametros[0])){
+		/*IP local Invalido*/
+		Serial.print(CMD_ERROR_1);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	if(!gateway.fromString(comando_recibido.parametros[1])){
+		/*Gateway Invalido*/
+		Serial.print(CMD_ERROR_2);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	if(!subnet.fromString(comando_recibido.parametros[2])){
+		/*Subnet Invalido*/
+		Serial.print(CMD_ERROR_3);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	b_configuracion_punto_acceso = WiFi.softAPConfig(ip_local, gateway, subnet);
+	if(b_configuracion_punto_acceso == 0){
+		Serial.print(CMD_ERROR_4);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	Serial.print(CMD_RESP_OK);
+	Serial.print(CMD_TERMINATOR);
+	return;
+
+}
+
+/*Comando para iniciar la configuracion utilizando SmartConfig*/
+void cmd_WSC()
+{
+	if(WiFi.beginSmartConfig())
+	{
+		b_smartconfig_en_proceso = true;
+		Serial.print(CMD_RESP_OK);
+	}else
+	{
+		Serial.print(CMD_ERROR_1);
+	}
+	Serial.print(CMD_TERMINATOR);
+	return;
+}
+
+/*Comando para detener la configuracion a traves de SmartConfig*/
+void cmd_WSS()
+{
+	if(WiFi.stopSmartConfig())
+	{
+		b_smartconfig_en_proceso = false;
+		b_smartconfig_credenciales_recibidas = false;
+		Serial.print(CMD_RESP_OK);
+	}else
+	{
+		b_smartconfig_credenciales_recibidas = false;
+		Serial.print(CMD_ERROR_1);
+	}
+	Serial.print(CMD_TERMINATOR);
+	return;
+}
 
 void cmd_WAS(){
 	/*WAS - WiFi Acces Point Stations connected*/
@@ -876,21 +893,6 @@ void cmd_WAI(){
 	return;
 }
 
-/*Comando para iniciar la configuracion utilizando SmartConfig*/
-void cmd_WSC()
-{
-	if(WiFi.beginSmartConfig())
-	{
-		b_smartconfig_en_proceso = true;
-		Serial.print(CMD_RESP_OK);
-	}else
-	{
-		Serial.print(CMD_ERROR_1);
-	}
-	Serial.print(CMD_TERMINATOR);
-	return;
-}
-
 /*Comando para verificar el estado de la configuracion SmartConfig*/
 void cmd_WSD()
 {
@@ -906,22 +908,7 @@ void cmd_WSD()
 	return;
 }
 
-/*Comando para detener la configuracion a traves de SmartConfig*/
-void cmd_WSS()
-{
-	if(WiFi.stopSmartConfig())
-	{
-		b_smartconfig_en_proceso = false;
-		b_smartconfig_credenciales_recibidas = false;
-		Serial.print(CMD_RESP_OK);
-	}else
-	{
-		b_smartconfig_credenciales_recibidas = false;
-		Serial.print(CMD_ERROR_1);
-	}
-	Serial.print(CMD_TERMINATOR);
-	return;
-}
+//----------------------------Comandos TCP/IP-----------------------------------
 
 /**
  * CCS - Client Connect Server
@@ -937,8 +924,8 @@ void cmd_WSS()
  * @retval 3 			Error, la cantidad de conexiones esta fuera de rango.
  * @retval 4 			Error, no se pudo crear el punto de acceso.
  */
-/*Comandos para el manejo de las operaciones TCP*/
-void cmd_CCS(){
+void cmd_CCS()
+{
 	/*TODO: Se podria agregar verificacion para el parametro IP. Es decir
 	 * comprobar que sea una direccion IP y que se tenga alcance a esta direccion.*/
 	/*CCS - cliente_tcp Connect to Server*/
@@ -1023,147 +1010,6 @@ void cmd_CCS(){
 	return;
 }
 
-void cmd_SLC(){
-	/*SLC - Server Listen to Clients*/
-	wl_status_t estado_conexion_wifi;
-	uint8_t socket_pasivo;
-	uint8_t backlog;
-	uint16_t puerto_tcp;
-	int8_t conexion_wifi;
-	bool b_puerto_tcp_en_uso = false;
-
-	puerto_tcp = atoi(comando_recibido.parametros[0]);
-	backlog = atoi(comando_recibido.parametros[1]);
-	/*Determinar primero si el puerto es valido*/
-	if(!dentro_intervalo(puerto_tcp,0,NUM_MAX_PUERTO)){
-		/*El numero de puerto esta fuera de rango*/
-		Serial.print(CMD_ERROR_2);
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-	if(!dentro_intervalo(backlog,0,CANT_MAX_CLIENTES)){
-		/*El numero de clientes esta fuera de rango*/
-		Serial.print(CMD_ERROR_3);
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}else{
-		/*Verificar que se tienen los recursos disponibles para escuchar la cantidad de clientes*/
-	}
-	/*Verificar conexion WiFi*/
-	conexion_wifi = verificar_conexion_wifi();
-	if(conexion_wifi != 0)
-	{
-		Serial.print(CMD_ERROR_1);
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-	/*Determinar si ya existe un servidor funcionando con ese puerto*/
-	for (socket_pasivo = 0; socket_pasivo < CANT_MAX_SERVIDORES; socket_pasivo++) {
-		if(puerto_tcp != servidor[socket_pasivo].num_puerto_en_uso){
-			b_puerto_tcp_en_uso = false;
-			break;
-		}else{
-			Serial.print(CMD_RESP_OK);
-			Serial.print(CMD_DELIMITER);
-			Serial.print(socket_pasivo,DEC);
-			Serial.print(CMD_TERMINATOR);
-			return;
-		}
-	}
-	/*Si no existe un servidor con ese puerto, determinar que servidor esta libre y crear el servidor*/
-	if(!b_puerto_tcp_en_uso){
-		for (socket_pasivo = 0; socket_pasivo < CANT_MAX_SERVIDORES; socket_pasivo++) {
-			if(servidor_obj[socket_pasivo].status() == CLOSED){
-				servidor[socket_pasivo].num_puerto_en_uso = puerto_tcp;
-				servidor[socket_pasivo].cant_maxima_clientes_permitidos= backlog;
-				servidor_obj[socket_pasivo].begin(puerto_tcp);
-				Serial.print(CMD_RESP_OK);
-				Serial.print(CMD_DELIMITER);
-				Serial.print(socket_pasivo,DEC);
-				Serial.print(CMD_TERMINATOR);
-				servidor[socket_pasivo].b_activo = true;
-				break;
-			}
-		}
-	}
-	return;
-}
-
-void cmd_SAC(){
-	/*SAC - Server Accept Clients*/
-
-	uint8_t socket;
-	int8_t conexion_wifi;
-	uint8_t serverAcceptStatus;
-
-	socket = atoi(comando_recibido.parametros[0]);
-	if(!dentro_intervalo(socket,0,CANT_MAX_SERVIDORES)){
-		/*El numero de socket esta fuera de rango*/
-		Serial.print(CMD_ERROR_2);
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-	conexion_wifi = verificar_conexion_wifi();
-	if(conexion_wifi != 0)
-	{
-		Serial.print(CMD_ERROR_1);
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-	if(servidor[socket].b_activo){
-		if(servidor_obj[socket].hasClient()){
-			serverAcceptStatus = servidor_acepta_clientes(servidor_obj[socket],socket);
-			if(serverAcceptStatus == 1){
-				/*Hay socket disponible*/
-			}
-			if(serverAcceptStatus == 2){
-				/*No hay socket disponible*/
-				Serial.print(CMD_ERROR_3);
-			}
-			if(serverAcceptStatus == 3){
-				/*No se aceptan mas clientes en este servidor*/
-				Serial.print(CMD_ERROR_6);
-			}
-		}else{
-			/*El servidor no tiene clientes*/
-			Serial.print(CMD_ERROR_4);
-		}
-	}else{
-		/*El servidor se encuentra desactivado*/
-		Serial.print(CMD_ERROR_5);
-	}
-	Serial.print(CMD_TERMINATOR);
-	return;
-}
-
-void cmd_SCC(){
-	/*SCC - Server Close Connection*/
-	uint8_t socket;
-	int8_t conexion_wifi;
-
-	socket = atoi(comando_recibido.parametros[0]);
-	if(!dentro_intervalo(socket,0,CANT_MAX_SERVIDORES)){
-		/*El numero de socket esta fuera de rango*/
-		Serial.print(CMD_ERROR_2);
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-
-	conexion_wifi = verificar_conexion_wifi();
-	if(conexion_wifi != 0)
-	{
-		Serial.print(CMD_ERROR_1);
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-
-	servidor_obj[socket].stop();
-	servidor[socket].b_activo = false;
-	Serial.print(CMD_RESP_OK);
-	Serial.print(CMD_TERMINATOR);
-	return;
-}
-
 /*SOW - Socket Write*/
 void cmd_SOW()
 {
@@ -1229,151 +1075,6 @@ void cmd_SOW()
 		Serial.print(CMD_RESP_OK);
 		Serial.print(CMD_TERMINATOR);
 	}
-	return;
-}
-
-void cmd_SVU()
-{
-	int8_t socket;
-	uint16_t puerto_udp;
-	int8_t conexion_wifi;
-
-	puerto_udp = atoi(comando_recibido.parametros[0]);
-
-	/*Determinar primero si el puerto es valido*/
-	if(!dentro_intervalo(puerto_udp,0,NUM_MAX_PUERTO)){
-		/*El numero de puerto esta fuera de rango*/
-		Serial.print(CMD_ERROR_2);
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-
-	/*Verificar conexion WiFi*/
-	conexion_wifi = verificar_conexion_wifi();
-	if(conexion_wifi != 0)
-	{
-		Serial.print(CMD_ERROR_1);
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-	socket = obtener_socket_libre(UDP);
-	if(socket == -1)
-	{
-		/*No hay socket disponible*/
-		Serial.print(CMD_ERROR_3);
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-
-	if( udp_obj[sockets[socket].indice_objeto].begin(puerto_udp))
-	{
-		sockets[socket].en_uso = true;
-		sockets[socket].tipo = TIPO_SERVIDOR;
-		sockets[socket].protocolo = UDP;
-		Serial.print(CMD_RESP_OK);
-		Serial.print(CMD_DELIMITER);
-		Serial.print(socket);
-	}else{
-		Serial.print(CMD_ERROR_4);
-	}
-	Serial.print(CMD_TERMINATOR);
-	return;
-}
-
-
-//SDU-Send UDP, para enviar datos con el protocolo UDP
-void cmd_SDU()
-{
-	uint8_t socket;
-	uint16_t cant_bytes_enviar;
-	int8_t conexion_wifi;
-	socket = atoi(comando_recibido.parametros[0]);
-	cant_bytes_enviar = atoi(comando_recibido.parametros[1]);
-	if(!dentro_intervalo(socket,0,CANT_MAX_CLIENTES))
-	{
-		Serial.print(CMD_ERROR_2);
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-
-	/*Verificar conexion WiFi*/
-	conexion_wifi = verificar_conexion_wifi();
-	if(conexion_wifi != 0)
-	{
-		Serial.print(CMD_ERROR_1);
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-
-	if(sockets[socket].protocolo == TCP)
-	{
-		//Socket del tipo incorrecto
-		Serial.print(CMD_ERROR_5);
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-
-	//TODO: Verificar que el socket sea uno del tipo cliente y no servidor.
-
-	if(!dentro_intervalo(cant_bytes_enviar,0,TAM_MAX_PAQUETE_DATOS_UDP))
-	{
-		Serial.print(CMD_ERROR_3);
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-	if ( udp_obj[sockets[socket].indice_objeto].write(paquete_datos_tcp,cant_bytes_enviar) )
-	{
-		if(udp_obj[sockets[socket].indice_objeto].endPacket())
-		{
-			Serial.print(CMD_RESP_OK);
-			Serial.print(CMD_TERMINATOR);
-		}else{
-			Serial.print(CMD_ERROR_4);
-			Serial.print(CMD_TERMINATOR);
-		}
-	}else{
-		Serial.print(CMD_ERROR_4);
-		Serial.print(CMD_TERMINATOR);
-	}
-	return;
-}
-
-/*Comando RVU - Receive UDP Data.
- * */
-void cmd_RVU()
-{
-	int cant_bytes_paquete_udp_recibido;
-	uint8_t socket;
-	int8_t indice_objeto;
-	int8_t conexion_wifi;
-	socket = atoi(comando_recibido.parametros[0]);
-	if(!dentro_intervalo(socket,0,CANT_MAX_CLIENTES)){
-		Serial.print(CMD_ERROR_2);
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-	/*Verificar conexion WiFi*/
-	conexion_wifi = verificar_conexion_wifi();
-	if(conexion_wifi != 0)
-	{
-		Serial.print(CMD_ERROR_1);
-		Serial.print(CMD_TERMINATOR);
-		return;
-	}
-	indice_objeto = sockets[socket].indice_objeto;
-	cant_bytes_paquete_udp_recibido = udp_obj[indice_objeto].parsePacket();
-	Serial.print(CMD_RESP_OK);
-	Serial.print(CMD_DELIMITER);
-/*	Serial.print(udp_obj[indice_objeto].remoteIP());
-	Serial.print(CMD_DELIMITER);
-	Serial.print(udp_obj[indice_objeto].remotePort());
-	Serial.print(CMD_DELIMITER);*/
-	Serial.print(cant_bytes_paquete_udp_recibido,DEC);
-	Serial.print(CMD_DELIMITER);
-	while(cant_bytes_paquete_udp_recibido--){
-		Serial.print((char)udp_obj[indice_objeto].read());
-	}
-	Serial.print(CMD_TERMINATOR);
 	return;
 }
 
@@ -1477,42 +1178,376 @@ void cmd_SOC()
 	return;
 }
 
+void cmd_WFI()
+{
+	/*WFI - WiFi Station Information
+	 * Descripcion: Imprime la direccion MAC e IP local de la  interfaz de estacion, ademas
+	 * de la mascara de subred, IP de la puerta de enlance y la direccion IP del servidor DNS #1*/
+	Serial.print(CMD_RESP_OK);
+	Serial.print(CMD_DELIMITER);
+	Serial.print(WiFi.macAddress());
+	Serial.print(CMD_DELIMITER);
+	Serial.print(WiFi.localIP());
+	Serial.print(CMD_DELIMITER);
+	Serial.print(WiFi.subnetMask());
+	Serial.print(CMD_DELIMITER);
+	Serial.print(WiFi.gatewayIP().toString().c_str());
+	Serial.print(CMD_DELIMITER);
+	Serial.print(WiFi.dnsIP());
+	Serial.print(CMD_TERMINATOR);
+	return;
+}
 
+void cmd_SLC()
+{
+	/*SLC - Server Listen to Clients*/
+	wl_status_t estado_conexion_wifi;
+	uint8_t socket_pasivo;
+	uint8_t backlog;
+	uint16_t puerto_tcp;
+	int8_t conexion_wifi;
+	bool b_puerto_tcp_en_uso = false;
 
-void cmd_WFM(){
-	uint8_t parametro_modo_wifi;
-	WiFiMode_t modo_wifi;
-	bool ret_val;
-	parametro_modo_wifi = atoi(comando_recibido.parametros[0]);
-	if(!dentro_intervalo(parametro_modo_wifi,0,3) == true){
+	puerto_tcp = atoi(comando_recibido.parametros[0]);
+	backlog = atoi(comando_recibido.parametros[1]);
+	/*Determinar primero si el puerto es valido*/
+	if(!dentro_intervalo(puerto_tcp,0,NUM_MAX_PUERTO)){
+		/*El numero de puerto esta fuera de rango*/
+		Serial.print(CMD_ERROR_2);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	if(!dentro_intervalo(backlog,0,CANT_MAX_CLIENTES)){
+		/*El numero de clientes esta fuera de rango*/
+		Serial.print(CMD_ERROR_3);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}else{
+		/*Verificar que se tienen los recursos disponibles para escuchar la cantidad de clientes*/
+	}
+	/*Verificar conexion WiFi*/
+	conexion_wifi = verificar_conexion_wifi();
+	if(conexion_wifi != 0)
+	{
 		Serial.print(CMD_ERROR_1);
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
-	switch (parametro_modo_wifi) {
-		case 0:
-			modo_wifi = WIFI_OFF;
+	/*Determinar si ya existe un servidor funcionando con ese puerto*/
+	for (socket_pasivo = 0; socket_pasivo < CANT_MAX_SERVIDORES; socket_pasivo++) {
+		if(puerto_tcp != servidor[socket_pasivo].num_puerto_en_uso){
+			b_puerto_tcp_en_uso = false;
 			break;
-		case 1:
-			modo_wifi = WIFI_STA;
-			break;
-		case 2:
-			modo_wifi = WIFI_AP;
-			break;
-		case 3:
-			modo_wifi = WIFI_AP_STA;
-			break;
-		default:
-			break;
+		}else{
+			Serial.print(CMD_RESP_OK);
+			Serial.print(CMD_DELIMITER);
+			Serial.print(socket_pasivo,DEC);
+			Serial.print(CMD_TERMINATOR);
+			return;
+		}
 	}
-	ret_val = WiFi.mode(modo_wifi);
-	if(ret_val == true){
-		Serial.print(CMD_RESP_OK);
-		Serial.print(CMD_TERMINATOR);
-	}else{
+	/*Si no existe un servidor con ese puerto, determinar que servidor esta libre y crear el servidor*/
+	if(!b_puerto_tcp_en_uso){
+		for (socket_pasivo = 0; socket_pasivo < CANT_MAX_SERVIDORES; socket_pasivo++) {
+			if(servidor_obj[socket_pasivo].status() == CLOSED){
+				servidor[socket_pasivo].num_puerto_en_uso = puerto_tcp;
+				servidor[socket_pasivo].cant_maxima_clientes_permitidos= backlog;
+				servidor_obj[socket_pasivo].begin(puerto_tcp);
+				Serial.print(CMD_RESP_OK);
+				Serial.print(CMD_DELIMITER);
+				Serial.print(socket_pasivo,DEC);
+				Serial.print(CMD_TERMINATOR);
+				servidor[socket_pasivo].b_activo = true;
+				break;
+			}
+		}
+	}
+	return;
+}
+
+void cmd_SAC()
+{
+	/*SAC - Server Accept Clients*/
+
+	uint8_t socket;
+	int8_t conexion_wifi;
+	uint8_t serverAcceptStatus;
+
+	socket = atoi(comando_recibido.parametros[0]);
+	if(!dentro_intervalo(socket,0,CANT_MAX_SERVIDORES)){
+		/*El numero de socket esta fuera de rango*/
 		Serial.print(CMD_ERROR_2);
 		Serial.print(CMD_TERMINATOR);
+		return;
 	}
+	conexion_wifi = verificar_conexion_wifi();
+	if(conexion_wifi != 0)
+	{
+		Serial.print(CMD_ERROR_1);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	if(servidor[socket].b_activo){
+		if(servidor_obj[socket].hasClient()){
+			serverAcceptStatus = servidor_acepta_clientes(servidor_obj[socket],socket);
+			if(serverAcceptStatus == 1){
+				/*Hay socket disponible*/
+			}
+			if(serverAcceptStatus == 2){
+				/*No hay socket disponible*/
+				Serial.print(CMD_ERROR_3);
+			}
+			if(serverAcceptStatus == 3){
+				/*No se aceptan mas clientes en este servidor*/
+				Serial.print(CMD_ERROR_6);
+			}
+		}else{
+			/*El servidor no tiene clientes*/
+			Serial.print(CMD_ERROR_4);
+		}
+	}else{
+		/*El servidor se encuentra desactivado*/
+		Serial.print(CMD_ERROR_5);
+	}
+	Serial.print(CMD_TERMINATOR);
+	return;
+}
+
+void cmd_SCC()
+{
+	/*SCC - Server Close Connection*/
+	uint8_t socket;
+	int8_t conexion_wifi;
+
+	socket = atoi(comando_recibido.parametros[0]);
+	if(!dentro_intervalo(socket,0,CANT_MAX_SERVIDORES)){
+		/*El numero de socket esta fuera de rango*/
+		Serial.print(CMD_ERROR_2);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+
+	conexion_wifi = verificar_conexion_wifi();
+	if(conexion_wifi != 0)
+	{
+		Serial.print(CMD_ERROR_1);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+
+	servidor_obj[socket].stop();
+	servidor[socket].b_activo = false;
+	Serial.print(CMD_RESP_OK);
+	Serial.print(CMD_TERMINATOR);
+	return;
+}
+
+void cmd_SVU()
+{
+	int8_t socket;
+	uint16_t puerto_udp;
+	int8_t conexion_wifi;
+
+	puerto_udp = atoi(comando_recibido.parametros[0]);
+
+	/*Determinar primero si el puerto es valido*/
+	if(!dentro_intervalo(puerto_udp,0,NUM_MAX_PUERTO)){
+		/*El numero de puerto esta fuera de rango*/
+		Serial.print(CMD_ERROR_2);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+
+	/*Verificar conexion WiFi*/
+	conexion_wifi = verificar_conexion_wifi();
+	if(conexion_wifi != 0)
+	{
+		Serial.print(CMD_ERROR_1);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	socket = obtener_socket_libre(UDP);
+	if(socket == -1)
+	{
+		/*No hay socket disponible*/
+		Serial.print(CMD_ERROR_3);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+
+	if( udp_obj[sockets[socket].indice_objeto].begin(puerto_udp))
+	{
+		sockets[socket].en_uso = true;
+		sockets[socket].tipo = TIPO_SERVIDOR;
+		sockets[socket].protocolo = UDP;
+		Serial.print(CMD_RESP_OK);
+		Serial.print(CMD_DELIMITER);
+		Serial.print(socket);
+	}else{
+		Serial.print(CMD_ERROR_4);
+	}
+	Serial.print(CMD_TERMINATOR);
+	return;
+}
+
+//SDU-Send UDP, para enviar datos con el protocolo UDP
+void cmd_SDU()
+{
+	uint8_t socket;
+	uint16_t cant_bytes_enviar;
+	int8_t conexion_wifi;
+	socket = atoi(comando_recibido.parametros[0]);
+	cant_bytes_enviar = atoi(comando_recibido.parametros[1]);
+	if(!dentro_intervalo(socket,0,CANT_MAX_CLIENTES))
+	{
+		Serial.print(CMD_ERROR_2);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+
+	/*Verificar conexion WiFi*/
+	conexion_wifi = verificar_conexion_wifi();
+	if(conexion_wifi != 0)
+	{
+		Serial.print(CMD_ERROR_1);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+
+	if(sockets[socket].protocolo == TCP)
+	{
+		//Socket del tipo incorrecto
+		Serial.print(CMD_ERROR_5);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+
+	//TODO: Verificar que el socket sea uno del tipo cliente y no servidor.
+
+	if(!dentro_intervalo(cant_bytes_enviar,0,TAM_MAX_PAQUETE_DATOS_UDP))
+	{
+		Serial.print(CMD_ERROR_3);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	if ( udp_obj[sockets[socket].indice_objeto].write(paquete_datos_tcp,cant_bytes_enviar) )
+	{
+		if(udp_obj[sockets[socket].indice_objeto].endPacket())
+		{
+			Serial.print(CMD_RESP_OK);
+			Serial.print(CMD_TERMINATOR);
+		}else{
+			Serial.print(CMD_ERROR_4);
+			Serial.print(CMD_TERMINATOR);
+		}
+	}else{
+		Serial.print(CMD_ERROR_4);
+		Serial.print(CMD_TERMINATOR);
+	}
+	return;
+}
+
+/*Comando RVU - Receive UDP Data.
+ * */
+void cmd_RVU()
+{
+	int cant_bytes_paquete_udp_recibido;
+	uint8_t socket;
+	int8_t indice_objeto;
+	int8_t conexion_wifi;
+	socket = atoi(comando_recibido.parametros[0]);
+	if(!dentro_intervalo(socket,0,CANT_MAX_CLIENTES)){
+		Serial.print(CMD_ERROR_2);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	/*Verificar conexion WiFi*/
+	conexion_wifi = verificar_conexion_wifi();
+	if(conexion_wifi != 0)
+	{
+		Serial.print(CMD_ERROR_1);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	indice_objeto = sockets[socket].indice_objeto;
+	cant_bytes_paquete_udp_recibido = udp_obj[indice_objeto].parsePacket();
+	Serial.print(CMD_RESP_OK);
+	Serial.print(CMD_DELIMITER);
+/*	Serial.print(udp_obj[indice_objeto].remoteIP());
+	Serial.print(CMD_DELIMITER);
+	Serial.print(udp_obj[indice_objeto].remotePort());
+	Serial.print(CMD_DELIMITER);*/
+	Serial.print(cant_bytes_paquete_udp_recibido,DEC);
+	Serial.print(CMD_DELIMITER);
+	while(cant_bytes_paquete_udp_recibido--){
+		Serial.print((char)udp_obj[indice_objeto].read());
+	}
+	Serial.print(CMD_TERMINATOR);
+	return;
+}
+
+/* Comando para cambiar el hostname del servidor DHCP de la interfaz de estacion*/
+void cmd_WSN()
+{
+	if (WiFi.hostname(comando_recibido.parametros[0]))
+	{
+		Serial.print(CMD_RESP_OK);
+
+	}else
+	{
+		Serial.print(CMD_ERROR_1);
+	}
+	Serial.print(CMD_TERMINATOR);
+	return;
+}
+
+/**
+ * Comando para obtener el RSSI del punto de acceso al cual se encuentra
+ * conectado.
+ *
+ *  @param 	Ninguno.
+ *  @retval 0,RSSI(dB) Sin error, se retorna el RSSI en decibeles.
+ *  @retval 1 Error al obtener el RSSI.
+ */
+void cmd_WRI()
+{
+	/*WRI - WiFi RSSI*/
+	int32_t rssi = WiFi.RSSI();
+	if(rssi == 31){
+		/*Valor invalido, ver documentacion del SDK: wifi_station_get_rssi*/
+		Serial.print(CMD_ERROR_1);
+	}else{
+		Serial.print(CMD_RESP_OK);
+		Serial.print(CMD_DELIMITER);
+		Serial.print(rssi);
+	}
+	Serial.print(CMD_TERMINATOR);
+	return;
+}
+
+/**
+ * Comando para obtener el SSID de la estacion a la que se encuentra conectado
+ * actualmente el modulo.
+ *
+ *  @param 	Ninguno.
+ *  @retval 0,SSID\n	Sin error, se retorna el SSID.
+ *  @retval 1 Error al obtener el SSID, no se encuentra conectada a ningun red.
+ */
+
+void cmd_WID()
+{
+	int ssid_longitud;
+	ssid_longitud = strlen(WiFi.SSID().c_str());
+	if(ssid_longitud == 0){
+		Serial.print(CMD_ERROR_1);
+	}else{
+		Serial.print(CMD_RESP_OK);
+		Serial.print(CMD_DELIMITER);
+		Serial.print(WiFi.SSID().c_str());
+		Serial.print(CMD_DELIMITER);
+		Serial.print(WiFi.psk().c_str());
+	}
+	Serial.print(CMD_TERMINATOR);
 	return;
 }
 
