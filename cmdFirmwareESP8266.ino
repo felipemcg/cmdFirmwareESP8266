@@ -102,7 +102,7 @@ bool dentro_intervalo(uint32_t val, uint32_t min, uint32_t max);
 void cmd_MIS(void);
 void cmd_MRS(void);
 void cmd_MVI(void);
-
+void cmd_MDS(void);
 void cmd_MUC(void);
 
 
@@ -160,6 +160,7 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] =
 		{"MIS",{0,0},&cmd_MIS},
 		{"MRS",{0,0},&cmd_MRS},
 		{"MVI",{0,0},&cmd_MVI},
+		{"MDS",{2,0},&cmd_MDS},
 		{"MUC",{1,0},&cmd_MUC},
 		{"MFH",{0,0},&cmd_MFH},
 		{"WFM",{1,0},&cmd_WFM},
@@ -475,6 +476,55 @@ void cmd_MVI()
 	Serial.print("ArduinoCore:");
 	Serial.print(arduino_core_version);
 	Serial.print(CMD_TERMINATOR);
+	return;
+}
+
+void cmd_MDS()
+{
+	//MDS - Module deep sleep
+	//Medido en ms.
+	uint64_t tiempo_dormir_ms;
+	uint8_t modo_rf;
+	WakeMode modo;
+
+	tiempo_dormir_ms = atoi(comando_recibido.parametros[0]);
+	modo_rf = atoi(comando_recibido.parametros[1]);
+
+	//Limitamos el maximo a 4294967295 ms (32 bits)
+	if(!dentro_intervalo(tiempo_dormir_ms, 0, 0xFFFFFFFF))
+	{
+		Serial.print(CMD_ERROR_1);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+
+	if(!dentro_intervalo(modo_rf, 0, 3))
+	{
+		Serial.print(CMD_ERROR_2);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+
+	switch (modo_rf)
+	{
+		case 0:
+			modo = RF_DEFAULT;
+			break;
+		case 1:
+			modo = RF_CAL;
+			break;
+		case 2:
+			modo = RF_NO_CAL;
+			break;
+		case 3:
+			modo = RF_DISABLED;
+			break;
+		default:
+			break;
+	}
+
+	ESP.deepSleep(tiempo_dormir_ms, modo);
+
 	return;
 }
 
