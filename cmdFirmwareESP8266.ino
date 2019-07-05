@@ -104,10 +104,11 @@ void cmd_MRS(void);
 void cmd_MVI(void);
 void cmd_MDS(void);
 void cmd_MUC(void);
-
-
-
+void cmd_MRP(void);
 void cmd_MFH(void);
+
+
+
 
 //Comandos WiFI
 void cmd_WFM(void);
@@ -162,6 +163,7 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] =
 		{"MVI",{0,0},&cmd_MVI},
 		{"MDS",{2,0},&cmd_MDS},
 		{"MUC",{1,0},&cmd_MUC},
+		{"MRP",{1,0},&cmd_MRP},
 		{"MFH",{0,0},&cmd_MFH},
 		{"WFM",{1,0},&cmd_WFM},
   		{"WFC",{2,0},&cmd_WFC},
@@ -556,6 +558,30 @@ void cmd_MUC()
 	delay(1);
 	Serial.begin(baud_rate);
 	Serial.setRxBufferSize(1024);
+	return;
+}
+
+void cmd_MRP()
+{
+	//MRP - Module RF Power
+	float potencia_dbm;
+	char *prt;
+
+	potencia_dbm = strtod(comando_recibido.parametros[0], &prt);
+
+	if( (potencia_dbm > 20.5) || (potencia_dbm < 0)  )
+	{
+		Serial.print(CMD_ERROR_1);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+
+	WiFi.setOutputPower(potencia_dbm);
+	delay(1);
+
+	Serial.print(CMD_RESP_OK);
+	Serial.print(CMD_TERMINATOR);
+
 	return;
 }
 
