@@ -123,6 +123,7 @@ void cmd_WFA(void);
 void cmd_WSI(void);
 void cmd_WCF(void);
 void cmd_WAC(void);
+void cmd_WMA(void);
 void cmd_WSC(void);
 void cmd_WSS(void);
 
@@ -177,6 +178,7 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] =
 		{"WSI",{0,0},&cmd_WSI},
 		{"WCF",{4,0},&cmd_WCF},
 		{"WAC",{3,0},&cmd_WAC},
+		{"WMA",{2,0},&cmd_WMA},
 		{"WSC",{0,0},&cmd_WSC},
 		{"WSS",{0,0},&cmd_WSS},
 		{"CCS",{2,3},&cmd_CCS},
@@ -438,6 +440,17 @@ int8_t verificar_conexion_wifi()
 			break;
 	}
 	return ret_val;
+}
+
+void parseBytes(const char* str, char sep, byte* bytes, int maxBytes, int base) {
+    for (int i = 0; i < maxBytes; i++) {
+        bytes[i] = strtoul(str, NULL, base);  // Convert byte
+        str = strchr(str, sep);               // Find next separator
+        if (str == NULL || *str == '\0') {
+            break;                            // No more separators, exit
+        }
+        str++;                                // Point to next character after separator
+    }
 }
 
 //----------------------------Comandos basicos----------------------------------
@@ -953,6 +966,51 @@ void cmd_WAC()
 	Serial.print(CMD_TERMINATOR);
 	return;
 
+}
+
+void cmd_WMA()
+{
+	/*WMA - WiFi Mac Address*/
+	uint8_t parametro_interfaz;
+	uint8_t mac[6];
+	uint8_t cant_bytes_mac;
+
+	parametro_interfaz = atoi(comando_recibido.parametros[0]);
+
+	if(!dentro_intervalo(parametro_interfaz, 0, 1))
+	{
+		//Parametro de interfaz fuera de rango
+		Serial.print(CMD_ERROR_1);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+
+	cant_bytes_mac = strlen(comando_recibido.parametros[1]);
+
+	if(cant_bytes_mac != 17)
+	{
+		//Direccion de MAC con longitud incorrecta, muy larga o muy corta.
+		Serial.print(CMD_ERROR_2);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+
+	parseBytes(comando_recibido.parametros[1], ':', mac, 6, 16);
+
+	//Parametro_interfaz = 0, para interfaz de estacion (STA)
+	//Parametro_interfaz = 1, para interfaz de punto de acceso (softAP)
+	if(wifi_set_macaddr(parametro_interfaz,mac))
+	{
+		Serial.print(CMD_RESP_OK);
+		Serial.print(CMD_TERMINATOR);
+	}
+	else
+	{
+		Serial.print(CMD_ERROR_3);
+		Serial.print(CMD_TERMINATOR);
+	}
+
+	return;
 }
 
 /*Comando para iniciar la configuracion utilizando SmartConfig*/
