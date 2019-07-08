@@ -112,8 +112,6 @@ void cmd_MRP(void);
 void cmd_MFH(void);
 
 
-
-
 //Comandos WiFI
 void cmd_WFM(void);
 void cmd_WFC(void);
@@ -131,8 +129,7 @@ void cmd_WSS(void);
 void cmd_WSN(void);
 
 //Comandos TCP/IP
-
-
+void cmd_IDN(void);
 void cmd_CCS(void);
 void cmd_SOW(void);
 void cmd_SOR(void);
@@ -181,6 +178,7 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] =
 		{"WMA",{2,0},&cmd_WMA},
 		{"WSC",{0,0},&cmd_WSC},
 		{"WSS",{0,0},&cmd_WSS},
+		{"IDN",{1,0},&cmd_IDN},
 		{"CCS",{2,3},&cmd_CCS},
 		{"SOW",{2,0},&cmd_SOW},
 		{"SOR",{1,0},&cmd_SOR},
@@ -1002,14 +1000,12 @@ void cmd_WMA()
 	if(wifi_set_macaddr(parametro_interfaz,mac))
 	{
 		Serial.print(CMD_RESP_OK);
-		Serial.print(CMD_TERMINATOR);
 	}
 	else
 	{
 		Serial.print(CMD_ERROR_3);
-		Serial.print(CMD_TERMINATOR);
 	}
-
+	Serial.print(CMD_TERMINATOR);
 	return;
 }
 
@@ -1100,6 +1096,28 @@ void cmd_WSD()
 }
 
 //----------------------------Comandos TCP/IP-----------------------------------
+void cmd_IDN()
+{
+	//IDN - IP Domain Name
+	IPAddress direccion_ip;
+	char nombre_servidor[32];
+
+	strcpy(nombre_servidor,comando_recibido.parametros[0]);
+
+	if ( WiFi.hostByName(nombre_servidor, direccion_ip) )
+	{
+		Serial.print(CMD_RESP_OK);
+		Serial.print(CMD_DELIMITER);
+		Serial.print(direccion_ip.toString());
+	}
+	else
+	{
+		//No se pudo resolver el nombre del servidor
+		Serial.print(CMD_ERROR_1);
+	}
+	Serial.print(CMD_TERMINATOR);
+	return;
+}
 
 /**
  * CCS - Client Connect Server

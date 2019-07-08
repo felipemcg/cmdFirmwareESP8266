@@ -25,7 +25,7 @@
 #define CANT_MAX_CARACT_NOMBRE_CMD 3
 
 /*Numero maximo de comandos admitidos*/
-#define CANT_MAX_CMD 36
+#define CANT_MAX_CMD 37
 
 /*Cantidad maxima de parametros variables que puede permitir un comando*/
 #define CANT_MAX_PARAM_VARIABLES 2
