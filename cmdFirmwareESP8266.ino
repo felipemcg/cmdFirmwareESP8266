@@ -129,6 +129,7 @@ void cmd_WSS(void);
 void cmd_WSN(void);
 
 //Comandos TCP/IP
+void cmd_SOI(void);
 void cmd_IDN(void);
 void cmd_CCS(void);
 void cmd_SOW(void);
@@ -178,6 +179,7 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] =
 		{"WMA",{2,0},&cmd_WMA},
 		{"WSC",{0,0},&cmd_WSC},
 		{"WSS",{0,0},&cmd_WSS},
+		{"SOI",{1,0},&cmd_SOI},
 		{"IDN",{1,0},&cmd_IDN},
 		{"CCS",{2,3},&cmd_CCS},
 		{"SOW",{2,0},&cmd_SOW},
@@ -1096,6 +1098,68 @@ void cmd_WSD()
 }
 
 //----------------------------Comandos TCP/IP-----------------------------------
+void cmd_SOI()
+{
+	uint8_t socket;
+
+	socket = atoi(comando_recibido.parametros[0]);
+
+	if(!dentro_intervalo(socket, 0, CANT_MAX_CLIENTES))
+	{
+		//Socket fuera de rango
+		Serial.print(CMD_ERROR_1);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+
+	Serial.print(CMD_RESP_OK);
+	Serial.print(CMD_DELIMITER);
+
+	//Tipo de conexion: TCP o UDP
+	if(sockets[socket].protocolo == TCP)
+	{
+		Serial.print("TCP");
+		Serial.print(CMD_DELIMITER);
+		//IP remota
+		Serial.print(cliente_tcp[sockets[socket].indice_objeto].remoteIP().toString());
+		Serial.print(CMD_DELIMITER);
+		//Puerto remoto
+		Serial.print(cliente_tcp[sockets[socket].indice_objeto].remotePort());
+		Serial.print(CMD_DELIMITER);
+		//Puerto local
+		Serial.print(cliente_tcp[sockets[socket].indice_objeto].localPort());
+		Serial.print(CMD_DELIMITER);
+	}
+	else if(sockets[socket].protocolo == UDP)
+	{
+		Serial.print("UDP");
+		Serial.print(CMD_DELIMITER);
+		Serial.print(udp_obj[sockets[socket].indice_objeto].remoteIP().toString());
+		Serial.print(CMD_DELIMITER);
+		Serial.print(udp_obj[sockets[socket].indice_objeto].remotePort());
+		Serial.print(CMD_DELIMITER);
+		Serial.print(udp_obj[sockets[socket].indice_objeto].localPort());
+		Serial.print(CMD_DELIMITER);
+	}
+
+	//El socket es un cliente o servidor
+	switch (sockets[socket].tipo)
+	{
+		case TIPO_CLIENTE:
+			Serial.print('1');
+			break;
+		case TIPO_SERVIDOR:
+			Serial.print('0');
+			break;
+		default:
+			break;
+	}
+
+	Serial.print(CMD_TERMINATOR);
+
+	return;
+}
+
 void cmd_IDN()
 {
 	//IDN - IP Domain Name
