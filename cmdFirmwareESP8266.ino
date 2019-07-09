@@ -16,6 +16,9 @@
 #include <WiFiUdp.h>
 #include <WiFiClient.h>
 
+// https://github.com/arduino-libraries/NTPClient
+#include "NTPClient.h"
+
 //#include "test.h"
 //#include "puerto_serial.h"
 #include "operaciones_paquetes.h"
@@ -67,6 +70,11 @@ std::vector<WiFiServer> servidor_obj(CANT_MAX_SERVIDORES,
 
 std::vector<WiFiUDP> udp_obj(CANT_MAX_SERVIDORES,
 		WiFiUDP());
+
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "pool.ntp.org", 3600, 60000);
+
+
 struct elementos_servidor{
 	bool b_activo;
 	uint16_t num_puerto_en_uso;
@@ -138,6 +146,7 @@ void cmd_SOC(void);
 void cmd_WFI(void);
 
 void cmd_SLC(void);
+void cmd_STC(void);
 
 //Comandos propios
 void cmd_RVU(void);
@@ -187,6 +196,7 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] =
 		{"SOC",{1,0},&cmd_SOC},
 		{"WFI",{0,0},&cmd_WFI},
 		{"SLC",{2,0},&cmd_SLC},
+		{"STC",{3,0},&cmd_STC},
 		{"SVU",{1,0},&cmd_SVU},
 		{"SDU",{2,0},&cmd_SDU},
 		{"RVU",{1,0},&cmd_RVU},
@@ -1535,6 +1545,27 @@ void cmd_SLC()
 			}
 		}
 	}
+	return;
+}
+
+void cmd_STC()
+{
+	//STC - SNTP server configuration
+	char nombre_servidor_pool[32];
+	char *ptr;
+	int offset_tiempo;
+	unsigned long intervalo_refresco;
+
+	strcpy(nombre_servidor_pool, comando_recibido.parametros[0]);
+	offset_tiempo = atoi(comando_recibido.parametros[1]);
+	intervalo_refresco = strtoul(comando_recibido.parametros[2], &ptr, 10);
+
+	timeClient.setPoolServerName(nombre_servidor_pool);
+	timeClient.setTimeOffset(offset_tiempo);
+	timeClient.setUpdateInterval(intervalo_refresco);
+
+	timeClient.begin();
+
 	return;
 }
 
