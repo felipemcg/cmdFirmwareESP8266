@@ -147,6 +147,7 @@ void cmd_WFI(void);
 
 void cmd_SLC(void);
 void cmd_STC(void);
+void cmd_STG(void);
 
 //Comandos propios
 void cmd_RVU(void);
@@ -197,6 +198,7 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] =
 		{"WFI",{0,0},&cmd_WFI},
 		{"SLC",{2,0},&cmd_SLC},
 		{"STC",{3,0},&cmd_STC},
+		{"STG",{0,0},&cmd_STG},
 		{"SVU",{1,0},&cmd_SVU},
 		{"SDU",{2,0},&cmd_SDU},
 		{"RVU",{1,0},&cmd_RVU},
@@ -1560,12 +1562,34 @@ void cmd_STC()
 	offset_tiempo = atoi(comando_recibido.parametros[1]);
 	intervalo_refresco = strtoul(comando_recibido.parametros[2], &ptr, 10);
 
+
 	timeClient.setPoolServerName(nombre_servidor_pool);
 	timeClient.setTimeOffset(offset_tiempo);
 	timeClient.setUpdateInterval(intervalo_refresco);
 
 	timeClient.begin();
 
+
+	return;
+}
+
+void cmd_STG()
+{
+	//STG - STNP time get
+	String tiempo;
+
+	if ( !timeClient.update() )
+	{
+		//Error al actualizar el tiempo
+		Serial.print(CMD_ERROR_1);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
+	tiempo = timeClient.getFormattedTime();
+	Serial.print(CMD_RESP_OK);
+	Serial.print(CMD_DELIMITER);
+	Serial.print(tiempo);
+	Serial.print(CMD_TERMINATOR);
 	return;
 }
 
