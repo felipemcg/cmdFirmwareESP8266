@@ -1908,20 +1908,14 @@ void cmd_WID()
 
 void setup()
 {
+	//Inicializamos el puerto serial a una velocidad de 115200 baud
+	//Utilizaremos un buffer de recepcion serial de 1024 Bytes.
 	Serial.begin(115200);
 	Serial.setRxBufferSize(1024);
 	delay(10);
 
-#ifdef sDebug
-	Serial.println();
-    Serial.println();
-    Serial.println("Listo.");
-    Serial.println("Las instrucciones que tengo son: ");
-    for(int i=0; i < CANT_MAX_CMD; i++){
-  	  Serial.println((instructionSet[i]));
-    }
-#endif
-
+	/*Inicializamos la estructura "sockets", que sirve para almacenar
+	 * informacion correspondiente a los sockets utilizados. */
     for (uint8_t indice_socket = 0; indice_socket < CANT_MAX_CLIENTES; ++indice_socket) {
     	sockets[indice_socket].en_uso = false;
 		sockets[indice_socket].tipo = NINGUNO;
@@ -1929,20 +1923,20 @@ void setup()
 		sockets[indice_socket].indice_servidor = -1;
 	}
 
-    //Activamos nagle por defecto
+    //Activamos algoritmo de nagle por defecto para las conexiones TCP.
     cliente_tcp[0].setNoDelay(0);
     cliente_tcp[1].setNoDelay(0);
     cliente_tcp[2].setNoDelay(0);
     cliente_tcp[3].setNoDelay(0);
-    modo_wifi_actual = WiFi.getMode();
-    estado_conexion_wifi_interfaz_sta_actual = WiFi.status();
 
     /*Inciar el sistema con la radio WiFi apagada*/
     WiFi.disconnect(1);
     delay(100);
-    WiFi.mode(WIFI_OFF);
+    WiFi.mode(WIFI_OFF); //Apagamos la radio WiFi
+    modo_wifi_actual = WiFi.getMode();
+	estado_conexion_wifi_interfaz_sta_actual = WiFi.status();
 
-
+	//Notificamos que el sistema esta listo para recibir comandos.
     Serial.print("R");
     Serial.print(CMD_TERMINATOR);
 }
