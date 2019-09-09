@@ -35,6 +35,9 @@ extern "C" {
 /*-------------------------DEFINE's--------------------------------*/
 //#define sDebug
 
+//Poner en 1 para habilitar los mensajes de depuracion del sistema de comandos.
+#define DEBUG_PRINT_COMAND_RECEPTION_SYSTEM 0
+
 /*---------------------*/
 /*El tiempo maxima para esperar una respuesta del servidor, em ms.*/
 #define TIEMPO_MS_ESPERA_RESPUESTA_SERVIDOR 500
@@ -1960,22 +1963,19 @@ void loop()
 	/*Se verifica si se recibio un nuevo paquete por el puerto serial.*/
 	if (recibir_paquetes(paquete_serial, paquete_datos_tcp) == 1)
 	{
-		/*Serial.print("Dir serial: ");
-		Serial.printf("%p",paquete_serial);
-		Serial.println();
-		Serial.print("Dir datos: ");
-		Serial.printf("%p",paquete_datos_tcp);*/
-
-		//Serial.println(paquete_serial);
+#if DEBUG_PRINT_COMAND_RECEPTION_SYSTEM
+		Serial.print("Paquete recibido:");
+		Serial.println(paquete_serial);
+#endif
 		yield();
-		//Serial.print("Antes de separar:");
-		//Serial.println(paquete_serial);
 
 		/*Separar el paquete en los campos correspondientes.*/
 		comando_recibido = separar_comando_parametros(paquete_serial);
 
 		/*Se muestran los datos separados en campos.*/
-		//imprimir_datos_separados(comando_recibido);
+#if DEBUG_PRINT_COMAND_RECEPTION_SYSTEM
+		imprimir_datos_separados(comando_recibido);
+#endif
 
 		/*Se busca el comando recibido dentro del conjunto de comandos.*/
 		indice_comando = buscar_comando(comando_recibido.nombre);
