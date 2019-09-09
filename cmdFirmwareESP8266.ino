@@ -1549,7 +1549,6 @@ void cmd_STC()
 {
 	//STC - SNTP server configuration
 	char nombre_servidor_pool[32];
-	char *ptr;
 	int offset_tiempo;
 	unsigned long intervalo_refresco;
 	int8_t conexion_wifi;
