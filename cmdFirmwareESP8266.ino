@@ -1057,17 +1057,6 @@ void cmd_WSS()
 	return;
 }
 
-void cmd_WAS(){
-	/*WAS - WiFi Acces Point Stations connected*/
-	uint8_t estaciones_conectadas = 0;
-	estaciones_conectadas = WiFi.softAPgetStationNum();
-	Serial.print(CMD_RESP_OK);
-	Serial.print(CMD_DELIMITER);
-	Serial.print(estaciones_conectadas);
-	Serial.print(CMD_TERMINATOR);
-	return;
-}
-
 void cmd_WAD(){
 	/*WAD - WiFi Acces Point Disconnect*/
 	bool b_softAP_off = comando_recibido.parametros[0];
