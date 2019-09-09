@@ -164,7 +164,6 @@ void cmd_SAC(void);
 void cmd_WRI(void);
 void cmd_WID(void);
 
-void cmd_WAS(void);
 void cmd_WAD(void);
 
 void cmd_WAI(void);
@@ -209,7 +208,6 @@ const struct cmd conjunto_comandos[CANT_MAX_CMD] =
 		{"WRI",{0,0},&cmd_WRI},
 		{"WID",{0,0},&cmd_WID},
 		{"WSN",{1,0},&cmd_WSN},
-  		{"WAS",{0,0},&cmd_WAS},
   		{"WAD",{1,0},&cmd_WAD},
 		{"WSD",{0,0},&cmd_WSD},
   		{"WAI",{0,0},&cmd_WAI}
