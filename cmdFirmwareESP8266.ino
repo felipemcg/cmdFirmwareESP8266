@@ -1593,11 +1593,21 @@ void cmd_STG()
 {
 	//STG - STNP time get
 	String tiempo;
+	int8_t conexion_wifi;
+
+	/*Verificar conexion WiFi*/
+	conexion_wifi = verificar_conexion_wifi();
+	if(conexion_wifi != 0)
+	{
+		Serial.print(CMD_ERROR_1);
+		Serial.print(CMD_TERMINATOR);
+		return;
+	}
 
 	if ( !timeClient.update() )
 	{
 		//Error al actualizar el tiempo
-		Serial.print(CMD_ERROR_1);
+		Serial.print(CMD_ERROR_2);
 		Serial.print(CMD_TERMINATOR);
 		//return;
 	}
