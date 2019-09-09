@@ -137,8 +137,6 @@ void cmd_WAC(void);
 void cmd_WMA(void);
 void cmd_WSC(void);
 void cmd_WSS(void);
-
-
 void cmd_WSN(void);
 
 //Comandos TCP/IP
@@ -149,7 +147,6 @@ void cmd_SOW(void);
 void cmd_SOR(void);
 void cmd_SOC(void);
 void cmd_WFI(void);
-
 void cmd_SLC(void);
 void cmd_STC(void);
 void cmd_STG(void);
