@@ -1482,7 +1482,6 @@ void cmd_WFI()
 void cmd_SLC()
 {
 	/*SLC - Server Listen to Clients*/
-	wl_status_t estado_conexion_wifi;
 	uint8_t socket_pasivo;
 	uint8_t backlog;
 	uint16_t puerto_tcp;
