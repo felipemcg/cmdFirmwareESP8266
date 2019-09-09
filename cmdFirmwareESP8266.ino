@@ -1943,8 +1943,9 @@ void setup()
 
 void loop()
 {
-	uint8_t cant_maxima_caracteres_paquete_serial = CANT_MAX_CARACT_NOMBRE_CMD + CANT_MAX_CARACT_PARAMETRO*CANT_MAX_PARAMETROS_CMD + CANT_MAX_PARAMETROS_CMD;
 	int indice_comando;
+
+	//Limpiamos la estructura "comando_recibido" para recibir un nuevo comando
 	comando_recibido.nombre[0] = '\0';
 	comando_recibido.parametros[0][0] = '\0';
 	comando_recibido.parametros[1][0] = '\0';
@@ -1952,9 +1953,11 @@ void loop()
 	comando_recibido.parametros[3][0] = '\0';
 	comando_recibido.parametros[4][0] = '\0';
 
+	/*Explicitamente cedemos tiempo de procesamiento para que el stack IP y WiFi
+	 * realicen tareas pendientes*/
 	yield();
 
-	/*Se verifica que se haya recibido un nuevo paquete por el puerto serial.*/
+	/*Se verifica si se recibio un nuevo paquete por el puerto serial.*/
 	if (recibir_paquetes(paquete_serial, paquete_datos_tcp) == 1)
 	{
 		/*Serial.print("Dir serial: ");
@@ -1977,15 +1980,14 @@ void loop()
 		/*Se busca el comando recibido dentro del conjunto de comandos.*/
 		indice_comando = buscar_comando(comando_recibido.nombre);
 
+		/*Se verifica que el comando sea valido*/
 		if(indice_comando != -1)
 		{
 			/*Se verifica que se recibio la cantidad necesaria de parametros para ejectuar el comando.*/
 			if( validar_cantidad_parametros(indice_comando, comando_recibido.cantidad_parametros_recibidos))
 			{
-
 				/*Se llama a la funcion que ejecutara las acciones correspondientes al comando.*/
 				conjunto_comandos[indice_comando].ejecutar();
-
 			}
 			else
 			{
@@ -2010,8 +2012,12 @@ void loop()
 
 	yield();
 
+	/*Se verifica si existen clientes nuevos que quieran conectarse al servidor
+	 * ejecutandose.*/
 	servidor_verificar_backlog();
 
+	/*En caso de que se este utilizando el procedimiento SmartConfig, se verifica
+	 * si este ya termino para notificar al comando correspondiente su estado*/
 	if(b_smartconfig_en_proceso == true)
 	{
 		if(WiFi.smartConfigDone())
