@@ -1,0 +1,982 @@
+\documentclass[a4paper,spanish]{article}
+\usepackage{booktabs}% http://ctan.org/pkg/booktabs
+
+\newcommand{\tabitem}{~~\llap{\textbullet}~~}
+\usepackage[utf8]{inputenc} % Required for inputting international characters
+\usepackage[T1]{fontenc} % Output font encoding for international characters
+\usepackage{xcolor,colortbl} %Para colorear las columnas de las tablas.
+\usepackage{tabularx}
+\usepackage{float}
+\usepackage{multirow}	%Para combinar varias filas en una tabla.
+\definecolor{Gray}{gray}{0.9}
+\newcolumntype{a}{>{\columncolor{Gray}}c}
+
+%opening
+\title{}
+\author{}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\section{Configuración del puerto serial para utilizar el modulo}
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|c|c|}
+		\hline 
+		\textbf{Parámetro} & \textbf{Valor}\\ 
+		\hline 
+		Baud Rate & 115200\\ 
+		\hline 
+		Data bits & 8\\ 
+		\hline 
+		Parity & None \\ 
+		\hline 
+		Flow Control & None  \\ 
+		\hline 
+		End of line & \textbackslash n (LF)  \\ 
+		\hline 
+	\end{tabular} 
+\end{table}
+
+\section{Descripción del protocolo}
+Al enviar un comando al módulo se verifica primero si se recibió un comando valido. En caso de que no lo sea, la respuesta del módulo es “C”, y el módulo espera de vuelta un comando. 
+Una vez que se validó el comando, se verifica que se cuente con la cantidad de parámetros necesarios. En caso de que no sea suficiente, la respuesta del módulo es “P”, y el módulo espera de vuelta un comando. 
+Si el comando es válido y se pasaron los parámetros necesarios para ejecutar el comando, se ejecuta el comando y se provee la respuesta dependiendo del resultado. 
+Al final de cada respuesta del módulo le sigue \textbackslash n , por ejemplo: 0\textbackslash n
+
+\subsection{Comandos}
+\textbf{Sintaxis:} 
+{\ttfamily NOMBRE\_COMANDO,param1,param2, . . ,paramN\textbackslash n}
+\begin{itemize}
+	\item Los nombres de los comandos deben estar en letras mayúsculas, de lo contrario se dará un error de que no se encuentra el comando.
+	\item Comandos que contienen parámetros deben incluir una marca de coma (,) como delimitador entre ellos.
+	\item La definición de cada comando indica cuantos parámetros necesita, en caso de que falte algún parámetro, se dará un error.
+\end{itemize}
+\subsection{Respuesta de los comandos}
+Las respuestas de los comandos pueden ser uno de los siguientes casos: 
+\begin{itemize}
+	\item Comando que retorna con éxito: {\ttfamily 0}
+	\item Comando que retorna con error: Indicado con un numero positivo, mayor que cero.
+	\item Comando que retorna con parámetro: {\ttfamily 0,parámetro}
+	\item Comando que retorna con parámetro y datos: {\ttfamily 0,parámetro,datos}
+\end{itemize}
+\section{Comandos Básicos}
+
+\subsection{MIS}
+Comando utilizado para verificar que el módulo se encuentra funcionando correctamente y esta listo para recibir comandos.
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily MIS\textbackslash n}
+	\item \textbf{Parámetros}\\
+	Ninguno.
+	\item \textbf{Respuesta}\\
+	{\ttfamily 0\textbackslash n}
+\end{itemize}
+
+\subsection{MRS}
+Comando que reinicia inmediatamente el módulo. Al iniciar de vuelta el módulo, este envía por el puerto serial una serie de caracteres sin importancia, luego de esto se recibe el carácter {\ttfamily R\textbackslash n}, el cual indica que el módulo esta listo.
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily MRS\textbackslash n}
+	\item \textbf{Parámetros}\\
+	Ninguno.
+	\item \textbf{Respuesta}\\
+	{\ttfamily R\textbackslash n}
+\end{itemize}
+
+\subsection{MVI}
+Comando que retorna información acerca de la versión actual del firmware que se esta ejecutando. También informa acerca de la versión del Arduino Core utilizado para programar el firmware.
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily MVI\textbackslash n}
+	\item \textbf{Parámetros}\\
+	Ninguno.
+	\item \textbf{Respuesta}\\
+	{\ttfamily 0,Firmware:<numero\_version>,ArduinoCore:<version>\textbackslash n}
+\end{itemize}
+
+\subsection{MDS}
+Comando que configura el modo de bajo consumo \textit{Deep-sleep} para el módulo.
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily MDS,tiempo\_dormir,modo\_rf\textbackslash n}
+	\item \textbf{Parámetros}
+	\begin{itemize}
+		\item{\ttfamily tiempo\_dormir}\\
+		El tiempo medido en $us$ que el dispositivo estara en deep-sleep.
+		\item{\ttfamily modo\_rf}\\
+		Parámetro que determina el comportamiento de la calibración RF luego de despertarse.
+		\begin{itemize}
+			\item \textbf{0} , Configuración RF por defecto. 
+			\item \textbf{1} , Efectuar calibración RF.
+			\item \textbf{2} , No se realiza calibración RF, esto reduce el consumo de corriente .
+			\item \textbf{3} , Desactiva el sistema de RF al despertarse. Esta opción permite el menor consumo posible de corriente, sin embargo, no se pueden enviar ni recibir datos al despertarse.
+		\end{itemize}
+	\end{itemize}
+%	\item \textbf{Respuesta}\\
+%	{\ttfamily 0,Firmware:<numero\_version>,ArduinoCore:<version>\textbackslash n}
+\end{itemize}
+
+\subsection{MUC}
+Comando utilizado para modificar la velocidad de transmisión del periférico UART, utilizado por el módulo para comunicarse con el micro-controlador externo.
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily MUC,\textless velocidad\textgreater\textbackslash n}
+	\item \textbf{Parámetros}
+	\begin{itemize}
+		\item{\ttfamily \textless velocidad\textgreater}\\
+		Velocidad de transmisión deseada. El rango permitido para este parámetro va desde 9600 a 921600. 
+	\end{itemize}
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item {\ttfamily 0\textbackslash n} \\
+		El cambio de velocidad se realizó con éxito. Es necesario esperar 5 ms para enviar el siguiente comando utilizando la nueva velocidad.
+		\item{\ttfamily 1\textbackslash n} \\
+		Error, el parámetro {\ttfamily \textless velocidad\textgreater}  se encuentra fuera de rango. 
+	\end{itemize}
+\end{itemize}
+
+\subsection{MRP}
+Comando que configura la potencia de transmisión de la antena de radio frecuencia del módulo.
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily MRP,potencia\_dbm\textbackslash n}
+	\item \textbf{Parámetros}\\
+	\begin{itemize}
+		\item{\ttfamily potencia\_dbm}\\
+		Potencia de transmision a ser utilizada, en $dBm$. El rango de valores perimitido va desde 0 a 20,5. 
+	\end{itemize}
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item {\ttfamily 0\textbackslash n} \\
+		La configuración fue aplicada con éxito.
+		\item {\ttfamily 1\textbackslash n} \\
+		El parámetro {\ttfamily potencia\_dbm} esta fuera de rango.
+	\end{itemize}
+\end{itemize}
+
+\subsection{MFH}
+Comando que retorna la cantidad de Bytes disponibles de la memoria RAM.
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily MFH\textbackslash n}
+	\item \textbf{Parámetros}\\
+	Ninguno.
+	\item \textbf{Respuesta}\\
+	{\ttfamily 0,cantidad\_bytes\_disponibles\textbackslash n}
+\end{itemize}
+
+
+\section{Comandos WiFi}
+
+\subsection{WFM}
+Comando utilizado para establecer el modo de funcionamiento WiFi del modulo. 
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily WFM,modo\_wifi\textbackslash n}
+	\item \textbf{Parámetros}
+	\begin{itemize}
+		\item{\ttfamily modo\_wifi}\\
+		Parámetro que determina cual modo sera utilizado. Valores permitidos del 0 al 3. 
+		\begin{itemize}
+			\item \textbf{0} , WiFi apagado. 
+			\item \textbf{1} , modo estación (STA).
+			\item \textbf{2} , modo punto de acceso (AP).
+			\item \textbf{3} , modo estación + punto de acceso (STA + AP).
+		\end{itemize}
+	\end{itemize}
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0\textbackslash n} \\
+		Configuración exitosa.
+		\item{\ttfamily 1\textbackslash n} \\
+		Error, el parámetro {\ttfamily modo\_wifi} se encuentra fuera de rango.
+		\item{\ttfamily 2\textbackslash n} \\
+		Error, no se pudo establecer la configuración.
+	\end{itemize}
+\end{itemize}
+
+\subsection{WFC}
+Comando utilizado para conectar el módulo a un punto de acceso (AP, por sus siglas en ingles). 
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily WFC,\textless ssid\textgreater,\textless contraseña\textgreater\textbackslash n}
+	\item \textbf{Parámetros}
+	\begin{itemize}
+		\item{\ttfamily \textless ssid\textgreater}\\
+		Nombre del punto de acceso al cual se desea conectar el módulo.
+		\item{\ttfamily \textless contraseña\textgreater}\\
+		Contraseña del punto de acceso al cual se desea conectar el módulo.
+	\end{itemize}
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0\textbackslash n} \\
+		Conexión exitosa.
+		\item{\ttfamily 1\textbackslash n} \\
+		Error, no se pudo establecer la conexión al punto de acceso.
+		\item{\ttfamily 2\textbackslash n} \\
+		Error, se alcanzo el tiempo de espera máximo (20 segundos) sin poder establecer la conexión.
+		\item{\ttfamily 3\textbackslash n} \\
+		Error, contraseña incorrecta.
+		\item{\ttfamily 4\textbackslash n} \\
+		Error, no se encuentra el punto de acceso. 
+	\end{itemize}
+\end{itemize}
+
+\subsection{WFS}
+Comando utilizado para escanear los puntos de acceso que se encuentran al alcance del modulo.
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily WFS\textbackslash n}
+	\item \textbf{Parámetros}\\
+	Ninguno.
+	\item \textbf{Respuesta}\\
+	{\ttfamily 0,ssid\_1;rssi\_1,ssid\_2;rssi\_2,ssid\_N;rssi\_N\textbackslash n}
+	\item \textbf{Respuesta}\\
+	{\ttfamily 1\textbackslash n}\\
+	No se encontró ningún punto de acceso.
+	\item\textbf{Ejemplo}\\
+	Comando: {\ttfamily WFS\textbackslash n}\\
+	Respuesta: {\ttfamily 0,DEI-UCA;-81,DICIA-UCA;-70,LED-UCA;-85\textbackslash n}
+\end{itemize}
+
+
+
+\subsection{WFD}
+Comando utilizado para desconectar el modulo del punto de acceso al cual se encuentra conectado actualmente. 
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily WFD,wifi\_off\textbackslash n}
+	\item \textbf{Parámetros}
+	\begin{itemize}
+		\item{\ttfamily wifi\_off}\\
+		Parámetro que determina si se apagara la radio WiFi luego de desconectarse. Valores permitidos: 0 o 1.
+		\begin{itemize}
+			\item \textbf{0} , la radio WiFi sigue activada. 
+			\item \textbf{1} , se desactiva la radio WiFi.
+		\end{itemize}
+	\end{itemize}
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0\textbackslash n} \\
+		Configuración exitosa.
+		\item{\ttfamily 1\textbackslash n} \\
+		Error, el parámetro {\ttfamily  wifi\_off} se encuentra fuera de rango.
+		\item{\ttfamily 2\textbackslash n} \\
+		Error, no se pudo aplicar la configuración.
+	\end{itemize}
+\end{itemize}
+
+\subsection{WFA}
+Comando utilizado para configurar el módulo como un punto de acceso (AP, por sus siglas en ingles). El modo de autenticación es WPA2-PSK.
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily WFA,ssid,contraseña,canal,ssid\_oculto,max\_con\textbackslash n}
+	\item \textbf{Parámetros}
+	\begin{itemize}
+		\item{\ttfamily ssid}\\
+		Nombre del punto de acceso, longitud máxima de 63 caracteres.
+		\item{\ttfamily contraseña}\\
+		Contraseña del punto de acceso, longitud minima de 8 caracteres. 
+		\item{\ttfamily canal}\\
+		Numero del canal WiFi que utilizara el punto de acceso. Valores permitidos del 1 al 13.
+		\item{\ttfamily ssid\_oculto}\\
+		Parámetro que determina si el SSID se mostrará de manera publica. Para publicar, el valor es 0, para ocultar 1. 
+		\item{\ttfamily max\_con}\\
+		Numero máximo de conexiones simultaneas que permite atender el punto de acceso. Valores permitidos del 1 al 4. 
+	\end{itemize}
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0\textbackslash n} \\
+		El punto de acceso fue creado correctamente.
+		\item{\ttfamily 1\textbackslash n} \\
+		Error, el numero de canal esta fuera de rango.
+		\item{\ttfamily 2\textbackslash n} \\
+		Error, el parámetro {\ttfamily ssid\_oculto} esta fuera de rango.
+		\item{\ttfamily 3\textbackslash n} \\
+		Error, el parámetro {\ttfamily max\_con} esta fuera de rango.
+		\item{\ttfamily 4\textbackslash n} \\
+		Error, no se pudo crear el punto de acceso. 
+	\end{itemize}
+\end{itemize}
+
+\subsection{WSI}
+Comando para obtener información acerca de los dispositivos conectados a la interfaz del punto de acceso (softAP) del módulo.
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily WSI\textbackslash n}
+	\item \textbf{Parámetros}\\
+	Ninguno.
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0,clientes\_conectados,ip\_cliente1;mac\_cliente1,..,ip\_clienteN;mac\_clienteN\textbackslash n}\\
+		Comando ejecutado con éxito. Se muestra en primer lugar la cantidad de clientes conectados, luego la dirección IP y MAC de cada cliente.
+	\end{itemize}
+%	\item\textbf{Ejemplo}\\
+%	Comando: {\ttfamily WID\textbackslash n}\\
+%	Respuesta: {\ttfamily 0,LED-UCA\textbackslash n}
+\end{itemize}
+
+
+
+
+
+
+
+
+\subsection{WCF}
+Comando utilizado para configurar de forma manual los parámetros de la interfaz de red de la estación, desactivando la asignación por DHCP. 
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily WCF,ip,dns,gateway,subnet\textbackslash n}
+	\item \textbf{Parámetros}\\
+	Todos los parámetros son en formato de cadena de caracteres. 
+	\begin{itemize}
+		\item{\ttfamily ip}\\
+		Dirección IP a ser asignada al modulo. 
+		\item{\ttfamily dns}\\
+		Dirección del servidor DNS.
+		\item{\ttfamily gateway}\\
+		Dirección de la puerta de enlace.
+		\item{\ttfamily subnet}\\
+		Dirección de la mascara de la red.
+	\end{itemize}
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0\textbackslash n} \\
+		Configuración exitosa.
+		\item{\ttfamily 1\textbackslash n} \\
+		Error, dirección IP invalida.
+		\item{\ttfamily 2\textbackslash n} \\
+		Error, dirección DNS invalida.
+		\item{\ttfamily 3\textbackslash n} \\
+		Error, dirección Gateway invalida.
+		\item{\ttfamily 4\textbackslash n} \\
+		Error, dirección Subnet invalida.
+		\item{\ttfamily 5\textbackslash n} \\
+		Error, no se pudo establecer la configuración deseada. 
+	\end{itemize}
+\end{itemize}
+
+\subsection{WAC}
+Comando utilizado para configurar de forma manual los parámetros de la interfaz de red del punto de acceso (softAP). 
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily WAC,ip,gateway,subnet\textbackslash n}
+	\item \textbf{Parámetros}\\
+	Todos los parámetros son en formato de cadena de caracteres. 
+	\begin{itemize}
+		\item{\ttfamily ip}\\
+		Dirección IP a ser asignada al modulo. 
+		\item{\ttfamily gateway}\\
+		Dirección de la puerta de enlace.
+		\item{\ttfamily subnet}\\
+		Dirección de la mascara de la red.
+	\end{itemize}
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0\textbackslash n} \\
+		Configuración exitosa.
+		\item{\ttfamily 1\textbackslash n} \\
+		Error, dirección IP invalida.
+		\item{\ttfamily 2\textbackslash n} \\
+		Error, dirección Gateway invalida.
+		\item{\ttfamily 3\textbackslash n} \\
+		Error, dirección Subnet invalida. 
+		\item{\ttfamily 4\textbackslash n} \\
+		Error, no se pudo aplicar la configuración.
+	\end{itemize}
+\end{itemize}
+
+\subsection{WMA}
+Comando utilizado para configurar la dirección de MAC del módulo. 
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily WMA,interfaz,direccion\_mac\textbackslash n}
+	\item \textbf{Parámetros}\\
+	\begin{itemize}
+		\item{\ttfamily interfaz}\\
+		Selecciona para cual interfaz se configurara la direccion MAC.
+		\begin{itemize}
+			\item \textbf{0} , interfaz de estación (STA) . 
+			\item \textbf{1} , interfaz de punto de acceso (AP).
+		\end{itemize}
+	\end{itemize}
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0\textbackslash n} \\
+		Configuración exitosa.
+		\item{\ttfamily 1\textbackslash n} \\
+		Error, el parámetro {\ttfamily interfaz} esta fuera de rango.
+		\item{\ttfamily 2\textbackslash n} \\
+		Error, el parámetro {\ttfamily direccion\_mac} no tiene la longitud correcta.
+		\item{\ttfamily 3\textbackslash n} \\
+		Error, no se pudo establecer la configuración.
+	\end{itemize}
+\end{itemize}
+
+\subsection{WSC}
+Comando utilizado para iniciar el aprovisionamiento de las credenciales del punto de acceso al cual se intentara conectar, utilizando el protocolo SmartConfig. Al utilizar este comando, el único comando que puede ser llamado después es el comando WSD. 
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily WSC\textbackslash n}
+	\item \textbf{Parámetros}
+	\begin{itemize}
+		\item Ninguno 
+	\end{itemize}
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0\textbackslash n} \\
+		Configuración exitosa.
+		\item{\ttfamily 1\textbackslash n} \\
+		Error, la configuración no pudo ser aplicada.
+	\end{itemize}
+\end{itemize}
+
+\subsection{WSS}
+Comando utilizado para detener el aprovisionamiento de las credenciales del punto de acceso.  
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily WSS\textbackslash n}
+	\item \textbf{Parámetros}
+	\begin{itemize}
+		\item Ninguno 
+	\end{itemize}
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0\textbackslash n} \\
+		El aprovisionamiento fue detenido con éxito.
+		\item{\ttfamily 1\textbackslash n} \\
+		Error, no fue posible detener el aprovisionamiento.
+	\end{itemize}
+\end{itemize}
+
+\subsection{WSD}
+Comando utilizado para verificar el estado de la conexión luego de utilizar el comando WSC.  
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily WSD\textbackslash n}
+	\item \textbf{Parámetros}
+	\begin{itemize}
+		\item Ninguno 
+	\end{itemize}
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0\textbackslash n} \\
+		Credenciales recibidas con éxito.
+		\item{\ttfamily 1\textbackslash n} \\
+		Error, aun no se recibió ninguna credencial.
+	\end{itemize}
+\end{itemize}
+
+\subsection{WAD}
+Comando utilizado para desactivar el punto de acceso del modulo. 
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily WAD,wifi\_off\textbackslash n}
+	\item \textbf{Parámetros}
+	\begin{itemize}
+		\item{\ttfamily wifi\_off}\\
+		Parámetro que determina si se apagara la radio WiFi luego de desconectarse. Valores permitidos: 0 o 1.
+		\begin{itemize}
+			\item \textbf{0} , la radio WiFi sigue activada. 
+			\item \textbf{1} , se desactiva la radio WiFi.
+		\end{itemize}
+	\end{itemize}
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0\textbackslash n} \\
+		Configuración exitosa.
+		\item{\ttfamily 1\textbackslash n} \\
+		Error, el parámetro {\ttfamily  wifi\_off} se encuentra fuera de rango.
+		\item{\ttfamily 2\textbackslash n} \\
+		Error, no se pudo aplicar la configuración.
+	\end{itemize}
+	\item \textbf{Ejemplo}\\
+	Comando: {\ttfamily WAD,0\textbackslash n}\\
+	Respuesta: {\ttfamily 0\textbackslash n}
+\end{itemize}
+
+
+
+
+
+\subsection{WSN}
+Comando utilizado para establecer el nombre del módulo con el cual se registrará al servidor DHCP.
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily WSN,nombre\textbackslash n}
+	\item \textbf{Parámetros}\\
+	\begin{itemize}
+		\item{\ttfamily nombre}\\
+		 Nombre a ser enviado. Longitud máxima de 32 caracteres. 
+	\end{itemize}
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0\textbackslash n} \\
+		Configuración exitosa.
+		\item{\ttfamily 1\textbackslash n} \\
+		Error, la configuración no pudo ser aplicada.
+	\end{itemize}
+\end{itemize}
+
+
+
+
+
+
+
+
+
+\subsection{WRI}
+Comando utilizado para obtener el RSSI (en dB) del punto de acceso al cual se encuentra actualmente conectado el modulo.
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily WRI\textbackslash n}
+	\item \textbf{Parámetros}\\
+	Ninguno.
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0,rssi\textbackslash n}\\
+		Comando ejecutado con éxito, se muestra el RSSI en decibelios.
+		\item{\ttfamily 1\textbackslash n} \\
+		Error al obtener el RSSI.
+	\end{itemize}
+	\item\textbf{Ejemplo}\\
+	Comando: {\ttfamily WRI\textbackslash n}\\
+	Respuesta: {\ttfamily 0,-80\textbackslash n}
+\end{itemize}
+
+\subsection{WID}
+Comando para obtener el SSID de la estación a la que se encuentra conectado actualmente el modulo.
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily WID\textbackslash n}
+	\item \textbf{Parámetros}\\
+	Ninguno.
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0,ssid\textbackslash n}\\
+		Comando ejecutado con éxito, se muestra el ssid.
+		\item{\ttfamily 1\textbackslash n} \\
+		Error, el modulo no se encuentra conectado a ninguna red.
+	\end{itemize}
+	\item\textbf{Ejemplo}\\
+	Comando: {\ttfamily WID\textbackslash n}\\
+	Respuesta: {\ttfamily 0,LED-UCA\textbackslash n}
+\end{itemize}
+
+
+
+
+
+
+
+
+
+
+
+
+
+\section{Comandos TCP/UDP}
+
+\subsection{SOI}
+Comando que retorna información acerca de los sockets utilizados.
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily SOI,socket\textbackslash n}
+	\item \textbf{Parámetros}
+	\begin{itemize}
+		\item{\ttfamily socket}\\
+		Parámetro utilizado para identificar las conexiones. Los valores permitidos para este parámetro van de 0 a 3.
+	\end{itemize}
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0,protocolo,ip\_remota,puerto\_remoto,puerto\_local,tipo\textbackslash n} \\
+		Se retorna la información del socket. En primer lugar, se informa el tipo de protocolo utilizado para el socket: TCP o UDP. Luego, se provee la direccion IP y numero de puerto utilizado en el otro extremo del socket, ademas del puerto local utilizado para este socket.
+		Por ultimo, se informa el tipo de socket, que puede ser cliente o servidor. Esto indica si la conexion fue establecida en modo cliente (1) o si el socket fue creado tras aceptar a un cliente en el servidor (0).
+		\item{\ttfamily 1\textbackslash n} \\
+		Error, el parámetro {\ttfamily socket} esta fuera de rango.
+	\end{itemize} 
+	\item \textbf{Ejemplo}\\
+	Comando: {\ttfamily SOI,0\textbackslash n}\\
+	Respuesta: {\ttfamily 0,TCP,192.168.0.165,49531,15000,1\textbackslash n}
+\end{itemize}
+
+\subsection{IDN}
+Comando utilizado para resolver la dirección de IP a partir de un nombre de host .
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily IDN,nombre\_servidor\textbackslash n}
+	\item \textbf{Parámetros}
+	\begin{itemize}
+		\item{\ttfamily nombre\_servidor}\\
+		Nombre del servidor del cual se quiere resolver la direccion IP.
+	\end{itemize}
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0,direccion\_ip\_servidor\textbackslash n} \\
+		Se retorna la direccion IP del servidor. 
+		\item{\ttfamily 1\textbackslash n} \\
+		Error, no se pudo resolver la direccion.
+	\end{itemize} 
+	\item \textbf{Ejemplo}\\
+	Comando: {\ttfamily SOI,0\textbackslash n}\\
+	Respuesta: {\ttfamily 0,TCP,192.168.0.165,49531,15000,1\textbackslash n}
+\end{itemize}
+
+\subsection{CCS}
+Comando utilizado para establecer una conexión TCP o UDP en modo cliente a un servidor remoto.  
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily CCS,protocolo,ip,puerto\textbackslash n}
+	\item \textbf{Parámetros}
+	\begin{itemize}
+		\item{\ttfamily protocolo}\\
+		Parámetro para definir que protocolo se utilizara en la comunicación, puede ser TCP o UDP.
+		\item{\ttfamily ip}\\
+		Dirección IP del servidor al cual se quiere establecer la conexión, como también puede ser un nombre de host.
+		\item{\ttfamily puerto}\\
+		Puerto del servidor. Puede tener un valor máximo de 65535.
+	\end{itemize}
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0,socket\textbackslash n} \\
+		Se estableció exitosamente la conexión al servidor. Se retorna un numero de {\ttfamily socket} que sera utilizado para otros comandos para identificar la conexión. Los valores permitidos para este numero van de 0 a 3. 
+		\item{\ttfamily 1\textbackslash n} \\
+		Error, no hay una conexión WiFi activa.
+		\item{\ttfamily 2\textbackslash n} \\
+		Error, el parámetro {\ttfamily puerto} esta fuera de rango.
+		\item{\ttfamily 3\textbackslash n} \\
+		Error, no hay recursos disponibles(socket) para establecer la conexión.
+		\item{\ttfamily 4\textbackslash n} \\
+		Error, no se pudo establecer la conexión al servidor.
+		\item{\ttfamily 5\textbackslash n} \\
+		Error, el parámetro {\ttfamily protocolo} es invalido.
+	\end{itemize} 
+	\item \textbf{Ejemplo}\\
+	Comando: {\ttfamily CCS,TCP,192.168.0.35,9500\textbackslash n}\\
+	Respuesta: {\ttfamily 0,0\textbackslash n}
+\end{itemize}
+
+\subsection{SOW}
+Comando utilizado para enviar datos a través de una conexión TCP. Para utilizar este comando, es necesario primero utilizar el comando CCS, para establecer la conexión a un servidor, y/o el comando SAC, que acepta un cliente que intenta conectarse a un servidor en el modulo.  
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily SOW,socket,cantidad\_Bytes,datos\textbackslash n}
+	\item \textbf{Parámetros}
+	\begin{itemize}
+		\item{\ttfamily socket}\\
+		Parámetro utilizado para identificar las conexiones. Los valores permitidos para este parámetro van de 0 a 3.
+		\item{\ttfamily cantidad\_Bytes}\\
+		Cantidad de Bytes a ser enviados. El valor máximo permitido para este parámetro es 1460.
+		\item{\ttfamily datos}\\
+		Es la cadena de datos a ser enviados. La longitud de esta cadena debe ser igual al del parámetro {\ttfamily cantidad\_Bytes}, en caso de que no sean iguales, los datos no serán enviados.
+	\end{itemize}
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0\textbackslash n} \\
+		Los datos fueron enviados correctamente. 
+		\item{\ttfamily 1\textbackslash n} \\
+		Error, no hay una conexión WiFi activa.	
+		\item{\ttfamily 2\textbackslash n} \\
+		Error, el parámetro {\ttfamily socket} se encuentra fuera de rango.
+		\item{\ttfamily 3\textbackslash n} \\
+		Error, el parámetro {\ttfamily cantidad\_Bytes} se encuentra fuera de rango.
+		\item{\ttfamily 4\textbackslash n} \\
+		Error, el parámetro {\ttfamily socket} no utiliza el protocolo TCP.
+		\item{\ttfamily 5\textbackslash n} \\
+		Error, el parámetro {\ttfamily socket} no tiene una conexión activa.
+		\item{\ttfamily 6\textbackslash n} \\
+		Error, los datos no fueron enviados.
+	\end{itemize}
+\end{itemize}
+
+\subsection{SOR}
+Comando utilizado para recibir datos a través de una conexión TCP. Para utilizar este comando, es necesario primero utilizar el comando CCS, para establecer la conexión a un servidor, y/o el comando SAC, que acepta un cliente que intenta conectarse a un servidor en el modulo.  
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily SOR,socket\textbackslash n}
+	\item \textbf{Parámetros}
+	\begin{itemize}
+		\item{\ttfamily socket}\\
+		Parámetro utilizado para identificar las conexiones. Los valores permitidos para este parámetro van de 0 a 3.
+	\end{itemize}
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0,cantidad\_Bytes,datos\textbackslash n} \\
+		Los datos fueron recibidos correctamente.
+		\begin{itemize}
+			\item {\ttfamily cantidad\_Bytes}\\
+			Cantidad de Bytes que se recibieron. 
+			\item {\ttfamily datos}\\
+			La cadena de datos que fue recibida.
+		\end{itemize}
+		\item{\ttfamily 1\textbackslash n} \\
+		Error, no hay una conexión WiFi activa.
+		\item{\ttfamily 2\textbackslash n} \\
+		Error, el parámetro {\ttfamily socket} se encuentra fuera de rango.
+		\item{\ttfamily 3\textbackslash n} \\
+		Error, el parámetro {\ttfamily socket} no tiene una conexión activa.
+		\item{\ttfamily 4\textbackslash n} \\
+		Error, el parámetro {\ttfamily socket} no utiliza el protocolo TCP.
+	\end{itemize}
+\end{itemize}
+
+\subsection{SOC}
+Comando utilizado para cerrar las conexiones activas.  
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily SOC,socket\textbackslash n}
+	\item \textbf{Parámetros}
+	\begin{itemize}
+		\item{\ttfamily socket}\\
+		Parámetro utilizado para identificar las conexiones. Los valores permitidos para este parámetro van de 0 a 3.
+	\end{itemize}
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0\textbackslash n} \\
+		La conexión fue cerrada con éxito.
+		\item{\ttfamily 1\textbackslash n} \\
+		Error, no hay una conexión WiFi activa.
+		\item{\ttfamily 2\textbackslash n} \\
+		Error, el parámetro {\ttfamily socket} se encuentra fuera de rango.
+		\item{\ttfamily 3\textbackslash n} \\
+		Error, el parámetro {\ttfamily socket} no tiene una conexión activa.
+	\end{itemize}
+\end{itemize}
+
+\subsection{WFI}
+Comando utilizado para obtener la dirección MAC e IP local de la interfaz de red de la estación, además de la mascara de subred, dirección de la puerta de enlace y servidor DNS1.
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily WFI\textbackslash n}
+	\item \textbf{Parámetros}\\
+	Ninguno.
+	\item \textbf{Respuesta}\\
+	{\ttfamily 0,mac,ip,subnet,gateway,dns\textbackslash n}
+	\item\textbf{Ejemplo}\\
+	Comando: {\ttfamily WFI\textbackslash n}\\
+	Respuesta: {\ttfamily 0,0A:22,192.168.0.12,255.255.255.255,192.168.0.1,156.13.22.2\textbackslash n}
+\end{itemize}
+
+\subsection{WAI}
+Comando utilizado para obtener la dirección MAC e IP de la interfaz de red del punto de acceso (softAP).
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily WAI\textbackslash n}
+	\item \textbf{Parámetros}\\
+	Ninguno.
+	\item \textbf{Respuesta}\\
+	{\ttfamily 0,ip,mac\textbackslash n}
+	\item\textbf{Ejemplo}\\
+	Comando: {\ttfamily WAI\textbackslash n}\\
+	Respuesta: {\ttfamily 0,0A:22,192.168.0.12,255.255.255.255,192.168.0.1,156.13.22.2\textbackslash n}
+\end{itemize}
+
+
+
+
+\subsection{SLC}
+Comando utilizado para crear un servidor TCP en el módulo. Pueden trabajar en simultaneo 4 servidores, como máximo.  
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily SLC,puerto,cantidad\_clientes\textbackslash n}
+	\item \textbf{Parámetros}
+	\begin{itemize}
+		\item{\ttfamily puerto}\\
+		Puerto a ser utilizado por el servidor. Puede tener un valor máximo de 65535.
+		\item{\ttfamily cantidad\_clientes}\\
+		Especifica la cantidad de conexiones simultaneas que puede aceptar el servidor. Los valores permitidos para ese parámetro va desde 1 hasta 4. 
+	\end{itemize}
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0,socket\_pasivo\textbackslash n} \\
+		El servidor fue creado exitosamente. Se retorna un numero de {\ttfamily socket\_pasivo} que sera utilizado para identificar al servidor. El único comando que utiliza este valor como parámetro es el comando SAC. Los valores permitidos para este numero van de 0 a 3.
+		\item{\ttfamily 1\textbackslash n} \\
+		Error, no hay una conexión WiFi activa.
+		\item{\ttfamily 2\textbackslash n} \\
+		Error, el parámetro {\ttfamily puerto} se encuentra fuera de rango.
+		\item{\ttfamily 3\textbackslash n} \\
+		Error, el parámetro {\ttfamily cantidad\_clientes} se encuentra fuera de rango.
+	\end{itemize}
+\end{itemize}
+
+\subsection{SAC}
+Comando utilizado para aceptar clientes que desean conectarse a un servidor TCP del modulo. Para utilizar este comando en primer lugar se debe ejecutar el comando SLC, ya que este comando retorna un valor que utiliza el comando SAC como parámetro.
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily SAC,socket\_pasivo\textbackslash n}
+	\item \textbf{Parámetros}
+	\begin{itemize}
+		\item{\ttfamily socket\_pasivo}\\
+		Parámetro utilizado para identificar de cual servidor se deben aceptar los clientes. Para obtener este parámetro, se debe almacenar el valor de retorno del comando SLC. Los valores permitidos para este parámetro van de 0 a 3.
+	\end{itemize}
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0,socket\textbackslash n} \\
+		El cliente fue aceptado con éxito al servidor. Se retorna un numero {\ttfamily socket} de manera tal a identificar al cliente y poder intercambiar datos. Los valores permitidos para este numero van de 0 a 3.
+		\item{\ttfamily 1\textbackslash n} \\
+		Error, no hay una conexión WiFi activa.
+		\item{\ttfamily 2\textbackslash n} \\
+		Error, el parámetro {\ttfamily socket} se encuentra fuera de rango.
+		\item{\ttfamily 3\textbackslash n} \\
+		Error, no hay recursos disponibles para aceptar el cliente, se rechaza la conexión.
+		\item{\ttfamily 4\textbackslash n} \\
+		El servidor no tiene clientes que quieran conectarse. 
+		\item{\ttfamily 5\textbackslash n} \\
+		El servidor {\ttfamily socket\_pasivo} no se encuentra activo.
+		\item{\ttfamily 6\textbackslash n} \\
+		Ya se alcanzo el numero máximo de conexiones simultaneas permitidas para este servidor. Se rechaza el cliente.
+	\end{itemize}
+\end{itemize}
+
+\subsection{SCC}
+Comando utilizado para desactivar un servidor TCP. 
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily SCC,socket\_pasivo\textbackslash n}
+	\item \textbf{Parámetros}\\
+	\begin{itemize}
+		\item{\ttfamily socket\_pasivo}\\
+		Parámetro para indicar cual es el servidor que se desactivara. 
+	\end{itemize}
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0\textbackslash n} \\
+		El servidor fue desactivado exitosamente.
+		\item{\ttfamily 1\textbackslash n} \\
+		Error, no hay una conexión WiFi activa.
+		\item{\ttfamily 2\textbackslash n} \\
+		Error, el parámetro {\ttfamily socket\_pasivo} se encuentra fuera de rango.
+	\end{itemize}
+\end{itemize}
+
+\subsection{SVU}
+Comando utilizado crear un servidor para recibir paquetes UDP en el puerto especificado.   
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily SVU,puerto\textbackslash n}
+	\item \textbf{Parámetros}
+	\begin{itemize}
+		\item{\ttfamily puerto}\\
+		Puerto a ser utilizado por el servidor. Puede tener un valor máximo de 65535. 
+	\end{itemize}
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0,socket\textbackslash n} \\
+		El servidor fue creado exitosamente. Se retorna un numero de {\ttfamily socket} que sera utilizado para identificar al servidor. Los valores permitidos para este numero van de 0 a 3.
+		\item{\ttfamily 1\textbackslash n} \\
+		Error, no hay una conexión WiFi activa.
+		\item{\ttfamily 2\textbackslash n} \\
+		Error, el parámetro {\ttfamily puerto} se encuentra fuera de rango.
+		\item{\ttfamily 3\textbackslash n} \\
+		Error, no hay recursos disponibles para ejecutar el comando.
+		\item{\ttfamily 4\textbackslash n} \\
+		Error, no fue posible establecer la recepción de paquetes.
+	\end{itemize}
+\end{itemize}
+
+\subsection{SDU}
+Comando utilizado para enviar paquetes UDP.   
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily SDU,socket,cantidad\_Bytes,datos\textbackslash n}
+	\item \textbf{Parámetros}
+	\begin{itemize}
+		\item{\ttfamily socket}\\
+		Parámetro utilizado para identificar las conexiones. Los valores permitidos para este parámetro van de 0 a 3.
+		\item{\ttfamily cantidad\_Bytes}\\
+		Cantidad de Bytes a ser enviados. El valor máximo permitido para este parámetro es 1460.
+		\item{\ttfamily datos}\\
+		Es la cadena de datos a ser enviados. La longitud de esta cadena debe ser igual al del parámetro {\ttfamily cantidad\_Bytes}, en caso de que no sean iguales, los datos no serán enviados.
+	\end{itemize}
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0,socket\textbackslash n} \\
+		Los datos fueron enviados correctamente.
+		\item{\ttfamily 1\textbackslash n} \\
+		Error, no hay una conexión WiFi activa.
+		\item{\ttfamily 2\textbackslash n} \\
+		Error, el parámetro {\ttfamily socket} se encuentra fuera de rango.
+		\item{\ttfamily 3\textbackslash n} \\
+		Error, el parámetro {\ttfamily cantidad\_Bytes} se encuentra fuera de rango.
+		\item{\ttfamily 4\textbackslash n} \\
+		Error, los datos no fueron enviados.
+		\item{\ttfamily 5\textbackslash n} \\
+		Error, el parámetro {\ttfamily socket} fue configurado para ser utilizado con el protocolo TCP.		
+	\end{itemize}
+\end{itemize}
+
+\subsection{RVU}
+Comando utilizado para recibir datos a través de una conexión UDP. Para utilizar este comando, es necesario primero utilizar el comando SVU, para saber el puerto por el cual se reciben los paquetes. 
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily RVU,socket\textbackslash n}
+	\item \textbf{Parámetros}
+	\begin{itemize}
+		\item{\ttfamily socket}\\
+		Parámetro utilizado para identificar las conexiones. Los valores permitidos para este parámetro van de 0 a 3.
+	\end{itemize}
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0,cantidad\_Bytes,datos\textbackslash n} \\
+		Los datos fueron recibidos correctamente.
+		\begin{itemize}
+			\item {\ttfamily cantidad\_Bytes}\\
+			Cantidad de Bytes que se recibieron. 
+			\item {\ttfamily datos}\\
+			La cadena de datos que fue recibida.
+		\end{itemize}
+		\item{\ttfamily 1\textbackslash n} \\
+		Error, no hay una conexión WiFi activa.
+		\item{\ttfamily 2\textbackslash n} \\
+		Error, el parámetro {\ttfamily socket} se encuentra fuera de rango.
+	\end{itemize}
+\end{itemize}
+
+\subsection{STC}
+Comando utilizado para configurar el servidor SNTP del módulo. 
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily STC,direccion\_servidor\_sntp,offset\_tiempo\textbackslash n}
+	\item \textbf{Parámetros}
+	\begin{itemize}
+		\item{\ttfamily direccion\_servidor\_sntp}\\
+		Direccion del servidor SNTP a ser utilizado.
+		\item{\ttfamily offset\_tiempo}\\
+		Offset de tiempo para configurar la operacion del servidor.
+	\end{itemize}
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0\textbackslash n} \\
+		Servidor SNTP configurado correctamente.
+		\item{\ttfamily 1\textbackslash n} \\
+		Error, no hay una conexión WiFi activa.
+	\end{itemize}
+\end{itemize}
+
+\subsection{STG}
+Comando utilizado obtener el tiempo actual del servidor SNTP configurado previamente utilizando el comando STC. 
+\begin{itemize}
+	\item \textbf{Sintaxis}\\
+	{\ttfamily STG\textbackslash n}
+	\item \textbf{Parámetros}\\
+	Ninguno.
+	\item \textbf{Respuesta}
+	\begin{itemize}
+		\item{\ttfamily 0,tiempo\textbackslash n} \\
+		Informacion sobre el tiempo obtenido correctamente. Se retorna la informacion como una cadena {\ttfamily tiempo}, con el formato {\ttfamily horas:minutos:segundos}
+		\item{\ttfamily 1\textbackslash n} \\
+		Error, no hay una conexión WiFi activa.
+		\item{\ttfamily 2\textbackslash n} \\
+		Error, no se pudo obtener la información.
+	\end{itemize}
+\end{itemize}
+
+
+
+\end{document}
