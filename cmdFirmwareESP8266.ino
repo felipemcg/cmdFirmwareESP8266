@@ -1252,7 +1252,13 @@ void cmd_CCS()
 		}
 		estado_conexion_al_servidor_tcp = cliente_tcp[sockets[socket].indice_objeto].connect(comando_recibido.parametros[1],puerto_conexion);
 		if(estado_conexion_al_servidor_tcp){
+
+			//Para desactivar algoritmo de nagle
 			//cliente_tcp[socket].setNoDelay(1);
+
+			//Para activar nagle
+			cliente_tcp[socket].setNoDelay(0);
+
 			sockets[socket].en_uso = true;
 			sockets[socket].tipo = TIPO_CLIENTE;
 			sockets[socket].protocolo = TCP;
@@ -1923,10 +1929,11 @@ void setup()
 		sockets[indice_socket].indice_servidor = -1;
 	}
 
-    /*cliente_tcp[0].setNoDelay(1);
-    cliente_tcp[1].setNoDelay(1);
-    cliente_tcp[2].setNoDelay(1);
-    cliente_tcp[3].setNoDelay(1);*/
+    //Activamos nagle por defecto
+    cliente_tcp[0].setNoDelay(0);
+    cliente_tcp[1].setNoDelay(0);
+    cliente_tcp[2].setNoDelay(0);
+    cliente_tcp[3].setNoDelay(0);
     modo_wifi_actual = WiFi.getMode();
     estado_conexion_wifi_interfaz_sta_actual = WiFi.status();
 
@@ -1934,6 +1941,7 @@ void setup()
     WiFi.disconnect(1);
     delay(100);
     WiFi.mode(WIFI_OFF);
+
 
     Serial.print("R");
     Serial.print(CMD_TERMINATOR);
