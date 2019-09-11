@@ -503,7 +503,7 @@ void cmd_MVI()
 	arduino_core_version = ESP.getCoreVersion();
 	Serial.print(CMD_RESP_OK);
 	Serial.print(CMD_DELIMITER);
-	Serial.print("Firmware:V1.0.6");
+	Serial.print("Firmware:V1.0.7");
 	Serial.print(CMD_DELIMITER);
 	Serial.print("ArduinoCore:");
 	Serial.print(arduino_core_version);
