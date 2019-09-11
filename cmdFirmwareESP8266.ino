@@ -872,6 +872,7 @@ void cmd_WSI()
 	Serial.print(CMD_DELIMITER);
 	Serial.print(cantidad_clientes_conectados);
 
+	/*
 	for (int cliente = 0; cliente < cantidad_clientes_conectados; cliente++)
 	{
 		Serial.print(CMD_DELIMITER);
@@ -890,6 +891,7 @@ void cmd_WSI()
 		Serial.print(info_cliente->bssid[4],HEX);Serial.print(":");
 		Serial.print(info_cliente->bssid[5],HEX);
 	}
+	*/
 	Serial.print(CMD_TERMINATOR);
 	return;
 }
