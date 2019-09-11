@@ -1336,6 +1336,7 @@ void cmd_SOW()
 		return;
 	}
 
+	//Verificamos que el socket se encuentre conectado
 	if(!cliente_tcp[sockets[socket].indice_objeto].connected())
 	{
 		/*El socket no esta conectado*/
@@ -1344,8 +1345,39 @@ void cmd_SOW()
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
+
+
+	/*Escribimos en el socket.
+	Ver https://github.com/esp8266/Arduino/blob/master/doc/esp8266wifi/client-examples.rst
+	para saber con detalle que pasa al utilizar client.write()
+	*/
+
+	// or we can send but it will take time because data are too
+	// big to be asynchronously bufferized: TCP needs to receive
+	// some ACKs to release its buffers.
+	// That means that write() will block until it receives
+	// authorization to send because we are not in a
+	// multitasking environment
+
+	// It is always OK to do this, client.availableForWrite() is
+	// only needed when efficiency is a priority and when data
+	// to send can wait where they currently are, especially
+	// when they are in another tcp client.
+
+	// Flow control:
+	// It is also important to know that the ACKs we are sending
+	// to remote are directly generated from client.read().
+	// It means that:
+	// Not immediately reading available data can be good for
+	// flow control and avoid useless memory filling/overflow by
+	// preventing peer from sending more data, and slow down
+	// incoming bandwidth
+	// (tcp is really a nice and efficient beast)
+
 	cant_bytes_enviados_tcp = cliente_tcp[sockets[socket].indice_objeto].write(paquete_datos_tcp,
 			cant_bytes_enviar_tcp);
+
+
 	if(cant_bytes_enviar_tcp != cant_bytes_enviados_tcp)
 	{
 		/*No se pudo escribir los datos al socket*/
