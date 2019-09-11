@@ -440,9 +440,9 @@ int8_t verificar_conexion_wifi()
 		case WIFI_AP_STA:
 			cant_clientes_conectados_interfaz_softap = WiFi.softAPgetStationNum();
 			estado_conexion_wifi_interfaz_sta_actual = WiFi.status();
-			if( (estado_conexion_wifi_interfaz_sta_actual == WL_DISCONNECTED)
-				|| (estado_conexion_wifi_interfaz_sta_actual == WL_CONNECTION_LOST)
-				|| (cant_clientes_conectados_interfaz_softap == 0) )
+			if( ( (estado_conexion_wifi_interfaz_sta_actual == WL_DISCONNECTED)
+				|| (estado_conexion_wifi_interfaz_sta_actual == WL_CONNECTION_LOST) )
+				&& (cant_clientes_conectados_interfaz_softap == 0) )
 			{
 				ret_val = -2;
 			}
