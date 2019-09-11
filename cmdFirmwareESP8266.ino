@@ -1389,6 +1389,7 @@ void cmd_SOR()
 	{
 		Serial.print(CMD_ERROR_1);
 		Serial.print(CMD_TERMINATOR);
+		return;
 	}
 
 	/*Agregar verificacion de conexion a servidor antes de imprimir respuesta*/
