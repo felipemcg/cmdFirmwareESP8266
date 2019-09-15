@@ -1964,6 +1964,8 @@ void setup()
     delay(100);
     WiFi.mode(WIFI_OFF); //Apagamos la radio WiFi
     WiFi.setSleepMode(WIFI_NONE_SLEEP);
+    WiFi.setAutoConnect(false);
+    WiFi.setAutoReconnect(false);
     modo_wifi_actual = WiFi.getMode();
 	estado_conexion_wifi_interfaz_sta_actual = WiFi.status();
 
