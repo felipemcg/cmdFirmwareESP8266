@@ -1092,6 +1092,10 @@ void cmd_WSD()
 	{
 		b_smartconfig_credenciales_recibidas = false;
 		Serial.print(CMD_RESP_OK);
+		Serial.print(CMD_DELIMITER);
+		Serial.print(WiFi.SSID());
+		Serial.print(CMD_DELIMITER);
+		Serial.print(WiFi.psk());
 	}else
 	{
 		Serial.print(CMD_ERROR_1);
