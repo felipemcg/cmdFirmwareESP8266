@@ -440,9 +440,9 @@ int8_t verificar_conexion_wifi()
 		case WIFI_AP_STA:
 			cant_clientes_conectados_interfaz_softap = WiFi.softAPgetStationNum();
 			estado_conexion_wifi_interfaz_sta_actual = WiFi.status();
-			if( (estado_conexion_wifi_interfaz_sta_actual == WL_DISCONNECTED)
-				|| (estado_conexion_wifi_interfaz_sta_actual == WL_CONNECTION_LOST)
-				|| (cant_clientes_conectados_interfaz_softap == 0) )
+			if( ( (estado_conexion_wifi_interfaz_sta_actual == WL_DISCONNECTED)
+				|| (estado_conexion_wifi_interfaz_sta_actual == WL_CONNECTION_LOST) )
+				&& (cant_clientes_conectados_interfaz_softap == 0) )
 			{
 				ret_val = -2;
 			}
@@ -503,7 +503,7 @@ void cmd_MVI()
 	arduino_core_version = ESP.getCoreVersion();
 	Serial.print(CMD_RESP_OK);
 	Serial.print(CMD_DELIMITER);
-	Serial.print("Firmware:V1.0.6");
+	Serial.print("Firmware:V1.0.7");
 	Serial.print(CMD_DELIMITER);
 	Serial.print("ArduinoCore:");
 	Serial.print(arduino_core_version);
@@ -872,6 +872,7 @@ void cmd_WSI()
 	Serial.print(CMD_DELIMITER);
 	Serial.print(cantidad_clientes_conectados);
 
+	/*
 	for (int cliente = 0; cliente < cantidad_clientes_conectados; cliente++)
 	{
 		Serial.print(CMD_DELIMITER);
@@ -890,6 +891,7 @@ void cmd_WSI()
 		Serial.print(info_cliente->bssid[4],HEX);Serial.print(":");
 		Serial.print(info_cliente->bssid[5],HEX);
 	}
+	*/
 	Serial.print(CMD_TERMINATOR);
 	return;
 }
@@ -1090,6 +1092,10 @@ void cmd_WSD()
 	{
 		b_smartconfig_credenciales_recibidas = false;
 		Serial.print(CMD_RESP_OK);
+		Serial.print(CMD_DELIMITER);
+		Serial.print(WiFi.SSID());
+		Serial.print(CMD_DELIMITER);
+		Serial.print(WiFi.psk());
 	}else
 	{
 		Serial.print(CMD_ERROR_1);
@@ -1334,6 +1340,7 @@ void cmd_SOW()
 		return;
 	}
 
+	//Verificamos que el socket se encuentre conectado
 	if(!cliente_tcp[sockets[socket].indice_objeto].connected())
 	{
 		/*El socket no esta conectado*/
@@ -1342,8 +1349,39 @@ void cmd_SOW()
 		Serial.print(CMD_TERMINATOR);
 		return;
 	}
+
+
+	/*Escribimos en el socket.
+	Ver https://github.com/esp8266/Arduino/blob/master/doc/esp8266wifi/client-examples.rst
+	para saber con detalle que pasa al utilizar client.write()
+	*/
+
+	// or we can send but it will take time because data are too
+	// big to be asynchronously bufferized: TCP needs to receive
+	// some ACKs to release its buffers.
+	// That means that write() will block until it receives
+	// authorization to send because we are not in a
+	// multitasking environment
+
+	// It is always OK to do this, client.availableForWrite() is
+	// only needed when efficiency is a priority and when data
+	// to send can wait where they currently are, especially
+	// when they are in another tcp client.
+
+	// Flow control:
+	// It is also important to know that the ACKs we are sending
+	// to remote are directly generated from client.read().
+	// It means that:
+	// Not immediately reading available data can be good for
+	// flow control and avoid useless memory filling/overflow by
+	// preventing peer from sending more data, and slow down
+	// incoming bandwidth
+	// (tcp is really a nice and efficient beast)
+
 	cant_bytes_enviados_tcp = cliente_tcp[sockets[socket].indice_objeto].write(paquete_datos_tcp,
 			cant_bytes_enviar_tcp);
+
+
 	if(cant_bytes_enviar_tcp != cant_bytes_enviados_tcp)
 	{
 		/*No se pudo escribir los datos al socket*/
@@ -1387,6 +1425,7 @@ void cmd_SOR()
 	{
 		Serial.print(CMD_ERROR_1);
 		Serial.print(CMD_TERMINATOR);
+		return;
 	}
 
 	/*Agregar verificacion de conexion a servidor antes de imprimir respuesta*/
@@ -1928,6 +1967,9 @@ void setup()
     WiFi.disconnect(1);
     delay(100);
     WiFi.mode(WIFI_OFF); //Apagamos la radio WiFi
+    WiFi.setSleepMode(WIFI_NONE_SLEEP);
+    WiFi.setAutoConnect(false);
+    WiFi.setAutoReconnect(false);
     modo_wifi_actual = WiFi.getMode();
 	estado_conexion_wifi_interfaz_sta_actual = WiFi.status();
 

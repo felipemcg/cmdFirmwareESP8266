@@ -1,0 +1,11 @@
+\contentsline {section}{\numberline {1}Conexiones hardware}{2}% 
+\contentsline {section}{\numberline {2}Esquema de comunicaci\IeC {\'o}n}{2}% 
+\contentsline {section}{\numberline {3}Resumen de comandos}{3}% 
+\contentsline {section}{\numberline {4}Sintaxis de los comandos}{5}% 
+\contentsline {paragraph}{Comandos.}{5}% 
+\contentsline {paragraph}{Respuestas.}{6}% 
+\contentsline {paragraph}{Consideraciones.}{6}% 
+\contentsline {section}{\numberline {5}Definici\IeC {\'o}n de los comandos}{7}% 
+\contentsline {subsection}{\numberline {5.1}Comandos B\IeC {\'a}sicos}{7}% 
+\contentsline {subsection}{\numberline {5.2}Comandos WiFi}{10}% 
+\contentsline {subsection}{\numberline {5.3}Comandos TCP/IP}{19}% 
