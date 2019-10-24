@@ -6,3 +6,7 @@ Release/
 spec.d
 /Wemos_debug/
 /2.5.2/
+.aux
+.log
+.synctex.gz
+.toc
