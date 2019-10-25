@@ -3,9 +3,7 @@
 Este firmware implementa un nuevo conjunto de comandos para el ESP8266, para que este pueda ser controlado por un microcontrolador externo, utilizando el periférico UART a una velocidad de 115200 bps. 
 ## Resumen de comandos
 
-En las tablas [\[tab:comandos\_basicos\]](#tab:comandos_basicos),
-[\[tab:comandos\_wifi\]](#tab:comandos_wifi) y
-[\[tab:coomnados\_tcpip\]](#tab:coomnados_tcpip) se presentan todos los
+En las siguientes tablas se presentan todos los
 comandos disponibles y una breve descripción de la función de cada uno.
 
 ### Comandos Básicos
@@ -64,4 +62,5 @@ comandos disponibles y una breve descripción de la función de cada uno.
 | STC         | Configura el servidor SNTP.                               |
 | STG         | Obtiene el tiempo actual del servidor SNTP.               |
 
+Para mayor informacion acerca de los comandos, consultar la [Guia de comandos.](documentacion/guia.pdf)
 
