@@ -1,5 +1,12 @@
-## Archivos del proyecto 
-.pio
-
-## Visual Studio Code 
-.vscode 
+/sloeber.ino.cpp
+Release/
+.project
+.cproject
+.settings/
+spec.d
+/Wemos_debug/
+/2.5.2/
+.aux
+.log
+.synctex.gz
+.toc
