@@ -676,10 +676,10 @@ void cmd_WFM()
  * Comando para conectar el modulo a un punto de acceso.
  *
  *  @param 	SSID 		Del punto de acceso al cual se quiere conectar.
- *  @param 	Contraseña 	Del punto de acceso al cual se quiere conectar.
+ *  @param 	Contraseï¿½a 	Del punto de acceso al cual se quiere conectar.
  *  @retval 1\n Si no se pudo conectar al punto de acceso.
  *  @retval 2\n Si se alcanzo el timeout para conectarse (20 segundos).
- *  @retval 3\n La contraseña es incorrecta.
+ *  @retval 3\n La contraseï¿½a es incorrecta.
  *  @retval 4\n El SSID no esta disponible.
  */
 void cmd_WFC()
@@ -729,7 +729,7 @@ void cmd_WFC()
 			Serial.print(CMD_ERROR_5);
 			break;
 		case WL_CONNECT_FAILED:
-			/*Significa que la contraseña es incorrecta*/
+			/*Significa que la contraseï¿½a es incorrecta*/
 			Serial.print(CMD_ERROR_3);
 			break;
 		case WL_CONNECTION_LOST:
@@ -799,7 +799,7 @@ void cmd_WFD()
 /**
  * Comando para configurar el modulo ESP8266 en modo punto de acceso(softAP).
  * @param SSID			Nombre del AP, 63 caracteres maximo.
- * @param Contraseña    Minimo 8 caracteres.
+ * @param Contraseï¿½a    Minimo 8 caracteres.
  * @param Canal         Numero del canal WiFi, del 1 al 13.
  * @param SSID_Oculto   0 para mostrar el SSID, 1 para ocultar.
  * @param MAX_CONEX    	Numero de conexiones simultaneas, del 1 al 4.
@@ -1194,7 +1194,7 @@ void cmd_IDN()
  * CCS - Client Connect Server
  * Comando para conectarse a un servidor, sea TCP o UDP.
  * @param SSID			Nombre del AP, 63 caracteres maximo.
- * @param Contraseña    Minimo 8 caracteres.
+ * @param Contraseï¿½a    Minimo 8 caracteres.
  * @param Canal         Numero del canal WiFi, del 1 al 13.
  * @param SSID_Oculto   0 para mostrar el SSID, 1 para ocultar.
  * @param MAX_CONEX    	Numero de conexiones simultaneas, del 1 al 4.
